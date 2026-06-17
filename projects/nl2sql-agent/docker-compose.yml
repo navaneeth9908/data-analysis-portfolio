@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  nl2sql:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/chinook
+      - LLM_PROVIDER=openai
+      - LLM_MODEL=gpt-4o-mini
+      - LLM_API_KEY=${LLM_API_KEY}
+      - READ_ONLY=true
+      - SQL_DIALECT=postgresql
+    depends_on:
+      - db
+    volumes:
+      - ./.env:/app/.env:ro
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=chinook
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./examples/chinook:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:
