@@ -103,6 +103,16 @@ INCLUDE_VIEWS=true
 INCLUDE_SYSTEM_TABLES=false
 ```
 
+## Offline sample sales mart
+
+For portfolio demos without private data or API keys, generate a deterministic SQLite sales mart:
+
+```bash
+python src/sample_data.py --output examples/sales_mart.sqlite
+```
+
+The generated database includes `customers`, `products`, `orders`, and `order_items` tables with foreign keys and enough variation for joins, revenue aggregation, date filtering, and ranking questions. See `examples/README.md` for suggested business questions.
+
 ## Usage Examples
 
 ### Natural Language → SQL
