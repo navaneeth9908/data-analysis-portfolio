@@ -104,7 +104,8 @@ def build_sales_mart(db_path: str | Path) -> dict[str, int]:
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    with sqlite3.connect(path) as conn:
+    conn = sqlite3.connect(path)
+    try:
         conn.executescript(SCHEMA_SQL)
         conn.executemany("INSERT INTO customers VALUES (?, ?, ?, ?)", CUSTOMERS)
         conn.executemany("INSERT INTO products VALUES (?, ?, ?, ?)", PRODUCTS)
@@ -116,6 +117,8 @@ def build_sales_mart(db_path: str | Path) -> dict[str, int]:
             table: conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             for table in ("customers", "products", "orders", "order_items")
         }
+    finally:
+        conn.close()
 
 
 def default_question_examples() -> list[dict[str, str]]:

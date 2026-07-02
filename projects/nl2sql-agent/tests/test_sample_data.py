@@ -33,7 +33,8 @@ def test_build_sales_mart_creates_joinable_star_schema(tmp_path: Path) -> None:
     assert summary["order_items"] == 16
     assert db_path.exists()
 
-    with sqlite3.connect(db_path) as conn:
+    conn = sqlite3.connect(db_path)
+    try:
         top_region = conn.execute(
             """
             SELECT c.region, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
@@ -45,8 +46,13 @@ def test_build_sales_mart_creates_joinable_star_schema(tmp_path: Path) -> None:
             LIMIT 1
             """
         ).fetchone()
+    finally:
+        conn.close()
 
     assert top_region == ("West", 6060.0)
+
+    db_path.unlink()
+    assert not db_path.exists()
 
 
 def test_default_question_examples_match_sales_mart_tables() -> None:
