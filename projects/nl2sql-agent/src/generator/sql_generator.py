@@ -349,12 +349,35 @@ FROM track t
 JOIN genre g ON t.genre_id = g.genre_id
 JOIN album al ON t.album_id = al.album_id
 JOIN artist ar ON al.artist_id = ar.artist_id;```"""
+
+        if "region" in question_lower and "revenue" in question_lower:
+            return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
+
+```sql
+SELECT c.region, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN orders o ON oi.order_id = o.order_id
+JOIN customers c ON o.customer_id = c.customer_id
+GROUP BY c.region
+ORDER BY revenue DESC
+LIMIT 1;```"""
+
+        if "product" in question_lower and "revenue" in question_lower:
+            return """Rank products by revenue from the sample sales mart by summing order item extended prices.
+
+```sql
+SELECT p.product_name, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_name
+ORDER BY revenue DESC
+LIMIT 3;```"""
         
         return """Basic query to answer the question.
 
 ```sql
 SELECT * FROM customer LIMIT 10;```"""
-    
+
     def _parse_response(self, response: str) -> tuple:
         """Parse LLM response to extract SQL and reasoning."""
         # Extract SQL from markdown code block

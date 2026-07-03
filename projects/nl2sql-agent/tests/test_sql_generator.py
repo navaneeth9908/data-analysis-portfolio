@@ -81,6 +81,57 @@ def build_sales_schema() -> DatabaseSchema:
     return schema
 
 
+def build_sample_mart_schema() -> DatabaseSchema:
+    """Create the portfolio sample mart schema used by offline demos."""
+    schema = DatabaseSchema(dialect="sqlite")
+    schema.add_table(
+        Table(
+            name="customers",
+            columns=[
+                Column("customer_id", ColumnType.INTEGER, "INTEGER", nullable=False, is_primary_key=True),
+                Column("customer_name", ColumnType.TEXT, "TEXT", nullable=False),
+                Column("region", ColumnType.TEXT, "TEXT", nullable=False),
+                Column("segment", ColumnType.TEXT, "TEXT", nullable=False),
+            ],
+        )
+    )
+    schema.add_table(
+        Table(
+            name="products",
+            columns=[
+                Column("product_id", ColumnType.INTEGER, "INTEGER", nullable=False, is_primary_key=True),
+                Column("product_name", ColumnType.TEXT, "TEXT", nullable=False),
+                Column("category", ColumnType.TEXT, "TEXT", nullable=False),
+                Column("list_price", ColumnType.REAL, "REAL", nullable=False),
+            ],
+        )
+    )
+    schema.add_table(
+        Table(
+            name="orders",
+            columns=[
+                Column("order_id", ColumnType.INTEGER, "INTEGER", nullable=False, is_primary_key=True),
+                Column("customer_id", ColumnType.INTEGER, "INTEGER", nullable=False),
+                Column("order_date", ColumnType.TEXT, "TEXT", nullable=False),
+                Column("status", ColumnType.TEXT, "TEXT", nullable=False),
+            ],
+        )
+    )
+    schema.add_table(
+        Table(
+            name="order_items",
+            columns=[
+                Column("order_item_id", ColumnType.INTEGER, "INTEGER", nullable=False, is_primary_key=True),
+                Column("order_id", ColumnType.INTEGER, "INTEGER", nullable=False),
+                Column("product_id", ColumnType.INTEGER, "INTEGER", nullable=False),
+                Column("quantity", ColumnType.INTEGER, "INTEGER", nullable=False),
+                Column("unit_price", ColumnType.REAL, "REAL", nullable=False),
+            ],
+        )
+    )
+    return schema
+
+
 def test_prompt_includes_schema_dialect_examples_and_question() -> None:
     generator = SQLGenerator(build_sales_schema())
 
@@ -102,6 +153,28 @@ def test_mock_generation_parses_sql_and_reports_tables() -> None:
     assert result.tables_used == ["customer", "invoice"]
     assert result.validation_errors == []
     assert result.confidence == 0.8
+
+
+def test_mock_generation_answers_sample_mart_region_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which region generated the most revenue?")
+
+    assert "c.region" in result.sql
+    assert "SUM(oi.quantity * oi.unit_price)" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
+def test_mock_generation_answers_sample_mart_product_ranking_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("What are the top three products by revenue?")
+
+    assert "p.product_name" in result.sql
+    assert "LIMIT 3" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
 
 
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
