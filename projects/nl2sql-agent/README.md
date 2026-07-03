@@ -113,6 +113,14 @@ python src/sample_data.py --output examples/sales_mart.sqlite
 
 The generated database includes `customers`, `products`, `orders`, and `order_items` tables with foreign keys and enough variation for joins, revenue aggregation, date filtering, and ranking questions. See `examples/README.md` for suggested business questions.
 
+Run an end-to-end offline NL2SQL demo against that mart:
+
+```bash
+python -m src.offline_demo "Which region generated the most revenue?" --limit 5
+```
+
+The demo builds the SQLite mart if needed, generates a safe SQL query, validates table and column references, executes the query in read-only mode, and prints an interview-friendly result table.
+
 ## Usage Examples
 
 ### Natural Language → SQL

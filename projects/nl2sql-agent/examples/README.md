@@ -22,3 +22,26 @@ The generated database contains a small star schema:
 3. Which customer segment has the highest average order value?
 
 These questions are designed to exercise joins, grouping, ranking, and CTE-style reasoning in the SQL generator and executor.
+
+## Offline demo runner
+
+Use the demo runner to exercise the full local path without an LLM provider:
+
+```bash
+python -m src.offline_demo "Which region generated the most revenue?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+Question: Which region generated the most revenue?
+
+Generated SQL:
+SELECT c.region, ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+...
+
+Result:
+region | revenue
+-------+--------
+West   | 6060.0
+```
