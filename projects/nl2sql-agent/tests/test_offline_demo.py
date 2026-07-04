@@ -54,6 +54,7 @@ def test_answer_sample_question_builds_database_generates_sql_and_returns_rows(t
     assert answer.validation_errors == []
     assert answer.tables_used == ["customers", "order_items", "orders"]
     assert answer.rows == [{"region": "West", "revenue": 6060.0}]
+    assert answer.insight.headline == "West leads with revenue of 6,060.00."
     assert "GROUP BY c.region" in answer.sql
     assert "region" in answer.table
     assert "West" in answer.table
@@ -74,5 +75,7 @@ def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> N
     assert exit_code == 0
     assert "Question: Which region generated the most revenue?" in captured
     assert "Generated SQL:" in captured
+    assert "Answer Summary:" in captured
+    assert "West leads with revenue of 6,060.00." in captured
     assert "Result:" in captured
     assert "West" in captured

@@ -14,6 +14,7 @@ from typing import Any
 
 from sqlalchemy import create_engine
 
+from .executor.insights import ResultInsight, explain_result
 from .executor.runner import QueryRunner, ResultFormatter
 from .generator.sql_generator import SQLGenerator
 from .sample_data import build_sales_mart
@@ -31,6 +32,7 @@ class DemoAnswer:
     validation_errors: list[str]
     rows: list[dict[str, Any]]
     table: str
+    insight: ResultInsight | None = None
 
 
 def build_sample_mart_schema() -> DatabaseSchema:
@@ -110,6 +112,7 @@ def answer_sample_question(
     try:
         result = QueryRunner(engine, schema).execute(generation.sql, limit=limit)
         rendered = ResultFormatter.to_table(result)
+        insight = explain_result(question, result)
         rows = result.rows
     finally:
         engine.dispose()
@@ -122,6 +125,7 @@ def answer_sample_question(
         validation_errors=[],
         rows=rows,
         table=rendered,
+        insight=insight,
     )
 
 
@@ -148,6 +152,9 @@ def main(argv: list[str] | None = None) -> int:
         for error in answer.validation_errors:
             print(f"- {error}")
         return 1
+    print("\nAnswer Summary:")
+    if answer.insight is not None:
+        print(answer.insight.to_markdown())
     print("\nResult:")
     print(answer.table)
     return 0
