@@ -41,9 +41,11 @@ def explain_result(question: str, result: QueryResult) -> ResultInsight:
     metric_key, metric_value = _metric_field(first_row, exclude=label_key)
 
     if label_key and metric_key:
-        headline = f"{_format_value(label_value)} leads with {metric_key} of {_format_value(metric_value)}."
+        metric_label = _format_label(metric_key)
+        headline = f"{_format_value(label_value)} leads with {metric_label} of {_format_value(metric_value)}."
     elif metric_key:
-        headline = f"Top result has {metric_key} of {_format_value(metric_value)}."
+        metric_label = _format_label(metric_key)
+        headline = f"Top result has {metric_label} of {_format_value(metric_value)}."
     else:
         headline = f"Top result: {_format_row(first_row)}."
 
@@ -82,6 +84,11 @@ def _metric_field(row: dict[str, Any], exclude: str | None = None) -> tuple[str 
 
 def _format_row(row: dict[str, Any]) -> str:
     return ", ".join(f"{key}={_format_value(value)}" for key, value in row.items())
+
+
+def _format_label(label: str) -> str:
+    """Convert snake_case result aliases into reader-friendly labels."""
+    return label.replace("_", " ")
 
 
 def _format_value(value: Any) -> str:

@@ -60,6 +60,25 @@ def test_answer_sample_question_builds_database_generates_sql_and_returns_rows(t
     assert "West" in answer.table
 
 
+def test_answer_sample_question_handles_segment_average_order_value(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segment has the highest average order value?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows[0] == {"segment": "Financial Services", "average_order_value": 2250.0}
+    assert answer.insight.headline == (
+        "Financial Services leads with average order value of 2,250.00."
+    )
+    assert "WITH order_revenue AS" in answer.sql
+    assert "AVG(revenue)" in answer.sql
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

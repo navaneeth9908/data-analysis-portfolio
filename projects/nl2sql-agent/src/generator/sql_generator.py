@@ -372,6 +372,22 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY p.product_name
 ORDER BY revenue DESC
 LIMIT 3;```"""
+
+        if "segment" in question_lower and "average order" in question_lower:
+            return """Calculate average order value by customer segment from the sample sales mart by first summing each order, then averaging order revenue per segment.
+
+```sql
+WITH order_revenue AS (
+    SELECT o.order_id, c.segment, SUM(oi.quantity * oi.unit_price) AS revenue
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    GROUP BY o.order_id, c.segment
+)
+SELECT segment, ROUND(AVG(revenue), 2) AS average_order_value
+FROM order_revenue
+GROUP BY segment
+ORDER BY average_order_value DESC;```"""
         
         return """Basic query to answer the question.
 

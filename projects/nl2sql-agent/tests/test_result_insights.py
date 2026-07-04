@@ -54,6 +54,22 @@ def test_explain_result_highlights_leading_metric_and_context() -> None:
     assert "West leads" in insight.to_markdown()
 
 
+def test_explain_result_humanizes_metric_column_names() -> None:
+    result = QueryResult(
+        columns=["segment", "average_order_value"],
+        rows=[{"segment": "Financial Services", "average_order_value": 2250.0}],
+        row_count=1,
+        execution_time_ms=2.5,
+        query="SELECT segment, average_order_value FROM segment_metrics",
+    )
+
+    insight = explain_result("Which segment has the highest average order value?", result)
+
+    assert insight.headline == (
+        "Financial Services leads with average order value of 2,250.00."
+    )
+
+
 def test_explain_result_reports_empty_and_truncated_outputs() -> None:
     empty = QueryResult(
         columns=["customer_name"],
