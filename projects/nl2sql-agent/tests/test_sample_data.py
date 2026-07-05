@@ -62,3 +62,8 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
     assert "JOIN orders" in examples[0]["sql"]
     assert "order_items" in examples[0]["sql"]
     assert {example["difficulty"] for example in examples} == {"basic", "intermediate", "advanced"}
+    assert any(
+        example["question"] == "Show monthly revenue trend for 2024"
+        and "strftime('%Y-%m', o.order_date)" in example["sql"]
+        for example in examples
+    )

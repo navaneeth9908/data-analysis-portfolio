@@ -37,6 +37,9 @@ def explain_result(question: str, result: QueryResult) -> ResultInsight:
         )
 
     first_row = result.rows[0]
+    if _looks_like_trend(question, result):
+        return _explain_trend_result(result)
+
     label_key, label_value = _label_field(first_row)
     metric_key, metric_value = _metric_field(first_row, exclude=label_key)
 
@@ -57,6 +60,52 @@ def explain_result(question: str, result: QueryResult) -> ResultInsight:
         details.append("Results are a limited preview; rerun with a higher limit to inspect more rows.")
 
     return ResultInsight(headline=headline, details=details)
+
+
+def _looks_like_trend(question: str, result: QueryResult) -> bool:
+    question_lower = question.lower()
+    return (
+        ("trend" in question_lower or "monthly" in question_lower or "month" in result.columns)
+        and "month" in result.columns
+        and result.row_count > 1
+    )
+
+
+def _explain_trend_result(result: QueryResult) -> ResultInsight:
+    metric_key = next(
+        (
+            column
+            for column in result.columns
+            if column != "month" and any(isinstance(row.get(column), Number) for row in result.rows)
+        ),
+        None,
+    )
+    if metric_key is None:
+        return ResultInsight(
+            headline=f"Trend returned {result.row_count} periods.",
+            details=[_execution_detail(result), f"First period: {_format_row(result.rows[0])}."],
+        )
+
+    metric_values = [row[metric_key] for row in result.rows if isinstance(row.get(metric_key), Number)]
+    low = min(metric_values)
+    high = max(metric_values)
+    peak_row = max(result.rows, key=lambda row: row.get(metric_key, float("-inf")))
+    first_row = result.rows[0]
+    details = [
+        _execution_detail(result),
+        f"First period: {_format_row(first_row)}.",
+        f"Peak period: {_format_row(peak_row)}.",
+    ]
+    if result.truncated:
+        details.append("Results are a limited preview; rerun with a higher limit to inspect more rows.")
+
+    return ResultInsight(
+        headline=(
+            f"Monthly {_format_label(metric_key)} ranges from {_format_value(low)} "
+            f"to {_format_value(high)} across {result.row_count} periods."
+        ),
+        details=details,
+    )
 
 
 def _execution_detail(result: QueryResult) -> str:

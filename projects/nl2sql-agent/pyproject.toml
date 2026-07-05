@@ -65,6 +65,7 @@ console_scripts = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = "test_*.py"
 python_functions = "test_*"
 addopts = "-v --cov=src --cov-report=term-missing"

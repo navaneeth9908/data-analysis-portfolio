@@ -79,6 +79,29 @@ def test_answer_sample_question_handles_segment_average_order_value(tmp_path: Pa
     assert "AVG(revenue)" in answer.sql
 
 
+def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Show monthly revenue trend for 2024",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "orders"]
+    assert answer.rows == [
+        {"month": "2024-01", "revenue": 3300.0, "order_count": 2},
+        {"month": "2024-02", "revenue": 3300.0, "order_count": 2},
+        {"month": "2024-03", "revenue": 4150.0, "order_count": 2},
+        {"month": "2024-04", "revenue": 1450.0, "order_count": 2},
+        {"month": "2024-05", "revenue": 3010.0, "order_count": 2},
+    ]
+    assert "strftime('%Y-%m', o.order_date)" in answer.sql
+    assert "COUNT(DISTINCT o.order_id)" in answer.sql
+    assert "2024-03" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

@@ -362,6 +362,19 @@ GROUP BY c.region
 ORDER BY revenue DESC
 LIMIT 1;```"""
 
+        if ("month" in question_lower or "monthly" in question_lower) and "revenue" in question_lower:
+            return """Build a month-by-month revenue trend from the sample sales mart by grouping closed orders on the order date month and summing line-item revenue.
+
+```sql
+SELECT strftime('%Y-%m', o.order_date) AS month,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status = 'closed won'
+GROUP BY month
+ORDER BY month;```"""
+
         if "product" in question_lower and "revenue" in question_lower:
             return """Rank products by revenue from the sample sales mart by summing order item extended prices.
 

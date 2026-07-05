@@ -119,7 +119,7 @@ Run an end-to-end offline NL2SQL demo against that mart:
 python -m src.offline_demo "Which region generated the most revenue?" --limit 5
 ```
 
-The demo builds the SQLite mart if needed, generates a safe SQL query, validates table and column references, executes the query in read-only mode, adds a deterministic business-facing answer summary, and prints an interview-friendly result table. The offline fallback currently covers revenue-by-region, top-products-by-revenue, and segment average-order-value questions.
+The demo builds the SQLite mart if needed, generates a safe SQL query, validates table and column references, executes the query in read-only mode, adds a deterministic business-facing answer summary, and prints an interview-friendly result table. The offline fallback currently covers revenue-by-region, top-products-by-revenue, monthly revenue trend, and segment average-order-value questions.
 
 Example output includes an `Answer Summary` block such as:
 

@@ -70,6 +70,28 @@ def test_explain_result_humanizes_metric_column_names() -> None:
     )
 
 
+def test_explain_result_summarizes_monthly_trends_without_claiming_first_month_leads() -> None:
+    result = QueryResult(
+        columns=["month", "revenue", "order_count"],
+        rows=[
+            {"month": "2024-01", "revenue": 3300.0, "order_count": 2},
+            {"month": "2024-02", "revenue": 3300.0, "order_count": 2},
+            {"month": "2024-03", "revenue": 4150.0, "order_count": 2},
+            {"month": "2024-04", "revenue": 1450.0, "order_count": 2},
+            {"month": "2024-05", "revenue": 3010.0, "order_count": 2},
+        ],
+        row_count=5,
+        execution_time_ms=2.0,
+        query="SELECT month, revenue, order_count FROM monthly_revenue ORDER BY month",
+    )
+
+    insight = explain_result("Show monthly revenue trend for 2024", result)
+
+    assert insight.headline == "Monthly revenue ranges from 1,450.00 to 4,150.00 across 5 periods."
+    assert "Peak period: month=2024-03, revenue=4,150.00, order_count=2." in insight.details
+    assert "First period: month=2024-01, revenue=3,300.00, order_count=2." in insight.details
+
+
 def test_explain_result_reports_empty_and_truncated_outputs() -> None:
     empty = QueryResult(
         columns=["customer_name"],
