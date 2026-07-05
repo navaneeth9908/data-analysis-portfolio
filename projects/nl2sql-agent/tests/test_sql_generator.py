@@ -177,6 +177,18 @@ def test_mock_generation_answers_sample_mart_product_ranking_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Who are the top customers by revenue?")
+
+    assert "c.customer_name" in result.sql
+    assert "SUM(oi.quantity * oi.unit_price)" in result.sql
+    assert "ORDER BY revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

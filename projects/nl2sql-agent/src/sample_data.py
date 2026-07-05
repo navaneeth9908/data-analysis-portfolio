@@ -164,6 +164,21 @@ ORDER BY month;
 """.strip(),
         },
         {
+            "difficulty": "intermediate",
+            "question": "Who are the top customers by revenue?",
+            "sql": """
+SELECT c.customer_name,
+       c.region,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.customer_name, c.region
+ORDER BY revenue DESC
+LIMIT 5;
+""".strip(),
+        },
+        {
             "difficulty": "advanced",
             "question": "Which customer segment has the highest average order value?",
             "sql": """

@@ -350,6 +350,20 @@ JOIN genre g ON t.genre_id = g.genre_id
 JOIN album al ON t.album_id = al.album_id
 JOIN artist ar ON al.artist_id = ar.artist_id;```"""
 
+        if "customer" in question_lower and "revenue" in question_lower:
+            return """Rank customers by revenue from the sample sales mart by joining customers, orders, and order items, then summing line-item revenue per customer.
+
+```sql
+SELECT c.customer_name,
+       c.region,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.customer_name, c.region
+ORDER BY revenue DESC
+LIMIT 5;```"""
+
         if "region" in question_lower and "revenue" in question_lower:
             return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
 

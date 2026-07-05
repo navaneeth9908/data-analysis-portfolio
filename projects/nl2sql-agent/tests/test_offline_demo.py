@@ -79,6 +79,26 @@ def test_answer_sample_question_handles_segment_average_order_value(tmp_path: Pa
     assert "AVG(revenue)" in answer.sql
 
 
+def test_answer_sample_question_handles_top_customers_by_revenue(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Who are the top customers by revenue?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows[:2] == [
+        {"customer_name": "Bluebird Foods", "region": "West", "revenue": 3910.0},
+        {"customer_name": "Cedar Health", "region": "South", "revenue": 2650.0},
+    ]
+    assert answer.insight.headline == "Bluebird Foods leads with revenue of 3,910.00."
+    assert "GROUP BY c.customer_name, c.region" in answer.sql
+    assert "Bluebird Foods" in answer.table
+
+
 def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
