@@ -179,6 +179,19 @@ LIMIT 5;
 """.strip(),
         },
         {
+            "difficulty": "intermediate",
+            "question": "Which product category generated the most revenue?",
+            "sql": """
+SELECT p.category,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT p.product_id) AS product_count
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.category
+ORDER BY revenue DESC;
+""".strip(),
+        },
+        {
             "difficulty": "advanced",
             "question": "Which customer segment has the highest average order value?",
             "sql": """

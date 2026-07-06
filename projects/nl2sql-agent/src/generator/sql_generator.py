@@ -389,6 +389,18 @@ WHERE o.status = 'closed won'
 GROUP BY month
 ORDER BY month;```"""
 
+        if "category" in question_lower and "revenue" in question_lower:
+            return """Compare revenue by product category from the sample sales mart by joining products to line items and counting products in each category.
+
+```sql
+SELECT p.category,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT p.product_id) AS product_count
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.category
+ORDER BY revenue DESC;```"""
+
         if "product" in question_lower and "revenue" in question_lower:
             return """Rank products by revenue from the sample sales mart by summing order item extended prices.
 

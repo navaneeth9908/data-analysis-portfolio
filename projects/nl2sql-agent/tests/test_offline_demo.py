@@ -99,6 +99,26 @@ def test_answer_sample_question_handles_top_customers_by_revenue(tmp_path: Path)
     assert "Bluebird Foods" in answer.table
 
 
+def test_answer_sample_question_handles_category_revenue_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which product category generated the most revenue?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows == [
+        {"category": "Software", "revenue": 7610.0, "product_count": 3},
+        {"category": "Services", "revenue": 7600.0, "product_count": 2},
+    ]
+    assert answer.insight.headline == "Software leads with revenue of 7,610.00."
+    assert "GROUP BY p.category" in answer.sql
+    assert "COUNT(DISTINCT p.product_id)" in answer.sql
+
+
 def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
