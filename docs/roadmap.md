@@ -12,7 +12,7 @@ Projects are prioritized when they demonstrate at least one of the following:
 - clear interview talking points for data engineering and analytics roles
 - reproducible local execution without relying on private data
 
-## Monthly build sequence
+## Project roadmap
 
 ### 1. Auto EDA Analyst
 

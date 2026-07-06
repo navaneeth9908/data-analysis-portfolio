@@ -1,10 +1,10 @@
 # Data Analysis Portfolio
 
-A practical portfolio of data analysis, analytics engineering, and AI-assisted data products. Each project is designed to look and work like a small production system: documented inputs, reproducible pipelines, tests, and examples that can be explained in interviews.
+A practical collection of data analysis, analytics engineering, and AI-assisted data products. Each project is designed like a small production system: documented inputs, reproducible pipelines, tests, and examples that can be explained clearly in interviews or technical discussions.
 
-## Why this repo exists
+## Focus areas
 
-My background is in analytics and data engineering, so this portfolio focuses on projects that connect business questions to reliable data workflows:
+My background is in analytics and data engineering, so this repo focuses on projects that connect business questions to reliable data workflows:
 
 - natural-language analytics over tabular data
 - SQL generation and validation for warehouse-style datasets
@@ -13,20 +13,16 @@ My background is in analytics and data engineering, so this portfolio focuses on
 - financial research and metrics analysis
 - automated research briefings and summarization
 
-The projects are inspired by open-source AI-agent patterns, but the implementations here are being rebuilt as original portfolio projects with clearer data-engineering structure, test coverage, and business-facing documentation.
+## Projects
 
-## 30-day roadmap
-
-The plan is to complete six small projects in one month. Each project gets five days of focused work, with steady commits that build the application in realistic increments.
-
-| Days | Project | Focus | Expected outcome |
-| --- | --- | --- | --- |
-| 1-5 | Auto EDA Analyst | pandas profiling, data quality checks, charts, business summary | CLI/app that turns CSV or Excel files into an analysis report |
-| 6-10 | NL2SQL Analytics Agent | DuckDB/SQLite, schema inspection, safe SQL generation, result explanation | Ask business questions over a local analytics database |
-| 11-15 | Report Q&A Agent | PDF/text ingestion, chunking, embeddings, retrieval, cited answers | Query long reports and return answers with source snippets |
-| 16-20 | Competitive Intelligence Pipeline | web/research collection, entity comparison, scoring, summary tables | Structured competitor landscape report from public inputs |
-| 21-25 | Financial Research Analyst | market data ingestion, ratios, time-series analysis, risk notes | Investment-style research notebook and reusable pipeline |
-| 26-30 | Research Briefing Generator | topic monitoring, summarization, source ranking, digest output | Automated daily-style briefing in Markdown/HTML |
+| Project | Focus | Outcome |
+| --- | --- | --- |
+| Auto EDA Analyst | pandas profiling, data quality checks, charts, business summary | CLI/app that turns CSV or Excel files into an analysis report |
+| NL2SQL Analytics Agent | DuckDB/SQLite, schema inspection, safe SQL generation, result explanation | Ask business questions over a local analytics database |
+| Report Q&A Agent | PDF/text ingestion, chunking, embeddings, retrieval, cited answers | Query long reports and return answers with source snippets |
+| Competitive Intelligence Pipeline | research collection, entity comparison, scoring, summary tables | Structured competitor landscape report from public inputs |
+| Financial Research Analyst | market data ingestion, ratios, time-series analysis, risk notes | Investment-style research notebook and reusable pipeline |
+| Research Briefing Generator | topic monitoring, summarization, source ranking, digest output | Briefing output in Markdown/HTML |
 
 ## Repository layout
 
@@ -59,8 +55,8 @@ Each project should include:
 - Prefer deterministic local examples over API-only demos.
 - Keep secrets out of the repo. Use `.env.example` files when credentials are optional.
 - Make every project runnable from a clean checkout.
-- Commit in small, readable steps that match how a developer would normally build the work.
+- Keep commits small and focused.
 
 ## Current status
 
-Roadmap setup is in progress. The first project will start with the Auto EDA Analyst: sample datasets, a profiling pipeline, and a Markdown report generator.
+The NL2SQL Analytics Agent is currently the most developed project. It includes a deterministic local sales mart, safe SQL generation patterns, executable sample questions, result insights, and focused tests.
