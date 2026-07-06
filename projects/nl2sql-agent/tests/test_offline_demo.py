@@ -119,6 +119,26 @@ def test_answer_sample_question_handles_category_revenue_mix(tmp_path: Path) -> 
     assert "COUNT(DISTINCT p.product_id)" in answer.sql
 
 
+def test_answer_sample_question_handles_category_revenue_share(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "What share of revenue comes from each product category?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows == [
+        {"category": "Software", "revenue": 7610.0, "revenue_share_pct": 50.03},
+        {"category": "Services", "revenue": 7600.0, "revenue_share_pct": 49.97},
+    ]
+    assert answer.insight.headline == "Software leads with revenue of 7,610.00."
+    assert "SUM(revenue) OVER ()" in answer.sql
+    assert "revenue_share_pct" in answer.sql
+
+
 def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

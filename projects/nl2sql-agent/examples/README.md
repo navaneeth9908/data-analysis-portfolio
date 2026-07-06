@@ -22,9 +22,10 @@ The generated database contains a small star schema:
 3. Show monthly revenue trend for 2024
 4. Who are the top customers by revenue?
 5. Which product category generated the most revenue?
-6. Which customer segment has the highest average order value?
+6. What share of revenue comes from each product category?
+7. Which customer segment has the highest average order value?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, date bucketing, category mix analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, date bucketing, category mix analysis, revenue-share calculations, window functions, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -60,4 +61,19 @@ Expected answer summary excerpt:
 ```text
 **Financial Services leads with average order value of 2,250.00.**
 - Top row: segment=Financial Services, average_order_value=2,250.00.
+```
+
+For revenue contribution analysis, run:
+
+```bash
+python -m src.offline_demo "What share of revenue comes from each product category?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+category | revenue | revenue_share_pct
+---------+---------+------------------
+Software | 7610.0  | 50.03
+Services | 7600.0  | 49.97
 ```

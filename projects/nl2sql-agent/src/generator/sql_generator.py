@@ -389,6 +389,23 @@ WHERE o.status = 'closed won'
 GROUP BY month
 ORDER BY month;```"""
 
+        if "category" in question_lower and "revenue" in question_lower and "share" in question_lower:
+            return """Calculate each product category's contribution to total revenue from the sample sales mart by aggregating category revenue first, then dividing by the total with a window function.
+
+```sql
+WITH category_revenue AS (
+    SELECT p.category,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY p.category
+)
+SELECT category,
+       revenue,
+       ROUND(revenue * 100.0 / SUM(revenue) OVER (), 2) AS revenue_share_pct
+FROM category_revenue
+ORDER BY revenue DESC;```"""
+
         if "category" in question_lower and "revenue" in question_lower:
             return """Compare revenue by product category from the sample sales mart by joining products to line items and counting products in each category.
 

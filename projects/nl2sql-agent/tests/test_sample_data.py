@@ -67,3 +67,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "strftime('%Y-%m', o.order_date)" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "What share of revenue comes from each product category?"
+        and "SUM(revenue) OVER ()" in example["sql"]
+        and "revenue_share_pct" in example["sql"]
+        for example in examples
+    )

@@ -193,6 +193,24 @@ ORDER BY revenue DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "What share of revenue comes from each product category?",
+            "sql": """
+WITH category_revenue AS (
+    SELECT p.category,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY p.category
+)
+SELECT category,
+       revenue,
+       ROUND(revenue * 100.0 / SUM(revenue) OVER (), 2) AS revenue_share_pct
+FROM category_revenue
+ORDER BY revenue DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Which customer segment has the highest average order value?",
             "sql": """
 WITH order_revenue AS (

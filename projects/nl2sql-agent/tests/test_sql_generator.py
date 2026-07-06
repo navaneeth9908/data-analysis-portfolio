@@ -177,6 +177,18 @@ def test_mock_generation_answers_sample_mart_product_ranking_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_category_revenue_share_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("What share of revenue comes from each product category?")
+
+    assert "category_revenue" in result.sql
+    assert "revenue_share_pct" in result.sql
+    assert "SUM(revenue) OVER ()" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 
