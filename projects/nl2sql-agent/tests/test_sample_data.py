@@ -73,3 +73,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "revenue_share_pct" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which region has the highest average order value?"
+        and "AVG(revenue)" in example["sql"]
+        and "GROUP BY region" in example["sql"]
+        for example in examples
+    )

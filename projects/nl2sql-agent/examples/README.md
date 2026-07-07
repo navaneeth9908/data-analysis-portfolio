@@ -24,8 +24,9 @@ The generated database contains a small star schema:
 5. Which product category generated the most revenue?
 6. What share of revenue comes from each product category?
 7. Which customer segment has the highest average order value?
+8. Which region has the highest average order value?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, date bucketing, category mix analysis, revenue-share calculations, window functions, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -76,4 +77,17 @@ category | revenue | revenue_share_pct
 ---------+---------+------------------
 Software | 7610.0  | 50.03
 Services | 7600.0  | 49.97
+```
+
+For regional deal-size analysis, run:
+
+```bash
+python -m src.offline_demo "Which region has the highest average order value?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected answer summary excerpt:
+
+```text
+**Northeast leads with average order value of 1,900.00.**
+- Top row: region=Northeast, average_order_value=1,900.00.
 ```

@@ -79,6 +79,23 @@ def test_answer_sample_question_handles_segment_average_order_value(tmp_path: Pa
     assert "AVG(revenue)" in answer.sql
 
 
+def test_answer_sample_question_handles_region_average_order_value(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which region has the highest average order value?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows[0] == {"region": "Northeast", "average_order_value": 1900.0}
+    assert answer.insight.headline == "Northeast leads with average order value of 1,900.00."
+    assert "WITH order_revenue AS" in answer.sql
+    assert "GROUP BY region" in answer.sql
+
+
 def test_answer_sample_question_handles_top_customers_by_revenue(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

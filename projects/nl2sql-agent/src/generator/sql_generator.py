@@ -364,6 +364,22 @@ GROUP BY c.customer_name, c.region
 ORDER BY revenue DESC
 LIMIT 5;```"""
 
+        if "region" in question_lower and "average order" in question_lower:
+            return """Calculate average order value by region from the sample sales mart by first summing each order, then averaging order revenue per region.
+
+```sql
+WITH order_revenue AS (
+    SELECT o.order_id, c.region, SUM(oi.quantity * oi.unit_price) AS revenue
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    GROUP BY o.order_id, c.region
+)
+SELECT region, ROUND(AVG(revenue), 2) AS average_order_value
+FROM order_revenue
+GROUP BY region
+ORDER BY average_order_value DESC;```"""
+
         if "region" in question_lower and "revenue" in question_lower:
             return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
 

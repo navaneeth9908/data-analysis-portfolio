@@ -189,6 +189,18 @@ def test_mock_generation_answers_sample_mart_category_revenue_share_question() -
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_region_average_order_value_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which region has the highest average order value?")
+
+    assert "WITH order_revenue AS" in result.sql
+    assert "c.region" in result.sql
+    assert "ROUND(AVG(revenue), 2) AS average_order_value" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 
