@@ -177,6 +177,18 @@ def test_mock_generation_answers_sample_mart_product_ranking_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_units_sold_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which products sold the most units?")
+
+    assert "p.product_name" in result.sql
+    assert "SUM(oi.quantity) AS units_sold" in result.sql
+    assert "ORDER BY units_sold DESC" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_category_revenue_share_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

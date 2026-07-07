@@ -434,6 +434,19 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY p.category
 ORDER BY revenue DESC;```"""
 
+        if "product" in question_lower and ("unit" in question_lower or "quantity" in question_lower or "sold" in question_lower):
+            return """Rank products by units sold from the sample sales mart by summing order item quantities and including revenue for business context.
+
+```sql
+SELECT p.product_name,
+       SUM(oi.quantity) AS units_sold,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_name
+ORDER BY units_sold DESC, revenue DESC
+LIMIT 5;```"""
+
         if "product" in question_lower and "revenue" in question_lower:
             return """Rank products by revenue from the sample sales mart by summing order item extended prices.
 

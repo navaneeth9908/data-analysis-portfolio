@@ -151,6 +151,20 @@ LIMIT 3;
         },
         {
             "difficulty": "intermediate",
+            "question": "Which products sold the most units?",
+            "sql": """
+SELECT p.product_name,
+       SUM(oi.quantity) AS units_sold,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_name
+ORDER BY units_sold DESC, revenue DESC
+LIMIT 5;
+""".strip(),
+        },
+        {
+            "difficulty": "intermediate",
             "question": "Show monthly revenue trend for 2024",
             "sql": """
 SELECT strftime('%Y-%m', o.order_date) AS month,

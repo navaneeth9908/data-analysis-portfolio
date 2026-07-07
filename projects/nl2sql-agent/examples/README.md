@@ -19,14 +19,15 @@ The generated database contains a small star schema:
 
 1. Which region generated the most revenue?
 2. What are the top three products by revenue?
-3. Show monthly revenue trend for 2024
-4. Who are the top customers by revenue?
-5. Which product category generated the most revenue?
-6. What share of revenue comes from each product category?
-7. Which customer segment has the highest average order value?
-8. Which region has the highest average order value?
+3. Which products sold the most units?
+4. Show monthly revenue trend for 2024
+5. Who are the top customers by revenue?
+6. Which product category generated the most revenue?
+7. What share of revenue comes from each product category?
+8. Which customer segment has the highest average order value?
+9. Which region has the highest average order value?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -49,6 +50,21 @@ Result:
 region | revenue
 -------+--------
 West   | 6060.0
+```
+
+For product demand analysis, run:
+
+```bash
+python -m src.offline_demo "Which products sold the most units?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+product_name        | units_sold | revenue
+--------------------+------------+--------
+Pipeline Monitoring | 5          | 3210.0
+Dashboard Enablement| 4          | 3800.0
 ```
 
 A more advanced CTE-backed question is also supported:

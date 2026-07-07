@@ -179,6 +179,26 @@ def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) ->
     assert "2024-03" in answer.table
 
 
+def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products sold the most units?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows[:2] == [
+        {"product_name": "Pipeline Monitoring", "units_sold": 5, "revenue": 3210.0},
+        {"product_name": "Dashboard Enablement", "units_sold": 4, "revenue": 3800.0},
+    ]
+    assert answer.insight.headline == "Pipeline Monitoring leads with units sold of 5."
+    assert "SUM(oi.quantity) AS units_sold" in answer.sql
+    assert "Pipeline Monitoring" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [
