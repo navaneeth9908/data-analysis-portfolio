@@ -213,6 +213,19 @@ def test_mock_generation_answers_sample_mart_region_average_order_value_question
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_month_over_month_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Show month over month revenue growth for 2024")
+
+    assert "WITH monthly_revenue AS" in result.sql
+    assert "LAG(revenue) OVER (ORDER BY month)" in result.sql
+    assert "revenue_change" in result.sql
+    assert "revenue_change_pct" in result.sql
+    assert result.tables_used == ["order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

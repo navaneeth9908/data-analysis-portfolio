@@ -405,6 +405,37 @@ GROUP BY c.region
 ORDER BY revenue DESC
 LIMIT 1;```"""
 
+        if (
+            ("month over month" in question_lower or "mom" in question_lower)
+            and ("growth" in question_lower or "change" in question_lower or "revenue" in question_lower)
+        ):
+            return """Calculate month-over-month revenue growth from the sample sales mart by aggregating monthly revenue, using LAG to compare each month with the prior month, and returning absolute and percentage change.
+
+```sql
+WITH monthly_revenue AS (
+    SELECT strftime('%Y-%m', o.order_date) AS month,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.status = 'closed won'
+    GROUP BY month
+),
+monthly_with_previous AS (
+    SELECT month,
+           revenue,
+           LAG(revenue) OVER (ORDER BY month) AS previous_revenue
+    FROM monthly_revenue
+)
+SELECT month,
+       revenue,
+       ROUND(revenue - previous_revenue, 2) AS revenue_change,
+       CASE
+           WHEN previous_revenue IS NULL OR previous_revenue = 0 THEN NULL
+           ELSE ROUND((revenue - previous_revenue) * 100.0 / previous_revenue, 2)
+       END AS revenue_change_pct
+FROM monthly_with_previous
+ORDER BY month;```"""
+
         if ("month" in question_lower or "monthly" in question_lower) and "revenue" in question_lower:
             return """Build a month-by-month revenue trend from the sample sales mart by grouping closed orders on the order date month and summing line-item revenue.
 

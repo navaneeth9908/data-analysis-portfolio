@@ -21,14 +21,15 @@ The generated database contains a small star schema:
 2. What are the top three products by revenue?
 3. Which products sold the most units?
 4. Show monthly revenue trend for 2024
-5. Who are the top customers by revenue?
-6. Which customers placed repeat orders?
-7. Which product category generated the most revenue?
-8. What share of revenue comes from each product category?
-9. Which customer segment has the highest average order value?
-10. Which region has the highest average order value?
+5. Show month over month revenue growth for 2024
+6. Who are the top customers by revenue?
+7. Which customers placed repeat orders?
+8. Which product category generated the most revenue?
+9. What share of revenue comes from each product category?
+10. Which customer segment has the highest average order value?
+11. Which region has the highest average order value?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -51,6 +52,21 @@ Result:
 region | revenue
 -------+--------
 West   | 6060.0
+```
+
+For month-over-month revenue growth, run:
+
+```bash
+python -m src.offline_demo "Show month over month revenue growth for 2024" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+month   | revenue | revenue_change | revenue_change_pct
+--------+---------+----------------+-------------------
+2024-03 | 4150.0  | 850.0          | 25.76
+2024-04 | 1450.0  | -2700.0        | -65.06
 ```
 
 For product demand analysis, run:

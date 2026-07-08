@@ -179,6 +179,29 @@ def test_answer_sample_question_handles_monthly_revenue_trend(tmp_path: Path) ->
     assert "2024-03" in answer.table
 
 
+def test_answer_sample_question_handles_month_over_month_revenue_growth(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Show month over month revenue growth for 2024",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "orders"]
+    assert answer.rows == [
+        {"month": "2024-01", "revenue": 3300.0, "revenue_change": None, "revenue_change_pct": None},
+        {"month": "2024-02", "revenue": 3300.0, "revenue_change": 0.0, "revenue_change_pct": 0.0},
+        {"month": "2024-03", "revenue": 4150.0, "revenue_change": 850.0, "revenue_change_pct": 25.76},
+        {"month": "2024-04", "revenue": 1450.0, "revenue_change": -2700.0, "revenue_change_pct": -65.06},
+        {"month": "2024-05", "revenue": 3010.0, "revenue_change": 1560.0, "revenue_change_pct": 107.59},
+    ]
+    assert answer.insight.headline == "Monthly revenue ranges from 1,450.00 to 4,150.00 across 5 periods."
+    assert "LAG(revenue) OVER (ORDER BY month)" in answer.sql
+    assert "revenue_change_pct" in answer.table
+
+
 def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

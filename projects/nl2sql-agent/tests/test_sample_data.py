@@ -79,3 +79,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "GROUP BY region" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Show month over month revenue growth for 2024"
+        and "LAG(revenue) OVER (ORDER BY month)" in example["sql"]
+        and "revenue_change_pct" in example["sql"]
+        for example in examples
+    )
