@@ -199,6 +199,28 @@ def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -
     assert "Pipeline Monitoring" in answer.table
 
 
+def test_answer_sample_question_handles_repeat_customers(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customers placed repeat orders?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "orders"]
+    assert answer.rows == [
+        {"customer_name": "Acme Retail", "region": "West", "order_count": 2},
+        {"customer_name": "Bluebird Foods", "region": "West", "order_count": 2},
+        {"customer_name": "Cedar Health", "region": "South", "order_count": 2},
+        {"customer_name": "Delta Logistics", "region": "Midwest", "order_count": 2},
+    ]
+    assert answer.insight.headline == "Acme Retail leads with order count of 2."
+    assert "HAVING COUNT(o.order_id) > 1" in answer.sql
+    assert "Acme Retail" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

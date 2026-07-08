@@ -194,6 +194,20 @@ LIMIT 5;
         },
         {
             "difficulty": "intermediate",
+            "question": "Which customers placed repeat orders?",
+            "sql": """
+SELECT c.customer_name,
+       c.region,
+       COUNT(o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_name, c.region
+HAVING COUNT(o.order_id) > 1
+ORDER BY order_count DESC, c.customer_name;
+""".strip(),
+        },
+        {
+            "difficulty": "intermediate",
             "question": "Which product category generated the most revenue?",
             "sql": """
 SELECT p.category,

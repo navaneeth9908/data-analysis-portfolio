@@ -364,6 +364,19 @@ GROUP BY c.customer_name, c.region
 ORDER BY revenue DESC
 LIMIT 5;```"""
 
+        if "customer" in question_lower and ("repeat" in question_lower or "multiple" in question_lower) and "order" in question_lower:
+            return """Identify repeat customers in the sample sales mart by counting orders per customer and keeping only customers with more than one order.
+
+```sql
+SELECT c.customer_name,
+       c.region,
+       COUNT(o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_name, c.region
+HAVING COUNT(o.order_id) > 1
+ORDER BY order_count DESC, c.customer_name;```"""
+
         if "region" in question_lower and "average order" in question_lower:
             return """Calculate average order value by region from the sample sales mart by first summing each order, then averaging order revenue per region.
 

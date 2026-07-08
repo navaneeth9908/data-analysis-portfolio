@@ -225,6 +225,18 @@ def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_repeat_customer_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customers placed repeat orders?")
+
+    assert "COUNT(o.order_id) AS order_count" in result.sql
+    assert "HAVING COUNT(o.order_id) > 1" in result.sql
+    assert "ORDER BY order_count DESC, c.customer_name" in result.sql
+    assert result.tables_used == ["customers", "orders"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

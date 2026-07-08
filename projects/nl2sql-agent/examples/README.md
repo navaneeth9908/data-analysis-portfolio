@@ -22,12 +22,13 @@ The generated database contains a small star schema:
 3. Which products sold the most units?
 4. Show monthly revenue trend for 2024
 5. Who are the top customers by revenue?
-6. Which product category generated the most revenue?
-7. What share of revenue comes from each product category?
-8. Which customer segment has the highest average order value?
-9. Which region has the highest average order value?
+6. Which customers placed repeat orders?
+7. Which product category generated the most revenue?
+8. What share of revenue comes from each product category?
+9. Which customer segment has the highest average order value?
+10. Which region has the highest average order value?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, order-level CTEs, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
