@@ -273,6 +273,21 @@ ORDER BY average_order_value DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "Which products were sold below list price?",
+            "sql": """
+SELECT p.product_name,
+       p.category,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       SUM(oi.quantity) AS discounted_units
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY p.product_name, p.category
+ORDER BY discount_amount DESC, discounted_units DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Show month over month revenue growth for 2024",
             "sql": """
 WITH monthly_revenue AS (

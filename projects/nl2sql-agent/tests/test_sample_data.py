@@ -85,3 +85,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "revenue_change_pct" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which products were sold below list price?"
+        and "oi.unit_price < p.list_price" in example["sql"]
+        and "discount_amount" in example["sql"]
+        for example in examples
+    )

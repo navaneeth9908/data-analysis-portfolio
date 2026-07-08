@@ -478,6 +478,24 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY p.category
 ORDER BY revenue DESC;```"""
 
+        if "product" in question_lower and (
+            "below list" in question_lower
+            or "discount" in question_lower
+            or "marked down" in question_lower
+        ):
+            return """Identify products sold below list price by comparing realized line-item unit price with product list price, then aggregating discount dollars and discounted units.
+
+```sql
+SELECT p.product_name,
+       p.category,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       SUM(oi.quantity) AS discounted_units
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY p.product_name, p.category
+ORDER BY discount_amount DESC, discounted_units DESC;```"""
+
         if "product" in question_lower and ("unit" in question_lower or "quantity" in question_lower or "sold" in question_lower):
             return """Rank products by units sold from the sample sales mart by summing order item quantities and including revenue for business context.
 

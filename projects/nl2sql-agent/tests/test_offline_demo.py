@@ -244,6 +244,36 @@ def test_answer_sample_question_handles_repeat_customers(tmp_path: Path) -> None
     assert "Acme Retail" in answer.table
 
 
+def test_answer_sample_question_handles_discount_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products were sold below list price?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows == [
+        {
+            "product_name": "Data Quality Audit",
+            "category": "Services",
+            "discount_amount": 1000.0,
+            "discounted_units": 1,
+        },
+        {
+            "product_name": "Pipeline Monitoring",
+            "category": "Software",
+            "discount_amount": 40.0,
+            "discounted_units": 1,
+        },
+    ]
+    assert answer.insight.headline == "Data Quality Audit leads with discount amount of 1,000.00."
+    assert "oi.unit_price < p.list_price" in answer.sql
+    assert "discount_amount" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [
