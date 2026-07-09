@@ -262,6 +262,19 @@ def test_mock_generation_answers_sample_mart_repeat_customer_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_segment_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customer segment generated the most revenue?")
+
+    assert "c.segment" in result.sql
+    assert "SUM(oi.quantity * oi.unit_price)" in result.sql
+    assert "COUNT(DISTINCT o.order_id) AS order_count" in result.sql
+    assert "ORDER BY revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

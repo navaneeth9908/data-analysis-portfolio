@@ -26,11 +26,12 @@ The generated database contains a small star schema:
 7. Which customers placed repeat orders?
 8. Which product category generated the most revenue?
 9. What share of revenue comes from each product category?
-10. Which customer segment has the highest average order value?
-11. Which region has the highest average order value?
-12. Which products were sold below list price?
+10. Which customer segment generated the most revenue?
+11. Which customer segment has the highest average order value?
+12. Which region has the highest average order value?
+13. Which products were sold below list price?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -111,6 +112,22 @@ category | revenue | revenue_share_pct
 ---------+---------+------------------
 Software | 7610.0  | 50.03
 Services | 7600.0  | 49.97
+```
+
+For customer segment revenue mix, run:
+
+```bash
+python -m src.offline_demo "Which customer segment generated the most revenue?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+segment    | revenue | order_count
+-----------+---------+------------
+CPG        | 3910.0  | 2
+Healthcare | 2650.0  | 2
+Logistics  | 2350.0  | 2
 ```
 
 For regional deal-size analysis, run:

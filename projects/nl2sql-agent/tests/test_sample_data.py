@@ -91,3 +91,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "discount_amount" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which customer segment generated the most revenue?"
+        and "GROUP BY c.segment" in example["sql"]
+        and "COUNT(DISTINCT o.order_id) AS order_count" in example["sql"]
+        for example in examples
+    )

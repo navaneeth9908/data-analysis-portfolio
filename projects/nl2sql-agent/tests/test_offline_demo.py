@@ -116,6 +116,27 @@ def test_answer_sample_question_handles_top_customers_by_revenue(tmp_path: Path)
     assert "Bluebird Foods" in answer.table
 
 
+def test_answer_sample_question_handles_segment_revenue_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segment generated the most revenue?",
+        db_path=db_path,
+        limit=6,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows[:3] == [
+        {"segment": "CPG", "revenue": 3910.0, "order_count": 2},
+        {"segment": "Healthcare", "revenue": 2650.0, "order_count": 2},
+        {"segment": "Logistics", "revenue": 2350.0, "order_count": 2},
+    ]
+    assert answer.insight.headline == "CPG leads with revenue of 3,910.00."
+    assert "GROUP BY c.segment" in answer.sql
+    assert "COUNT(DISTINCT o.order_id) AS order_count" in answer.sql
+
+
 def test_answer_sample_question_handles_category_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

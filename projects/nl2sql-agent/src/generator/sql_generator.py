@@ -350,6 +350,19 @@ JOIN genre g ON t.genre_id = g.genre_id
 JOIN album al ON t.album_id = al.album_id
 JOIN artist ar ON al.artist_id = ar.artist_id;```"""
 
+        if "segment" in question_lower and "revenue" in question_lower:
+            return """Compare revenue by customer segment from the sample sales mart by joining customers, orders, and order items, then aggregating revenue and order count per segment.
+
+```sql
+SELECT c.segment,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.segment
+ORDER BY revenue DESC;```"""
+
         if "customer" in question_lower and "revenue" in question_lower:
             return """Rank customers by revenue from the sample sales mart by joining customers, orders, and order items, then summing line-item revenue per customer.
 

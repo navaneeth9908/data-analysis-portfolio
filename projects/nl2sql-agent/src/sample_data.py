@@ -238,6 +238,20 @@ ORDER BY revenue DESC;
 """.strip(),
         },
         {
+            "difficulty": "intermediate",
+            "question": "Which customer segment generated the most revenue?",
+            "sql": """
+SELECT c.segment,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.segment
+ORDER BY revenue DESC;
+""".strip(),
+        },
+        {
             "difficulty": "advanced",
             "question": "Which customer segment has the highest average order value?",
             "sql": """
