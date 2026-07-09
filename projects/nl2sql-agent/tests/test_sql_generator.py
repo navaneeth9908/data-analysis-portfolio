@@ -225,6 +225,19 @@ def test_mock_generation_answers_sample_mart_discount_analysis_question() -> Non
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_discount_rate_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which products have the highest discount rate?")
+
+    assert "discount_rate_pct" in result.sql
+    assert "oi.unit_price < p.list_price" in result.sql
+    assert "SUM(p.list_price * oi.quantity)" in result.sql
+    assert "ORDER BY discount_rate_pct DESC" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_month_over_month_revenue_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

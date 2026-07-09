@@ -295,6 +295,36 @@ def test_answer_sample_question_handles_discount_analysis(tmp_path: Path) -> Non
     assert "discount_amount" in answer.table
 
 
+def test_answer_sample_question_handles_discount_rate_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products have the highest discount rate?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows == [
+        {
+            "product_name": "Data Quality Audit",
+            "category": "Services",
+            "discount_rate_pct": 83.33,
+            "discount_amount": 1000.0,
+        },
+        {
+            "product_name": "Pipeline Monitoring",
+            "category": "Software",
+            "discount_rate_pct": 6.15,
+            "discount_amount": 40.0,
+        },
+    ]
+    assert answer.insight.headline == "Data Quality Audit leads with discount rate pct of 83.33."
+    assert "discount_rate_pct" in answer.sql
+    assert "discount_rate_pct" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

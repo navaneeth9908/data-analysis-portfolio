@@ -30,8 +30,9 @@ The generated database contains a small star schema:
 11. Which customer segment has the highest average order value?
 12. Which region has the highest average order value?
 13. Which products were sold below list price?
+14. Which products have the highest discount rate?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -156,4 +157,19 @@ product_name        | category | discount_amount | discounted_units
 --------------------+----------+-----------------+-----------------
 Data Quality Audit  | Services | 1000.0          | 1
 Pipeline Monitoring | Software | 40.0            | 1
+```
+
+For discount-rate analysis, run:
+
+```bash
+python -m src.offline_demo "Which products have the highest discount rate?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+product_name        | category | discount_rate_pct | discount_amount
+--------------------+----------+-------------------+----------------
+Data Quality Audit  | Services | 83.33             | 1000.0
+Pipeline Monitoring | Software | 6.15              | 40.0
 ```

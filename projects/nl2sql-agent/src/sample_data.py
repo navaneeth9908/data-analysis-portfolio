@@ -302,6 +302,25 @@ ORDER BY discount_amount DESC, discounted_units DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "Which products have the highest discount rate?",
+            "sql": """
+SELECT p.product_name,
+       p.category,
+       ROUND(
+           SUM((p.list_price - oi.unit_price) * oi.quantity) * 100.0
+           / SUM(p.list_price * oi.quantity),
+           2
+       ) AS discount_rate_pct,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY p.product_name, p.category
+ORDER BY discount_rate_pct DESC, discount_amount DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Show month over month revenue growth for 2024",
             "sql": """
 WITH monthly_revenue AS (

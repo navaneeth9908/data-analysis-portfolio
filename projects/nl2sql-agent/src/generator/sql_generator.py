@@ -491,6 +491,28 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY p.category
 ORDER BY revenue DESC;```"""
 
+        if "product" in question_lower and "discount" in question_lower and (
+            "rate" in question_lower
+            or "percent" in question_lower
+            or "percentage" in question_lower
+        ):
+            return """Rank products by realized discount rate from the sample sales mart by comparing discounted line-item revenue with the equivalent list-price value.
+
+```sql
+SELECT p.product_name,
+       p.category,
+       ROUND(
+           SUM((p.list_price - oi.unit_price) * oi.quantity) * 100.0
+           / SUM(p.list_price * oi.quantity),
+           2
+       ) AS discount_rate_pct,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY p.product_name, p.category
+ORDER BY discount_rate_pct DESC, discount_amount DESC;```"""
+
         if "product" in question_lower and (
             "below list" in question_lower
             or "discount" in question_lower
