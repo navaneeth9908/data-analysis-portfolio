@@ -97,3 +97,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "COUNT(DISTINCT o.order_id) AS order_count" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "How concentrated is revenue by customer?"
+        and "WITH customer_revenue AS" in example["sql"]
+        and "revenue_share_pct" in example["sql"]
+        for example in examples
+    )

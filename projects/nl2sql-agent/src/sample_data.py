@@ -253,6 +253,25 @@ ORDER BY revenue DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "How concentrated is revenue by customer?",
+            "sql": """
+WITH customer_revenue AS (
+    SELECT c.customer_name,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    GROUP BY c.customer_name
+)
+SELECT customer_name,
+       revenue,
+       ROUND(revenue * 100.0 / SUM(revenue) OVER (), 2) AS revenue_share_pct
+FROM customer_revenue
+ORDER BY revenue DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Which customer segment has the highest average order value?",
             "sql": """
 WITH order_revenue AS (

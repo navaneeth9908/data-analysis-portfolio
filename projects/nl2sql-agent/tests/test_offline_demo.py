@@ -137,6 +137,27 @@ def test_answer_sample_question_handles_segment_revenue_mix(tmp_path: Path) -> N
     assert "COUNT(DISTINCT o.order_id) AS order_count" in answer.sql
 
 
+def test_answer_sample_question_handles_customer_revenue_concentration(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "How concentrated is revenue by customer?",
+        db_path=db_path,
+        limit=6,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows[:3] == [
+        {"customer_name": "Bluebird Foods", "revenue": 3910.0, "revenue_share_pct": 25.71},
+        {"customer_name": "Cedar Health", "revenue": 2650.0, "revenue_share_pct": 17.42},
+        {"customer_name": "Delta Logistics", "revenue": 2350.0, "revenue_share_pct": 15.45},
+    ]
+    assert answer.insight.headline == "Bluebird Foods leads with revenue of 3,910.00."
+    assert "SUM(revenue) OVER ()" in answer.sql
+    assert "revenue_share_pct" in answer.table
+
+
 def test_answer_sample_question_handles_category_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

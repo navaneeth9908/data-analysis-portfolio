@@ -32,8 +32,9 @@ The generated database contains a small star schema:
 13. Which products were sold below list price?
 14. Which products have the highest discount rate?
 15. Which products have the highest average selling price?
+16. How concentrated is revenue by customer?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -130,6 +131,22 @@ segment    | revenue | order_count
 CPG        | 3910.0  | 2
 Healthcare | 2650.0  | 2
 Logistics  | 2350.0  | 2
+```
+
+For customer concentration analysis, run:
+
+```bash
+python -m src.offline_demo "How concentrated is revenue by customer?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+customer_name   | revenue | revenue_share_pct
+----------------+---------+------------------
+Bluebird Foods  | 3910.0  | 25.71
+Cedar Health    | 2650.0  | 17.42
+Delta Logistics | 2350.0  | 15.45
 ```
 
 For regional deal-size analysis, run:

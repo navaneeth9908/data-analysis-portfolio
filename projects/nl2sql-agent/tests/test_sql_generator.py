@@ -301,6 +301,19 @@ def test_mock_generation_answers_sample_mart_segment_revenue_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_customer_concentration_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("How concentrated is revenue by customer?")
+
+    assert "WITH customer_revenue AS" in result.sql
+    assert "revenue_share_pct" in result.sql
+    assert "SUM(revenue) OVER ()" in result.sql
+    assert "ORDER BY revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

@@ -363,6 +363,28 @@ JOIN order_items oi ON o.order_id = oi.order_id
 GROUP BY c.segment
 ORDER BY revenue DESC;```"""
 
+        if "customer" in question_lower and "revenue" in question_lower and (
+            "concentrated" in question_lower
+            or "concentration" in question_lower
+            or "share" in question_lower
+        ):
+            return """Measure customer revenue concentration from the sample sales mart by calculating revenue per customer and comparing each customer to total revenue.
+
+```sql
+WITH customer_revenue AS (
+    SELECT c.customer_name,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    GROUP BY c.customer_name
+)
+SELECT customer_name,
+       revenue,
+       ROUND(revenue * 100.0 / SUM(revenue) OVER (), 2) AS revenue_share_pct
+FROM customer_revenue
+ORDER BY revenue DESC;```"""
+
         if "customer" in question_lower and "revenue" in question_lower:
             return """Rank customers by revenue from the sample sales mart by joining customers, orders, and order items, then summing line-item revenue per customer.
 
