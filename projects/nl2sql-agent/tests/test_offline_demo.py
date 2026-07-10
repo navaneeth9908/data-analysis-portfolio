@@ -325,6 +325,42 @@ def test_answer_sample_question_handles_discount_rate_analysis(tmp_path: Path) -
     assert "discount_rate_pct" in answer.table
 
 
+def test_answer_sample_question_handles_average_selling_price_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products have the highest average selling price?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows[:3] == [
+        {
+            "product_name": "Dashboard Enablement",
+            "category": "Services",
+            "average_selling_price": 950.0,
+            "units_sold": 4,
+        },
+        {
+            "product_name": "Data Quality Audit",
+            "category": "Services",
+            "average_selling_price": 950.0,
+            "units_sold": 4,
+        },
+        {
+            "product_name": "Forecasting Add-on",
+            "category": "Software",
+            "average_selling_price": 800.0,
+            "units_sold": 3,
+        },
+    ]
+    assert answer.insight.headline == "Dashboard Enablement leads with average selling price of 950.00."
+    assert "average_selling_price" in answer.sql
+    assert "Dashboard Enablement" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

@@ -238,6 +238,19 @@ def test_mock_generation_answers_sample_mart_discount_rate_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_average_selling_price_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which products have the highest average selling price?")
+
+    assert "average_selling_price" in result.sql
+    assert "SUM(oi.quantity * oi.unit_price) / SUM(oi.quantity)" in result.sql
+    assert "units_sold" in result.sql
+    assert "ORDER BY average_selling_price DESC" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_month_over_month_revenue_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

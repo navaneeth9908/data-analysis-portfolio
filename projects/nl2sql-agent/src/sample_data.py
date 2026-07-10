@@ -320,6 +320,20 @@ ORDER BY discount_rate_pct DESC, discount_amount DESC;
 """.strip(),
         },
         {
+            "difficulty": "intermediate",
+            "question": "Which products have the highest average selling price?",
+            "sql": """
+SELECT p.product_name,
+       p.category,
+       ROUND(SUM(oi.quantity * oi.unit_price) / SUM(oi.quantity), 2) AS average_selling_price,
+       SUM(oi.quantity) AS units_sold
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_name, p.category
+ORDER BY average_selling_price DESC, p.product_name;
+""".strip(),
+        },
+        {
             "difficulty": "advanced",
             "question": "Show month over month revenue growth for 2024",
             "sql": """

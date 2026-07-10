@@ -531,6 +531,23 @@ WHERE oi.unit_price < p.list_price
 GROUP BY p.product_name, p.category
 ORDER BY discount_amount DESC, discounted_units DESC;```"""
 
+        if "product" in question_lower and "average" in question_lower and (
+            "selling price" in question_lower
+            or "sales price" in question_lower
+            or "unit price" in question_lower
+        ):
+            return """Calculate average realized selling price by product from the sample sales mart by dividing line-item revenue by units sold and ranking the highest products.
+
+```sql
+SELECT p.product_name,
+       p.category,
+       ROUND(SUM(oi.quantity * oi.unit_price) / SUM(oi.quantity), 2) AS average_selling_price,
+       SUM(oi.quantity) AS units_sold
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_name, p.category
+ORDER BY average_selling_price DESC, p.product_name;```"""
+
         if "product" in question_lower and ("unit" in question_lower or "quantity" in question_lower or "sold" in question_lower):
             return """Rank products by units sold from the sample sales mart by summing order item quantities and including revenue for business context.
 

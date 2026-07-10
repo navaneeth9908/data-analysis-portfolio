@@ -31,8 +31,9 @@ The generated database contains a small star schema:
 12. Which region has the highest average order value?
 13. Which products were sold below list price?
 14. Which products have the highest discount rate?
+15. Which products have the highest average selling price?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -172,4 +173,20 @@ product_name        | category | discount_rate_pct | discount_amount
 --------------------+----------+-------------------+----------------
 Data Quality Audit  | Services | 83.33             | 1000.0
 Pipeline Monitoring | Software | 6.15              | 40.0
+```
+
+For realized selling-price analysis, run:
+
+```bash
+python -m src.offline_demo "Which products have the highest average selling price?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+product_name         | category | average_selling_price | units_sold
+---------------------+----------+-----------------------+-----------
+Dashboard Enablement | Services | 950.0                 | 4
+Data Quality Audit   | Services | 950.0                 | 4
+Forecasting Add-on   | Software | 800.0                 | 3
 ```
