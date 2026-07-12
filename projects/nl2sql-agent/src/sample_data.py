@@ -268,6 +268,22 @@ ORDER BY software_revenue DESC;
 """.strip(),
         },
         {
+            "difficulty": "intermediate",
+            "question": "Which regions generate the most services revenue?",
+            "sql": """
+SELECT c.region,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS services_revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE p.category = 'Services'
+GROUP BY c.region
+ORDER BY services_revenue DESC;
+""".strip(),
+        },
+        {
             "difficulty": "advanced",
             "question": "How concentrated is revenue by customer?",
             "sql": """

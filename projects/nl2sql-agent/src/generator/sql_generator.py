@@ -462,6 +462,21 @@ WHERE p.category = 'Software'
 GROUP BY c.region
 ORDER BY software_revenue DESC;```"""
 
+        if "region" in question_lower and "services" in question_lower and "revenue" in question_lower:
+            return """Compare services revenue by region from the sample sales mart by filtering product category, then aggregating revenue and order count per region.
+
+```sql
+SELECT c.region,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS services_revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE p.category = 'Services'
+GROUP BY c.region
+ORDER BY services_revenue DESC;```"""
+
         if "region" in question_lower and "revenue" in question_lower:
             return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
 
