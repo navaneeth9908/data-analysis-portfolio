@@ -415,6 +415,26 @@ FROM monthly_with_previous
 ORDER BY month;
 """.strip(),
         },
+        {
+            "difficulty": "advanced",
+            "question": "Which regions have the most repeat customers?",
+            "sql": """
+WITH customer_order_counts AS (
+    SELECT c.customer_id,
+           c.region,
+           COUNT(o.order_id) AS order_count
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    GROUP BY c.customer_id, c.region
+    HAVING COUNT(o.order_id) > 1
+)
+SELECT region,
+       COUNT(*) AS repeat_customer_count
+FROM customer_order_counts
+GROUP BY region
+ORDER BY repeat_customer_count DESC, region;
+""".strip(),
+        },
     ]
 
 

@@ -341,6 +341,19 @@ def test_mock_generation_answers_sample_mart_product_affinity_question() -> None
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_repeat_customers_by_region_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which regions have the most repeat customers?")
+
+    assert "customer_order_counts" in result.sql
+    assert "HAVING COUNT(o.order_id) > 1" in result.sql
+    assert "COUNT(*) AS repeat_customer_count" in result.sql
+    assert "ORDER BY repeat_customer_count DESC" in result.sql
+    assert result.tables_used == ["customers", "orders"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

@@ -307,6 +307,27 @@ def test_answer_sample_question_handles_repeat_customers(tmp_path: Path) -> None
     assert "Acme Retail" in answer.table
 
 
+def test_answer_sample_question_handles_repeat_customers_by_region(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which regions have the most repeat customers?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "orders"]
+    assert answer.rows == [
+        {"region": "West", "repeat_customer_count": 2},
+        {"region": "Midwest", "repeat_customer_count": 1},
+        {"region": "South", "repeat_customer_count": 1},
+    ]
+    assert answer.insight.headline == "West leads with repeat customer count of 2."
+    assert "customer_order_counts" in answer.sql
+    assert "repeat_customer_count" in answer.table
+
+
 def test_answer_sample_question_handles_discount_analysis(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

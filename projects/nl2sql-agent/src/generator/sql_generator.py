@@ -412,6 +412,25 @@ GROUP BY c.customer_name, c.region
 HAVING COUNT(o.order_id) > 1
 ORDER BY order_count DESC, c.customer_name;```"""
 
+        if "region" in question_lower and "repeat" in question_lower and "customer" in question_lower:
+            return """Summarize repeat-customer concentration by region from the sample sales mart by first identifying customers with more than one order, then counting those repeat customers per region.
+
+```sql
+WITH customer_order_counts AS (
+    SELECT c.customer_id,
+           c.region,
+           COUNT(o.order_id) AS order_count
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    GROUP BY c.customer_id, c.region
+    HAVING COUNT(o.order_id) > 1
+)
+SELECT region,
+       COUNT(*) AS repeat_customer_count
+FROM customer_order_counts
+GROUP BY region
+ORDER BY repeat_customer_count DESC, region;```"""
+
         if "region" in question_lower and "average order" in question_lower:
             return """Calculate average order value by region from the sample sales mart by first summing each order, then averaging order revenue per region.
 

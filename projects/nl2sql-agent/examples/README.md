@@ -35,8 +35,9 @@ The generated database contains a small star schema:
 16. Which products have the highest average selling price?
 17. How concentrated is revenue by customer?
 18. Which products are most often purchased together?
+19. Which regions have the most repeat customers?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, product affinity analysis, date bucketing, customer-segment revenue analysis, regional software-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, product affinity analysis, date bucketing, customer-segment revenue analysis, regional software-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -165,6 +166,22 @@ customer_name   | revenue | revenue_share_pct
 Bluebird Foods  | 3910.0  | 25.71
 Cedar Health    | 2650.0  | 17.42
 Delta Logistics | 2350.0  | 15.45
+```
+
+For repeat-customer concentration by region, run:
+
+```bash
+python -m src.offline_demo "Which regions have the most repeat customers?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+region  | repeat_customer_count
+--------+----------------------
+West    | 2
+Midwest | 1
+South   | 1
 ```
 
 For regional deal-size analysis, run:
