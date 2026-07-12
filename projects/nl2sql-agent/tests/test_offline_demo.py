@@ -382,6 +382,40 @@ def test_answer_sample_question_handles_average_selling_price_analysis(tmp_path:
     assert "Dashboard Enablement" in answer.table
 
 
+
+def test_answer_sample_question_handles_product_affinity(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products are most often purchased together?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "products"]
+    assert answer.rows[:3] == [
+        {
+            "product_a": "Forecasting Add-on",
+            "product_b": "Pipeline Monitoring",
+            "shared_order_count": 2,
+        },
+        {
+            "product_a": "Analytics Starter",
+            "product_b": "Data Quality Audit",
+            "shared_order_count": 1,
+        },
+        {
+            "product_a": "Analytics Starter",
+            "product_b": "Pipeline Monitoring",
+            "shared_order_count": 1,
+        },
+    ]
+    assert answer.insight.headline == "Forecasting Add-on leads with shared order count of 2."
+    assert "oi1.product_id < oi2.product_id" in answer.sql
+    assert "Forecasting Add-on" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

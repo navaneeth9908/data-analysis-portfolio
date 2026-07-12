@@ -314,6 +314,20 @@ def test_mock_generation_answers_sample_mart_customer_concentration_question() -
     assert result.validation_errors == []
 
 
+
+def test_mock_generation_answers_sample_mart_product_affinity_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which products are most often purchased together?")
+
+    assert "oi1.order_id = oi2.order_id" in result.sql
+    assert "oi1.product_id < oi2.product_id" in result.sql
+    assert "shared_order_count" in result.sql
+    assert "ORDER BY shared_order_count DESC" in result.sql
+    assert result.tables_used == ["order_items", "products"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

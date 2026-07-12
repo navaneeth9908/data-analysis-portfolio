@@ -33,8 +33,9 @@ The generated database contains a small star schema:
 14. Which products have the highest discount rate?
 15. Which products have the highest average selling price?
 16. How concentrated is revenue by customer?
+17. Which products are most often purchased together?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, date bucketing, customer-segment revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, product affinity analysis, date bucketing, customer-segment revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -206,4 +207,19 @@ product_name         | category | average_selling_price | units_sold
 Dashboard Enablement | Services | 950.0                 | 4
 Data Quality Audit   | Services | 950.0                 | 4
 Forecasting Add-on   | Software | 800.0                 | 3
+```
+
+For product affinity analysis, run:
+
+```bash
+python -m src.offline_demo "Which products are most often purchased together?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+product_a          | product_b           | shared_order_count
+-------------------+---------------------+-------------------
+Forecasting Add-on | Pipeline Monitoring | 2
+Analytics Starter  | Data Quality Audit  | 1
 ```

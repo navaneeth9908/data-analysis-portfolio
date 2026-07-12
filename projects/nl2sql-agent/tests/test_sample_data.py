@@ -103,3 +103,9 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "revenue_share_pct" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which products are most often purchased together?"
+        and "oi1.order_id = oi2.order_id" in example["sql"]
+        and "shared_order_count" in example["sql"]
+        for example in examples
+    )

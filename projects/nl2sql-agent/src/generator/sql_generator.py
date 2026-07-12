@@ -513,6 +513,28 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY p.category
 ORDER BY revenue DESC;```"""
 
+        if "product" in question_lower and (
+            "purchased together" in question_lower
+            or "bought together" in question_lower
+            or "often together" in question_lower
+            or "affinity" in question_lower
+        ):
+            return """Find product affinity pairs from the sample sales mart by self-joining order items within the same order, using product id ordering to avoid duplicate pair directions.
+
+```sql
+SELECT p1.product_name AS product_a,
+       p2.product_name AS product_b,
+       COUNT(DISTINCT oi1.order_id) AS shared_order_count
+FROM order_items oi1
+JOIN order_items oi2
+  ON oi1.order_id = oi2.order_id
+ AND oi1.product_id < oi2.product_id
+JOIN products p1 ON oi1.product_id = p1.product_id
+JOIN products p2 ON oi2.product_id = p2.product_id
+GROUP BY p1.product_name, p2.product_name
+ORDER BY shared_order_count DESC, product_a, product_b
+LIMIT 5;```"""
+
         if "product" in question_lower and "discount" in question_lower and (
             "rate" in question_lower
             or "percent" in question_lower
