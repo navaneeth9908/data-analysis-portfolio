@@ -301,6 +301,19 @@ def test_mock_generation_answers_sample_mart_segment_revenue_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_region_software_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which regions generate the most software revenue?")
+
+    assert "p.category = 'Software'" in result.sql
+    assert "c.region" in result.sql
+    assert "software_revenue" in result.sql
+    assert "COUNT(DISTINCT o.order_id) AS order_count" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_customer_concentration_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

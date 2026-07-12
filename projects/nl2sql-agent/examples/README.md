@@ -27,15 +27,16 @@ The generated database contains a small star schema:
 8. Which product category generated the most revenue?
 9. What share of revenue comes from each product category?
 10. Which customer segment generated the most revenue?
-11. Which customer segment has the highest average order value?
-12. Which region has the highest average order value?
-13. Which products were sold below list price?
-14. Which products have the highest discount rate?
-15. Which products have the highest average selling price?
-16. How concentrated is revenue by customer?
-17. Which products are most often purchased together?
+11. Which regions generate the most software revenue?
+12. Which customer segment has the highest average order value?
+13. Which region has the highest average order value?
+14. Which products were sold below list price?
+15. Which products have the highest discount rate?
+16. Which products have the highest average selling price?
+17. How concentrated is revenue by customer?
+18. Which products are most often purchased together?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, quantity analysis, realized-price analysis, repeat-customer analysis, product affinity analysis, date bucketing, customer-segment revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, product affinity analysis, date bucketing, customer-segment revenue analysis, regional software-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -132,6 +133,22 @@ segment    | revenue | order_count
 CPG        | 3910.0  | 2
 Healthcare | 2650.0  | 2
 Logistics  | 2350.0  | 2
+```
+
+For regional software revenue mix, run:
+
+```bash
+python -m src.offline_demo "Which regions generate the most software revenue?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+region  | software_revenue | order_count
+--------+------------------+------------
+West    | 3710.0           | 3
+South   | 2750.0           | 2
+Midwest | 1150.0           | 1
 ```
 
 For customer concentration analysis, run:

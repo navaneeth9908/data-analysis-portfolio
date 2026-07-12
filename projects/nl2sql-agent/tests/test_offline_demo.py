@@ -137,6 +137,27 @@ def test_answer_sample_question_handles_segment_revenue_mix(tmp_path: Path) -> N
     assert "COUNT(DISTINCT o.order_id) AS order_count" in answer.sql
 
 
+def test_answer_sample_question_handles_region_software_revenue_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which regions generate the most software revenue?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {"region": "West", "software_revenue": 3710.0, "order_count": 3},
+        {"region": "South", "software_revenue": 2750.0, "order_count": 2},
+        {"region": "Midwest", "software_revenue": 1150.0, "order_count": 1},
+    ]
+    assert answer.insight.headline == "West leads with software revenue of 3,710.00."
+    assert "p.category = 'Software'" in answer.sql
+    assert "software_revenue" in answer.table
+
+
 def test_answer_sample_question_handles_customer_revenue_concentration(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
