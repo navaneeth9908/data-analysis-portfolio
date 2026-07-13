@@ -264,6 +264,20 @@ def test_mock_generation_answers_sample_mart_month_over_month_revenue_question()
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_quarterly_region_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Show quarterly revenue by region for 2024")
+
+    assert "quarter" in result.sql
+    assert "c.region" in result.sql
+    assert "COUNT(DISTINCT o.order_id) AS order_count" in result.sql
+    assert "GROUP BY quarter, c.region" in result.sql
+    assert "ORDER BY quarter, revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

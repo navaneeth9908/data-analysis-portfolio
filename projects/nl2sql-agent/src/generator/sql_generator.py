@@ -498,6 +498,26 @@ WHERE p.category = 'Services'
 GROUP BY c.region
 ORDER BY services_revenue DESC;```"""
 
+        if "quarter" in question_lower and "region" in question_lower and "revenue" in question_lower:
+            return """Summarize quarterly revenue by region from the sample sales mart by bucketing order dates into calendar quarters, joining customers for geography, and ranking regions within each quarter.
+
+```sql
+SELECT c.region,
+       '2024-Q' || CASE
+           WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1'
+           WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2'
+           WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3'
+           ELSE '4'
+       END AS quarter,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+       COUNT(DISTINCT o.order_id) AS order_count
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status = 'closed won'
+GROUP BY quarter, c.region
+ORDER BY quarter, revenue DESC;```"""
+
         if "region" in question_lower and "revenue" in question_lower:
             return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
 

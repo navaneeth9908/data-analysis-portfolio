@@ -287,6 +287,31 @@ def test_answer_sample_question_handles_month_over_month_revenue_growth(tmp_path
     assert "revenue_change_pct" in answer.table
 
 
+def test_answer_sample_question_handles_quarterly_region_revenue(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Show quarterly revenue by region for 2024",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows == [
+        {"quarter": "2024-Q1", "region": "South", "revenue": 4400.0, "order_count": 2},
+        {"quarter": "2024-Q1", "region": "West", "revenue": 3300.0, "order_count": 2},
+        {"quarter": "2024-Q1", "region": "Northeast", "revenue": 1900.0, "order_count": 1},
+        {"quarter": "2024-Q1", "region": "Midwest", "revenue": 1150.0, "order_count": 1},
+        {"quarter": "2024-Q2", "region": "West", "revenue": 2760.0, "order_count": 2},
+        {"quarter": "2024-Q2", "region": "Midwest", "revenue": 1200.0, "order_count": 1},
+        {"quarter": "2024-Q2", "region": "South", "revenue": 500.0, "order_count": 1},
+    ]
+    assert answer.insight.headline == "South leads with revenue of 4,400.00."
+    assert "GROUP BY quarter, c.region" in answer.sql
+    assert "2024-Q1" in answer.table
+
+
 def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
