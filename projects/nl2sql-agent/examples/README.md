@@ -37,8 +37,9 @@ The generated database contains a small star schema:
 18. How concentrated is revenue by customer?
 19. Which products are most often purchased together?
 20. Which regions have the most repeat customers?
+21. Which regions bought the widest product mix?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, product affinity analysis, date bucketing, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, regional product-mix breadth, product affinity analysis, date bucketing, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -274,3 +275,21 @@ product_a          | product_b           | shared_order_count
 Forecasting Add-on | Pipeline Monitoring | 2
 Analytics Starter  | Data Quality Audit  | 1
 ```
+
+For regional product-mix breadth, run:
+
+```bash
+python -m src.offline_demo "Which regions bought the widest product mix?" --db-path examples/sales_mart.sqlite --limit 5
+```
+
+Expected result excerpt:
+
+```text
+region    | distinct_products | category_count | revenue
+----------+-------------------+----------------+--------
+West      | 5                 | 2              | 6060.0
+South     | 5                 | 2              | 4900.0
+Midwest   | 3                 | 2              | 2350.0
+Northeast | 1                 | 1              | 1900.0
+```
+

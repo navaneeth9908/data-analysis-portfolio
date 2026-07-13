@@ -350,6 +350,28 @@ def test_answer_sample_question_handles_repeat_customers_by_region(tmp_path: Pat
     assert "repeat_customer_count" in answer.table
 
 
+def test_answer_sample_question_handles_region_product_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which regions bought the widest product mix?",
+        db_path=db_path,
+        limit=5,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {"region": "West", "distinct_products": 5, "category_count": 2, "revenue": 6060.0},
+        {"region": "South", "distinct_products": 5, "category_count": 2, "revenue": 4900.0},
+        {"region": "Midwest", "distinct_products": 3, "category_count": 2, "revenue": 2350.0},
+        {"region": "Northeast", "distinct_products": 1, "category_count": 1, "revenue": 1900.0},
+    ]
+    assert answer.insight.headline == "West leads with distinct products of 5."
+    assert "distinct_products" in answer.sql
+    assert "category_count" in answer.table
+
+
 def test_answer_sample_question_handles_discount_analysis(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

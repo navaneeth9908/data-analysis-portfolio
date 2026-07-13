@@ -367,6 +367,19 @@ def test_mock_generation_answers_sample_mart_repeat_customers_by_region_question
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_region_product_mix_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which regions bought the widest product mix?")
+
+    assert "COUNT(DISTINCT p.product_id) AS distinct_products" in result.sql
+    assert "COUNT(DISTINCT p.category) AS category_count" in result.sql
+    assert "ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue" in result.sql
+    assert "ORDER BY distinct_products DESC, revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

@@ -431,6 +431,23 @@ FROM monthly_with_previous
 ORDER BY month;
 """.strip(),
         },
+
+        {
+            "difficulty": "advanced",
+            "question": "Which regions bought the widest product mix?",
+            "sql": """
+SELECT c.region,
+       COUNT(DISTINCT p.product_id) AS distinct_products,
+       COUNT(DISTINCT p.category) AS category_count,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY c.region
+ORDER BY distinct_products DESC, revenue DESC;
+""".strip(),
+        },
         {
             "difficulty": "advanced",
             "question": "Which regions have the most repeat customers?",

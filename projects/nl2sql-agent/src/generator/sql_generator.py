@@ -412,6 +412,27 @@ GROUP BY c.customer_name, c.region
 HAVING COUNT(o.order_id) > 1
 ORDER BY order_count DESC, c.customer_name;```"""
 
+
+        if "region" in question_lower and "product" in question_lower and (
+            "mix" in question_lower
+            or "diversity" in question_lower
+            or "widest" in question_lower
+            or "variety" in question_lower
+        ):
+            return """Measure product mix breadth by region from the sample sales mart by counting distinct products and product categories purchased in each region, with revenue included for business context.
+
+```sql
+SELECT c.region,
+       COUNT(DISTINCT p.product_id) AS distinct_products,
+       COUNT(DISTINCT p.category) AS category_count,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY c.region
+ORDER BY distinct_products DESC, revenue DESC;```"""
+
         if "region" in question_lower and "repeat" in question_lower and "customer" in question_lower:
             return """Summarize repeat-customer concentration by region from the sample sales mart by first identifying customers with more than one order, then counting those repeat customers per region.
 
