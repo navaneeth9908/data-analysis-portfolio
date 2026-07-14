@@ -418,6 +418,19 @@ def test_validator_flags_unknown_table_and_qualified_column() -> None:
     assert "Unknown column referenced: c.missing_column on table customer" in errors
 
 
+def test_validator_flags_unknown_unqualified_columns_in_simple_queries() -> None:
+    validator = SQLValidator(build_sales_schema())
+
+    errors = validator.validate(
+        "SELECT customer_id, lifetime_value FROM customer WHERE country = 'USA' AND cohort = 'enterprise'"
+    )
+
+    assert "Unknown column referenced: lifetime_value" in errors
+    assert "Unknown column referenced: cohort" in errors
+    assert "Unknown column referenced: customer_id" not in errors
+    assert "Unknown column referenced: country" not in errors
+
+
 def test_validator_blocks_write_queries_but_ignores_keywords_inside_literals() -> None:
     validator = SQLValidator(build_sales_schema())
 

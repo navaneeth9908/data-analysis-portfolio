@@ -7,7 +7,7 @@ from typing import Any, List
 from dataclasses import dataclass
 
 from ..config import get_config
-from ..schema.models import DatabaseSchema
+from ..schema.models import DatabaseSchema, Table
 
 logger = logging.getLogger(__name__)
 
@@ -179,8 +179,96 @@ class SQLValidator:
                 errors.append(
                     f"Unknown column referenced: {qualifier}.{column_name} on table {table.name}"
                 )
+
+        errors.extend(self._check_unqualified_columns(sql, table_aliases, known_tables))
         return errors
-    
+
+    def _check_unqualified_columns(
+        self,
+        sql: str,
+        table_aliases: dict[str, str],
+        known_tables: dict[str, Table],
+    ) -> List[str]:
+        """Validate simple unqualified column references in SELECT and filters."""
+        referenced_tables = {
+            table_name.lower()
+            for table_name in table_aliases.values()
+            if table_name.lower() in known_tables
+        }
+        if not referenced_tables or self._extract_cte_names(sql):
+            return []
+
+        available_columns = {
+            column.name.lower()
+            for table_name in referenced_tables
+            for column in known_tables[table_name].columns
+        }
+        sql_without_literals = self._strip_string_literals(sql)
+        sql_without_qualified_refs = re.sub(
+            r"\b[A-Za-z_]\w*\.[A-Za-z_]\w*\b", "", sql_without_literals
+        )
+
+        candidate_names = self._extract_unqualified_column_candidates(sql_without_qualified_refs)
+        candidate_names -= self._extract_select_aliases(sql_without_qualified_refs)
+        errors = []
+        for name in sorted(candidate_names):
+            if name.lower() not in available_columns:
+                errors.append(f"Unknown column referenced: {name}")
+        return errors
+
+    @classmethod
+    def _extract_unqualified_column_candidates(cls, sql: str) -> set[str]:
+        """Extract likely unqualified column names from simple query clauses."""
+        candidates: set[str] = set()
+        reserved = cls._reserved_words()
+
+        select_match = re.search(r"\bSELECT\b(.*?)\bFROM\b", sql, re.IGNORECASE | re.DOTALL)
+        if select_match:
+            for expression in select_match.group(1).split(","):
+                candidates.update(cls._identifier_candidates(expression, reserved))
+
+        for keyword in ("WHERE", "GROUP BY", "HAVING", "ORDER BY"):
+            pattern = rf"\b{keyword}\b(.*?)(?=\bWHERE\b|\bGROUP BY\b|\bHAVING\b|\bORDER BY\b|\bLIMIT\b|\bOFFSET\b|;|$)"
+            match = re.search(pattern, sql, re.IGNORECASE | re.DOTALL)
+            if match:
+                candidates.update(cls._identifier_candidates(match.group(1), reserved))
+
+        return candidates
+
+    @staticmethod
+    def _extract_select_aliases(sql: str) -> set[str]:
+        """Return aliases introduced in the SELECT list."""
+        select_match = re.search(r"\bSELECT\b(.*?)\bFROM\b", sql, re.IGNORECASE | re.DOTALL)
+        if not select_match:
+            return set()
+        return {
+            match.group(1)
+            for match in re.finditer(
+                r"\bAS\s+([A-Za-z_]\w*)\b", select_match.group(1), re.IGNORECASE
+            )
+        }
+
+    @staticmethod
+    def _identifier_candidates(expression: str, reserved: set[str]) -> set[str]:
+        """Return non-keyword identifiers from a SQL expression fragment."""
+        cleaned = re.sub(r"\bAS\s+[A-Za-z_]\w*\b", "", expression, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\b[A-Za-z_]\w*\s*\(", "(", cleaned)
+        return {
+            identifier
+            for identifier in re.findall(r"\b[A-Za-z_]\w*\b", cleaned)
+            if identifier.lower() not in reserved
+        }
+
+    @staticmethod
+    def _reserved_words() -> set[str]:
+        """SQL words and literals that should not be treated as column names."""
+        return {
+            "and", "as", "asc", "between", "by", "case", "cast", "desc", "distinct",
+            "else", "end", "from", "group", "having", "in", "is", "join", "limit",
+            "not", "null", "offset", "on", "or", "order", "over", "partition", "select",
+            "then", "when", "where", "with",
+        }
+
     def _check_safety(self, sql: str) -> List[str]:
         """Check for unsafe operations."""
         errors = []
