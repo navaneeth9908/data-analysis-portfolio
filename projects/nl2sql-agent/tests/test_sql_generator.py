@@ -394,6 +394,19 @@ def test_mock_generation_answers_sample_mart_region_product_mix_question() -> No
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_top_product_by_region_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which products generate the most revenue in each region?")
+
+    assert "regional_product_revenue" in result.sql
+    assert "RANK() OVER" in result.sql
+    assert "PARTITION BY c.region" in result.sql
+    assert "WHERE revenue_rank = 1" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

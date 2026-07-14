@@ -490,6 +490,31 @@ GROUP BY region
 ORDER BY repeat_customer_count DESC, region;
 """.strip(),
         },
+        {
+            "difficulty": "advanced",
+            "question": "Which products generate the most revenue in each region?",
+            "sql": """
+WITH regional_product_revenue AS (
+    SELECT c.region,
+           p.product_name,
+           p.category,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+           RANK() OVER (
+               PARTITION BY c.region
+               ORDER BY SUM(oi.quantity * oi.unit_price) DESC
+           ) AS revenue_rank
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.region, p.product_name, p.category
+)
+SELECT region, product_name, category, revenue
+FROM regional_product_revenue
+WHERE revenue_rank = 1
+ORDER BY revenue DESC, region;
+""".strip(),
+        },
     ]
 
 

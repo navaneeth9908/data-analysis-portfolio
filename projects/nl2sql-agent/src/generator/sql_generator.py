@@ -518,6 +518,30 @@ WHERE o.status = 'closed won'
 GROUP BY quarter, c.region
 ORDER BY quarter, revenue DESC;```"""
 
+        if "region" in question_lower and "product" in question_lower and "revenue" in question_lower:
+            return """Identify the top revenue-generating product in each region from the sample sales mart by aggregating product revenue per region and using a window rank to keep each regional leader.
+
+```sql
+WITH regional_product_revenue AS (
+    SELECT c.region,
+           p.product_name,
+           p.category,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue,
+           RANK() OVER (
+               PARTITION BY c.region
+               ORDER BY SUM(oi.quantity * oi.unit_price) DESC
+           ) AS revenue_rank
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.region, p.product_name, p.category
+)
+SELECT region, product_name, category, revenue
+FROM regional_product_revenue
+WHERE revenue_rank = 1
+ORDER BY revenue DESC, region;```"""
+
         if "region" in question_lower and "revenue" in question_lower:
             return """Calculate revenue by region from the sample sales mart by joining orders to customers and order items, then ranking the highest region.
 

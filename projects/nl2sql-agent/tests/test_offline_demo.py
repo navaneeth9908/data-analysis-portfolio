@@ -397,6 +397,48 @@ def test_answer_sample_question_handles_region_product_mix(tmp_path: Path) -> No
     assert "category_count" in answer.table
 
 
+def test_answer_sample_question_handles_top_product_by_region(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products generate the most revenue in each region?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "region": "West",
+            "product_name": "Pipeline Monitoring",
+            "category": "Software",
+            "revenue": 1910.0,
+        },
+        {
+            "region": "Northeast",
+            "product_name": "Dashboard Enablement",
+            "category": "Services",
+            "revenue": 1900.0,
+        },
+        {
+            "region": "South",
+            "product_name": "Forecasting Add-on",
+            "category": "Software",
+            "revenue": 1600.0,
+        },
+        {
+            "region": "Midwest",
+            "product_name": "Data Quality Audit",
+            "category": "Services",
+            "revenue": 1200.0,
+        },
+    ]
+    assert answer.insight.headline == "West leads with revenue of 1,910.00."
+    assert "PARTITION BY c.region" in answer.sql
+    assert "Pipeline Monitoring" in answer.table
+
+
 def test_answer_sample_question_handles_discount_analysis(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
