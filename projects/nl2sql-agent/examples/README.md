@@ -41,8 +41,9 @@ The generated database contains a small star schema:
 22. Show quarterly revenue by region for 2024
 23. Show quarter over quarter revenue growth for 2024
 24. Which products generate the most revenue in each region?
+25. Which customers bought both software and services?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, regional product-mix breadth, top-product-by-region analysis, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, regional product-mix breadth, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -277,6 +278,22 @@ product_a          | product_b           | shared_order_count
 -------------------+---------------------+-------------------
 Forecasting Add-on | Pipeline Monitoring | 2
 Analytics Starter  | Data Quality Audit  | 1
+```
+
+For cross-category adoption analysis, run:
+
+```bash
+python -m src.offline_demo "Which customers bought both software and services?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+customer_name   | region  | total_revenue | software_revenue | services_revenue
+----------------+---------+---------------+------------------+-----------------
+Bluebird Foods  | West    | 3910.0        | 2710.0           | 1200.0
+Cedar Health    | South   | 2650.0        | 500.0            | 2150.0
+Delta Logistics | Midwest | 2350.0        | 1150.0           | 1200.0
 ```
 
 For regional product-mix breadth, run:

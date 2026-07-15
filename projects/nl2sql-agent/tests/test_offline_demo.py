@@ -589,6 +589,52 @@ def test_answer_sample_question_handles_product_affinity(tmp_path: Path) -> None
     assert "Forecasting Add-on" in answer.table
 
 
+def test_answer_sample_question_handles_cross_category_customers(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customers bought both software and services?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "customer_name": "Bluebird Foods",
+            "region": "West",
+            "software_revenue": 2710.0,
+            "services_revenue": 1200.0,
+            "total_revenue": 3910.0,
+        },
+        {
+            "customer_name": "Cedar Health",
+            "region": "South",
+            "software_revenue": 500.0,
+            "services_revenue": 2150.0,
+            "total_revenue": 2650.0,
+        },
+        {
+            "customer_name": "Delta Logistics",
+            "region": "Midwest",
+            "software_revenue": 1150.0,
+            "services_revenue": 1200.0,
+            "total_revenue": 2350.0,
+        },
+        {
+            "customer_name": "Acme Retail",
+            "region": "West",
+            "software_revenue": 1000.0,
+            "services_revenue": 1150.0,
+            "total_revenue": 2150.0,
+        },
+    ]
+    assert answer.insight.headline == "Bluebird Foods leads with total revenue of 3,910.00."
+    assert "customer_category_mix" in answer.sql
+    assert "software_revenue" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

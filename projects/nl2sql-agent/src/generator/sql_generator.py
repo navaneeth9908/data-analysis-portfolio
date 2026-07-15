@@ -473,6 +473,30 @@ SELECT customer_name,
 FROM customer_revenue
 ORDER BY revenue DESC;```"""
 
+        if "customer" in question_lower and "software" in question_lower and "services" in question_lower:
+            return """Identify customers with cross-category adoption by calculating software and services revenue per customer, then keeping customers with revenue in both product families.
+
+```sql
+WITH customer_category_mix AS (
+    SELECT c.customer_name,
+           c.region,
+           ROUND(SUM(CASE WHEN p.category = 'Software' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS software_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Services' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS services_revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.customer_name, c.region
+    HAVING software_revenue > 0 AND services_revenue > 0
+)
+SELECT customer_name,
+       region,
+       ROUND(software_revenue + services_revenue, 2) AS total_revenue,
+       software_revenue,
+       services_revenue
+FROM customer_category_mix
+ORDER BY total_revenue DESC, customer_name;```"""
+
         if "customer" in question_lower and "revenue" in question_lower:
             return """Rank customers by revenue from the sample sales mart by joining customers, orders, and order items, then summing line-item revenue per customer.
 

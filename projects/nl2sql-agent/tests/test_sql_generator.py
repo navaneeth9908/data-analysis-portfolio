@@ -420,6 +420,19 @@ def test_mock_generation_answers_sample_mart_top_product_by_region_question() ->
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_cross_category_customer_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customers bought both software and services?")
+
+    assert "customer_category_mix" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Software'" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Services'" in result.sql
+    assert "HAVING software_revenue > 0 AND services_revenue > 0" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

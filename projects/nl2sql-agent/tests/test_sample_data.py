@@ -145,4 +145,11 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "PARTITION BY c.region" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which customers bought both software and services?"
+        and "customer_category_mix" in example["sql"]
+        and "software_revenue" in example["sql"]
+        and "services_revenue" in example["sql"]
+        for example in examples
+    )
 
