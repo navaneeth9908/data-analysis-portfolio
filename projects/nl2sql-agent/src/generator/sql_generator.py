@@ -586,6 +586,42 @@ WHERE p.category = 'Services'
 GROUP BY c.region
 ORDER BY services_revenue DESC;```"""
 
+        if (
+            ("quarter over quarter" in question_lower or "qoq" in question_lower)
+            and ("growth" in question_lower or "change" in question_lower or "revenue" in question_lower)
+        ):
+            return """Calculate quarter-over-quarter revenue growth from the sample sales mart by aggregating closed-order revenue into calendar quarters, then using LAG to compare each quarter with the previous quarter.
+
+```sql
+WITH quarterly_revenue AS (
+    SELECT '2024-Q' || CASE
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3'
+               ELSE '4'
+           END AS quarter,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.status = 'closed won'
+    GROUP BY quarter
+),
+quarterly_with_previous AS (
+    SELECT quarter,
+           revenue,
+           LAG(revenue) OVER (ORDER BY quarter) AS previous_revenue
+    FROM quarterly_revenue
+)
+SELECT quarter,
+       revenue,
+       ROUND(revenue - previous_revenue, 2) AS revenue_change,
+       CASE
+           WHEN previous_revenue IS NULL OR previous_revenue = 0 THEN NULL
+           ELSE ROUND((revenue - previous_revenue) * 100.0 / previous_revenue, 2)
+       END AS revenue_change_pct
+FROM quarterly_with_previous
+ORDER BY quarter;```"""
+
         if "quarter" in question_lower and "region" in question_lower and "revenue" in question_lower:
             return """Summarize quarterly revenue by region from the sample sales mart by bucketing order dates into calendar quarters, joining customers for geography, and ranking regions within each quarter.
 

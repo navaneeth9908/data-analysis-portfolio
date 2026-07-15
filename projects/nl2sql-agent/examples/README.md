@@ -39,9 +39,10 @@ The generated database contains a small star schema:
 20. Which regions have the most repeat customers?
 21. Which regions bought the widest product mix?
 22. Show quarterly revenue by region for 2024
-23. Which products generate the most revenue in each region?
+23. Show quarter over quarter revenue growth for 2024
+24. Which products generate the most revenue in each region?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, regional product-mix breadth, top-product-by-region analysis, product affinity analysis, date bucketing, quarterly time bucketing, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, regional product-mix breadth, top-product-by-region analysis, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -313,6 +314,22 @@ South     | Forecasting Add-on   | Software | 1600.0
 Midwest   | Data Quality Audit   | Services | 1200.0
 ```
 
+
+
+For quarter-over-quarter revenue growth, run:
+
+```bash
+python -m src.offline_demo "Show quarter over quarter revenue growth for 2024" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+quarter | revenue | revenue_change | revenue_change_pct
+--------+---------+----------------+-------------------
+2024-Q1 | 10750.0 | NULL           | NULL
+2024-Q2 | 4460.0  | -6290.0        | -58.51
+```
 
 
 For quarterly regional revenue analysis, run:

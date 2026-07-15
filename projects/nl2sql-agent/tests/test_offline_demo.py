@@ -312,6 +312,26 @@ def test_answer_sample_question_handles_quarterly_region_revenue(tmp_path: Path)
     assert "2024-Q1" in answer.table
 
 
+def test_answer_sample_question_handles_quarter_over_quarter_revenue_growth(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Show quarter over quarter revenue growth for 2024",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "orders"]
+    assert answer.rows == [
+        {"quarter": "2024-Q1", "revenue": 10750.0, "revenue_change": None, "revenue_change_pct": None},
+        {"quarter": "2024-Q2", "revenue": 4460.0, "revenue_change": -6290.0, "revenue_change_pct": -58.51},
+    ]
+    assert answer.insight.headline == "2024-Q1 leads with revenue of 10,750.00."
+    assert "LAG(revenue) OVER (ORDER BY quarter)" in answer.sql
+    assert "revenue_change_pct" in answer.table
+
+
 def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

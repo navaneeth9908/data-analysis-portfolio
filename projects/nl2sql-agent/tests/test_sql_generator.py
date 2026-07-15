@@ -278,6 +278,19 @@ def test_mock_generation_answers_sample_mart_quarterly_region_revenue_question()
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_quarter_over_quarter_revenue_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Show quarter over quarter revenue growth for 2024")
+
+    assert "WITH quarterly_revenue AS" in result.sql
+    assert "LAG(revenue) OVER (ORDER BY quarter)" in result.sql
+    assert "revenue_change" in result.sql
+    assert "revenue_change_pct" in result.sql
+    assert result.tables_used == ["order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 
