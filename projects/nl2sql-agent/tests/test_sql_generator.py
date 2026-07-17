@@ -394,6 +394,20 @@ def test_mock_generation_answers_sample_mart_repeat_customers_by_region_question
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_repeat_customer_rate_by_region_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("What is the repeat customer rate by region?")
+
+    assert "customer_order_counts" in result.sql
+    assert "COUNT(*) AS total_customers" in result.sql
+    assert "repeat_customer_rate_pct" in result.sql
+    assert "LEFT JOIN orders" in result.sql
+    assert "ORDER BY repeat_customer_rate_pct DESC" in result.sql
+    assert result.tables_used == ["customers", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_region_product_mix_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

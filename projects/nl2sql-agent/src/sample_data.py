@@ -506,6 +506,30 @@ ORDER BY distinct_products DESC, revenue DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "What is the repeat customer rate by region?",
+            "sql": """
+WITH customer_order_counts AS (
+    SELECT c.customer_id,
+           c.region,
+           COUNT(o.order_id) AS order_count
+    FROM customers c
+    LEFT JOIN orders o ON c.customer_id = o.customer_id
+    GROUP BY c.customer_id, c.region
+)
+SELECT region,
+       COUNT(*) AS total_customers,
+       SUM(CASE WHEN order_count > 1 THEN 1 ELSE 0 END) AS repeat_customers,
+       ROUND(
+           SUM(CASE WHEN order_count > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+           2
+       ) AS repeat_customer_rate_pct
+FROM customer_order_counts
+GROUP BY region
+ORDER BY repeat_customer_rate_pct DESC, repeat_customers DESC, region;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Which regions have the most repeat customers?",
             "sql": """
 WITH customer_order_counts AS (

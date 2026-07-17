@@ -395,6 +395,48 @@ def test_answer_sample_question_handles_repeat_customers_by_region(tmp_path: Pat
     assert "repeat_customer_count" in answer.table
 
 
+def test_answer_sample_question_handles_repeat_customer_rate_by_region(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "What is the repeat customer rate by region?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "orders"]
+    assert answer.rows == [
+        {
+            "region": "West",
+            "total_customers": 2,
+            "repeat_customers": 2,
+            "repeat_customer_rate_pct": 100.0,
+        },
+        {
+            "region": "Midwest",
+            "total_customers": 1,
+            "repeat_customers": 1,
+            "repeat_customer_rate_pct": 100.0,
+        },
+        {
+            "region": "South",
+            "total_customers": 2,
+            "repeat_customers": 1,
+            "repeat_customer_rate_pct": 50.0,
+        },
+        {
+            "region": "Northeast",
+            "total_customers": 1,
+            "repeat_customers": 0,
+            "repeat_customer_rate_pct": 0.0,
+        },
+    ]
+    assert answer.insight.headline == "West leads with total customers of 2."
+    assert "LEFT JOIN orders" in answer.sql
+    assert "repeat_customer_rate_pct" in answer.table
+
+
 def test_answer_sample_question_handles_region_product_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

@@ -134,6 +134,12 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         for example in examples
     )
     assert any(
+        example["question"] == "What is the repeat customer rate by region?"
+        and "repeat_customer_rate_pct" in example["sql"]
+        and "LEFT JOIN orders" in example["sql"]
+        for example in examples
+    )
+    assert any(
         example["question"] == "Which regions bought the widest product mix?"
         and "distinct_products" in example["sql"]
         and "category_count" in example["sql"]
