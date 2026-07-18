@@ -43,8 +43,9 @@ The generated database contains a small star schema:
 24. Show quarter over quarter revenue growth for 2024
 25. Which products generate the most revenue in each region?
 26. Which customers bought both software and services?
+27. Which products grew revenue quarter over quarter?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, product-level quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -366,6 +367,19 @@ quarter | revenue | revenue_change | revenue_change_pct
 2024-Q2 | 4460.0  | -6290.0        | -58.51
 ```
 
+For product-level quarter-over-quarter growth, run:
+
+```bash
+python -m src.offline_demo "Which products grew revenue quarter over quarter?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+product_name       | category | quarter | revenue | previous_revenue | revenue_change | revenue_change_pct
+-------------------+----------+---------+---------+------------------+----------------+-------------------
+Data Quality Audit | Services | 2024-Q2 | 2400.0  | 1400.0           | 1000.0         | 71.43
+```
 
 For quarterly regional revenue analysis, run:
 

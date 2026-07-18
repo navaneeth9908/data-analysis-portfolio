@@ -332,6 +332,33 @@ def test_answer_sample_question_handles_quarter_over_quarter_revenue_growth(tmp_
     assert "revenue_change_pct" in answer.table
 
 
+def test_answer_sample_question_handles_product_quarter_growth(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which products grew revenue quarter over quarter?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "product_name": "Data Quality Audit",
+            "category": "Services",
+            "quarter": "2024-Q2",
+            "revenue": 2400.0,
+            "previous_revenue": 1400.0,
+            "revenue_change": 1000.0,
+            "revenue_change_pct": 71.43,
+        }
+    ]
+    assert answer.insight.headline == "Data Quality Audit leads with revenue of 2,400.00."
+    assert "product_quarter_revenue" in answer.sql
+    assert "revenue_change_pct" in answer.table
+
+
 def test_answer_sample_question_handles_products_sold_by_units(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

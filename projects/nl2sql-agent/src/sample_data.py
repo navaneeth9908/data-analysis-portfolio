@@ -467,6 +467,60 @@ ORDER BY quarter;
         },
         {
             "difficulty": "advanced",
+            "question": "Which products grew revenue quarter over quarter?",
+            "sql": """
+WITH product_quarter_revenue AS (
+    SELECT p.product_name,
+           p.category,
+           '2024-Q' || CASE
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3'
+               ELSE '4'
+           END AS quarter,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM orders o
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    WHERE o.status = 'closed won'
+    GROUP BY p.product_name, p.category, quarter
+),
+product_with_previous AS (
+    SELECT product_name,
+           category,
+           quarter,
+           revenue,
+           LAG(revenue) OVER (PARTITION BY product_name ORDER BY quarter) AS previous_revenue
+    FROM product_quarter_revenue
+),
+product_growth AS (
+    SELECT product_name,
+           category,
+           quarter,
+           revenue,
+           previous_revenue,
+           ROUND(revenue - previous_revenue, 2) AS revenue_change,
+           CASE
+               WHEN previous_revenue IS NULL OR previous_revenue = 0 THEN NULL
+               ELSE ROUND((revenue - previous_revenue) * 100.0 / previous_revenue, 2)
+           END AS revenue_change_pct
+    FROM product_with_previous
+)
+SELECT product_name,
+       category,
+       quarter,
+       revenue,
+       previous_revenue,
+       revenue_change,
+       revenue_change_pct
+FROM product_growth
+WHERE previous_revenue IS NOT NULL
+  AND revenue_change > 0
+ORDER BY revenue_change DESC, product_name;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Show quarterly revenue by region for 2024",
             "sql": """
 SELECT c.region,
