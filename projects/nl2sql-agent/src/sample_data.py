@@ -467,6 +467,45 @@ ORDER BY quarter;
         },
         {
             "difficulty": "advanced",
+            "question": "Show quarter over quarter revenue growth by region for 2024",
+            "sql": """
+WITH regional_quarter_revenue AS (
+    SELECT c.region,
+           '2024-Q' || CASE
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3'
+               ELSE '4'
+           END AS quarter,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.status = 'closed won'
+    GROUP BY c.region, quarter
+),
+regional_with_previous AS (
+    SELECT region,
+           quarter,
+           revenue,
+           LAG(revenue) OVER (PARTITION BY region ORDER BY quarter) AS previous_revenue
+    FROM regional_quarter_revenue
+)
+SELECT region,
+       quarter,
+       revenue,
+       previous_revenue,
+       ROUND(revenue - previous_revenue, 2) AS revenue_change,
+       CASE
+           WHEN previous_revenue IS NULL OR previous_revenue = 0 THEN NULL
+           ELSE ROUND((revenue - previous_revenue) * 100.0 / previous_revenue, 2)
+       END AS revenue_change_pct
+FROM regional_with_previous
+ORDER BY quarter, revenue DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Which products grew revenue quarter over quarter?",
             "sql": """
 WITH product_quarter_revenue AS (

@@ -332,6 +332,80 @@ def test_answer_sample_question_handles_quarter_over_quarter_revenue_growth(tmp_
     assert "revenue_change_pct" in answer.table
 
 
+def test_answer_sample_question_handles_regional_quarter_over_quarter_growth(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Show quarter over quarter revenue growth by region for 2024",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows == [
+        {
+            "region": "South",
+            "quarter": "2024-Q1",
+            "revenue": 4400.0,
+            "previous_revenue": None,
+            "revenue_change": None,
+            "revenue_change_pct": None,
+        },
+        {
+            "region": "West",
+            "quarter": "2024-Q1",
+            "revenue": 3300.0,
+            "previous_revenue": None,
+            "revenue_change": None,
+            "revenue_change_pct": None,
+        },
+        {
+            "region": "Northeast",
+            "quarter": "2024-Q1",
+            "revenue": 1900.0,
+            "previous_revenue": None,
+            "revenue_change": None,
+            "revenue_change_pct": None,
+        },
+        {
+            "region": "Midwest",
+            "quarter": "2024-Q1",
+            "revenue": 1150.0,
+            "previous_revenue": None,
+            "revenue_change": None,
+            "revenue_change_pct": None,
+        },
+        {
+            "region": "West",
+            "quarter": "2024-Q2",
+            "revenue": 2760.0,
+            "previous_revenue": 3300.0,
+            "revenue_change": -540.0,
+            "revenue_change_pct": -16.36,
+        },
+        {
+            "region": "Midwest",
+            "quarter": "2024-Q2",
+            "revenue": 1200.0,
+            "previous_revenue": 1150.0,
+            "revenue_change": 50.0,
+            "revenue_change_pct": 4.35,
+        },
+        {
+            "region": "South",
+            "quarter": "2024-Q2",
+            "revenue": 500.0,
+            "previous_revenue": 4400.0,
+            "revenue_change": -3900.0,
+            "revenue_change_pct": -88.64,
+        },
+    ]
+    assert answer.insight.headline == "South leads with revenue of 4,400.00."
+    assert "PARTITION BY region ORDER BY quarter" in answer.sql
+    assert "revenue_change_pct" in answer.table
+
+
 def test_answer_sample_question_handles_product_quarter_growth(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
