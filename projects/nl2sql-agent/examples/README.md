@@ -45,8 +45,9 @@ The generated database contains a small star schema:
 26. Which customers bought both software and services?
 27. Which products grew revenue quarter over quarter?
 28. Show quarter over quarter revenue growth by region for 2024
+29. Which customer segments grew revenue quarter over quarter?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -383,6 +384,20 @@ South     | 2024-Q1 | 4400.0  | NULL             | NULL           | NULL
 West      | 2024-Q1 | 3300.0  | NULL             | NULL           | NULL
 West      | 2024-Q2 | 2760.0  | 3300.0           | -540.0         | -16.36
 Midwest   | 2024-Q2 | 1200.0  | 1150.0           | 50.0           | 4.35
+```
+
+For customer-segment quarter-over-quarter growth, run:
+
+```bash
+python -m src.offline_demo "Which customer segments grew revenue quarter over quarter?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+segment   | quarter | revenue | previous_revenue | revenue_change | revenue_change_pct
+----------+---------+---------+------------------+----------------+-------------------
+Logistics | 2024-Q2 | 1200.0  | 1150.0           | 50.0           | 4.35
 ```
 
 For product-level quarter-over-quarter growth, run:

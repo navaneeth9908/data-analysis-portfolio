@@ -319,6 +319,20 @@ def test_mock_generation_answers_sample_mart_regional_quarter_growth_question() 
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_segment_quarter_growth_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customer segments grew revenue quarter over quarter?")
+
+    assert "WITH segment_quarter_revenue AS" in result.sql
+    assert "PARTITION BY segment ORDER BY quarter" in result.sql
+    assert "previous_revenue IS NOT NULL" in result.sql
+    assert "revenue_change > 0" in result.sql
+    assert "revenue_change_pct" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_customer_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

@@ -438,6 +438,65 @@ JOIN genre g ON t.genre_id = g.genre_id
 JOIN album al ON t.album_id = al.album_id
 JOIN artist ar ON al.artist_id = ar.artist_id;```"""
 
+        if (
+            "segment" in question_lower
+            and ("quarter over quarter" in question_lower or "qoq" in question_lower)
+            and (
+                "growth" in question_lower
+                or "grew" in question_lower
+                or "increase" in question_lower
+                or "change" in question_lower
+                or "revenue" in question_lower
+            )
+        ):
+            return """Find customer segments with positive quarter-over-quarter revenue growth in the sample sales mart by aggregating revenue per segment and quarter, then using LAG to compare each segment against its prior quarter.
+
+```sql
+WITH segment_quarter_revenue AS (
+    SELECT c.segment,
+           '2024-Q' || CASE
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2'
+               WHEN CAST(strftime('%m', o.order_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3'
+               ELSE '4'
+           END AS quarter,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.status = 'closed won'
+    GROUP BY c.segment, quarter
+),
+segment_with_previous AS (
+    SELECT segment,
+           quarter,
+           revenue,
+           LAG(revenue) OVER (PARTITION BY segment ORDER BY quarter) AS previous_revenue
+    FROM segment_quarter_revenue
+),
+segment_growth AS (
+    SELECT segment,
+           quarter,
+           revenue,
+           previous_revenue,
+           ROUND(revenue - previous_revenue, 2) AS revenue_change,
+           CASE
+               WHEN previous_revenue IS NULL OR previous_revenue = 0 THEN NULL
+               ELSE ROUND((revenue - previous_revenue) * 100.0 / previous_revenue, 2)
+           END AS revenue_change_pct
+    FROM segment_with_previous
+)
+SELECT segment,
+       quarter,
+       revenue,
+       previous_revenue,
+       revenue_change,
+       revenue_change_pct
+FROM segment_growth
+WHERE previous_revenue IS NOT NULL
+  AND revenue_change > 0
+ORDER BY revenue_change DESC, segment;```"""
+
         if "segment" in question_lower and "revenue" in question_lower:
             return """Compare revenue by customer segment from the sample sales mart by joining customers, orders, and order items, then aggregating revenue and order count per segment.
 

@@ -106,6 +106,13 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         for example in examples
     )
     assert any(
+        example["question"] == "Which customer segments grew revenue quarter over quarter?"
+        and "segment_quarter_revenue" in example["sql"]
+        and "PARTITION BY segment" in example["sql"]
+        and "revenue_change > 0" in example["sql"]
+        for example in examples
+    )
+    assert any(
         example["question"] == "Which products were sold below list price?"
         and "oi.unit_price < p.list_price" in example["sql"]
         and "discount_amount" in example["sql"]

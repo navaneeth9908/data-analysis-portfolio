@@ -406,6 +406,32 @@ def test_answer_sample_question_handles_regional_quarter_over_quarter_growth(tmp
     assert "revenue_change_pct" in answer.table
 
 
+def test_answer_sample_question_handles_segment_quarter_over_quarter_growth(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segments grew revenue quarter over quarter?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders"]
+    assert answer.rows == [
+        {
+            "segment": "Logistics",
+            "quarter": "2024-Q2",
+            "revenue": 1200.0,
+            "previous_revenue": 1150.0,
+            "revenue_change": 50.0,
+            "revenue_change_pct": 4.35,
+        }
+    ]
+    assert answer.insight.headline == "Logistics leads with revenue of 1,200.00."
+    assert "segment_quarter_revenue" in answer.sql
+    assert "revenue_change_pct" in answer.table
+
+
 def test_answer_sample_question_handles_product_quarter_growth(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
