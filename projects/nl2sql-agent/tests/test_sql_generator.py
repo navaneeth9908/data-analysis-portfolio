@@ -489,6 +489,20 @@ def test_mock_generation_answers_sample_mart_cross_category_customer_question() 
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_regional_category_mix_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("How does product category revenue mix vary by region?")
+
+    assert "WITH regional_category_revenue AS" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Software'" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Services'" in result.sql
+    assert "software_share_pct" in result.sql
+    assert "ORDER BY total_revenue DESC, region" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_validator_flags_unknown_table_and_qualified_column() -> None:
     validator = SQLValidator(build_sales_schema())
 

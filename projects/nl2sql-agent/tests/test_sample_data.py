@@ -179,4 +179,10 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "services_revenue" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "How does product category revenue mix vary by region?"
+        and "regional_category_revenue" in example["sql"]
+        and "software_share_pct" in example["sql"]
+        for example in examples
+    )
 

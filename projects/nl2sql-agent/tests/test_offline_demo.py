@@ -804,6 +804,52 @@ def test_answer_sample_question_handles_cross_category_customers(tmp_path: Path)
     assert "software_revenue" in answer.table
 
 
+def test_answer_sample_question_handles_regional_category_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "How does product category revenue mix vary by region?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "region": "West",
+            "total_revenue": 6060.0,
+            "software_revenue": 3710.0,
+            "services_revenue": 2350.0,
+            "software_share_pct": 61.22,
+        },
+        {
+            "region": "South",
+            "total_revenue": 4900.0,
+            "software_revenue": 2750.0,
+            "services_revenue": 2150.0,
+            "software_share_pct": 56.12,
+        },
+        {
+            "region": "Midwest",
+            "total_revenue": 2350.0,
+            "software_revenue": 1150.0,
+            "services_revenue": 1200.0,
+            "software_share_pct": 48.94,
+        },
+        {
+            "region": "Northeast",
+            "total_revenue": 1900.0,
+            "software_revenue": 0.0,
+            "services_revenue": 1900.0,
+            "software_share_pct": 0.0,
+        },
+    ]
+    assert answer.insight.headline == "West leads with total revenue of 6,060.00."
+    assert "regional_category_revenue" in answer.sql
+    assert "software_share_pct" in answer.table
+
+
 def test_main_prints_portfolio_friendly_demo_output(tmp_path: Path, capsys) -> None:
     exit_code = offline_demo.main(
         [

@@ -584,6 +584,39 @@ HAVING COUNT(o.order_id) > 1
 ORDER BY order_count DESC, c.customer_name;```"""
 
 
+        if (
+            "region" in question_lower
+            and "category" in question_lower
+            and "revenue" in question_lower
+            and (
+                "mix" in question_lower
+                or "breakdown" in question_lower
+                or "vary" in question_lower
+                or "compare" in question_lower
+            )
+        ):
+            return """Compare product-category revenue mix by region from the sample sales mart by aggregating software, services, and total revenue per region, then calculating the software revenue share for a quick mix readout.
+
+```sql
+WITH regional_category_revenue AS (
+    SELECT c.region,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Software' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS software_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Services' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS services_revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.region
+)
+SELECT region,
+       total_revenue,
+       software_revenue,
+       services_revenue,
+       ROUND(software_revenue * 100.0 / total_revenue, 2) AS software_share_pct
+FROM regional_category_revenue
+ORDER BY total_revenue DESC, region;```"""
+
         if "region" in question_lower and "product" in question_lower and (
             "mix" in question_lower
             or "diversity" in question_lower
