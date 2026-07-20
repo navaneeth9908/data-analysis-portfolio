@@ -370,6 +370,20 @@ def test_mock_generation_answers_sample_mart_segment_revenue_question() -> None:
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_segment_category_mix_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("How does product category revenue mix vary by customer segment?")
+
+    assert "WITH segment_category_revenue AS" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Software'" in result.sql
+    assert "SUM(CASE WHEN p.category = 'Services'" in result.sql
+    assert "software_share_pct" in result.sql
+    assert "ORDER BY total_revenue DESC, segment" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_region_software_revenue_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

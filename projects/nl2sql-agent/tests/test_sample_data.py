@@ -191,4 +191,10 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "software_share_pct" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "How does product category revenue mix vary by customer segment?"
+        and "segment_category_revenue" in example["sql"]
+        and "software_share_pct" in example["sql"]
+        for example in examples
+    )
 

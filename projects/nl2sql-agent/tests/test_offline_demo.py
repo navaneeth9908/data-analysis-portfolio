@@ -137,6 +137,66 @@ def test_answer_sample_question_handles_segment_revenue_mix(tmp_path: Path) -> N
     assert "COUNT(DISTINCT o.order_id) AS order_count" in answer.sql
 
 
+def test_answer_sample_question_handles_segment_category_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "How does product category revenue mix vary by customer segment?",
+        db_path=db_path,
+        limit=6,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "segment": "CPG",
+            "total_revenue": 3910.0,
+            "software_revenue": 2710.0,
+            "services_revenue": 1200.0,
+            "software_share_pct": 69.31,
+        },
+        {
+            "segment": "Healthcare",
+            "total_revenue": 2650.0,
+            "software_revenue": 500.0,
+            "services_revenue": 2150.0,
+            "software_share_pct": 18.87,
+        },
+        {
+            "segment": "Logistics",
+            "total_revenue": 2350.0,
+            "software_revenue": 1150.0,
+            "services_revenue": 1200.0,
+            "software_share_pct": 48.94,
+        },
+        {
+            "segment": "Financial Services",
+            "total_revenue": 2250.0,
+            "software_revenue": 2250.0,
+            "services_revenue": 0.0,
+            "software_share_pct": 100.0,
+        },
+        {
+            "segment": "Retail",
+            "total_revenue": 2150.0,
+            "software_revenue": 1000.0,
+            "services_revenue": 1150.0,
+            "software_share_pct": 46.51,
+        },
+        {
+            "segment": "Education",
+            "total_revenue": 1900.0,
+            "software_revenue": 0.0,
+            "services_revenue": 1900.0,
+            "software_share_pct": 0.0,
+        },
+    ]
+    assert answer.insight.headline == "CPG leads with total revenue of 3,910.00."
+    assert "segment_category_revenue" in answer.sql
+    assert "software_share_pct" in answer.table
+
+
 def test_answer_sample_question_handles_region_software_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
