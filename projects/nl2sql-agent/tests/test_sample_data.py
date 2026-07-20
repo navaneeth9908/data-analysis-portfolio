@@ -167,6 +167,12 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         for example in examples
     )
     assert any(
+        example["question"] == "Which customer segments bought the widest product mix?"
+        and "GROUP BY c.segment" in example["sql"]
+        and "distinct_products" in example["sql"]
+        for example in examples
+    )
+    assert any(
         example["question"] == "Which products generate the most revenue in each region?"
         and "regional_product_revenue" in example["sql"]
         and "PARTITION BY c.region" in example["sql"]

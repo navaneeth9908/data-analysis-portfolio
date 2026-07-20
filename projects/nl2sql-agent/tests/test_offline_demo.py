@@ -586,6 +586,35 @@ def test_answer_sample_question_handles_region_product_mix(tmp_path: Path) -> No
     assert "category_count" in answer.table
 
 
+def test_answer_sample_question_handles_segment_product_mix(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segments bought the widest product mix?",
+        db_path=db_path,
+        limit=6,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {"segment": "CPG", "distinct_products": 3, "category_count": 2, "revenue": 3910.0},
+        {"segment": "Healthcare", "distinct_products": 3, "category_count": 2, "revenue": 2650.0},
+        {"segment": "Logistics", "distinct_products": 3, "category_count": 2, "revenue": 2350.0},
+        {"segment": "Retail", "distinct_products": 3, "category_count": 2, "revenue": 2150.0},
+        {
+            "segment": "Financial Services",
+            "distinct_products": 2,
+            "category_count": 1,
+            "revenue": 2250.0,
+        },
+        {"segment": "Education", "distinct_products": 1, "category_count": 1, "revenue": 1900.0},
+    ]
+    assert answer.insight.headline == "CPG leads with distinct products of 3."
+    assert "GROUP BY c.segment" in answer.sql
+    assert "Financial Services" in answer.table
+
+
 def test_answer_sample_question_handles_top_product_by_region(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

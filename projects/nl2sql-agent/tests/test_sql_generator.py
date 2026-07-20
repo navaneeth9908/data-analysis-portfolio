@@ -463,6 +463,19 @@ def test_mock_generation_answers_sample_mart_region_product_mix_question() -> No
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_segment_product_mix_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customer segments bought the widest product mix?")
+
+    assert "c.segment" in result.sql
+    assert "COUNT(DISTINCT p.product_id) AS distinct_products" in result.sql
+    assert "COUNT(DISTINCT p.category) AS category_count" in result.sql
+    assert "ORDER BY distinct_products DESC, revenue DESC" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_top_product_by_region_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

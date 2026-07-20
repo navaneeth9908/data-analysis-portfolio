@@ -649,6 +649,22 @@ ORDER BY distinct_products DESC, revenue DESC;
         },
         {
             "difficulty": "advanced",
+            "question": "Which customer segments bought the widest product mix?",
+            "sql": """
+SELECT c.segment,
+       COUNT(DISTINCT p.product_id) AS distinct_products,
+       COUNT(DISTINCT p.category) AS category_count,
+       ROUND(SUM(oi.quantity * oi.unit_price), 2) AS revenue
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY c.segment
+ORDER BY distinct_products DESC, revenue DESC;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "What is the repeat customer rate by region?",
             "sql": """
 WITH customer_order_counts AS (

@@ -47,8 +47,9 @@ The generated database contains a small star schema:
 28. Show quarter over quarter revenue growth by region for 2024
 29. Which customer segments grew revenue quarter over quarter?
 30. How does product category revenue mix vary by region?
+31. Which customer segments bought the widest product mix?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, regional category revenue-mix analysis, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, customer-segment product-mix breadth, regional category revenue-mix analysis, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -349,6 +350,25 @@ West      | 5                 | 2              | 6060.0
 South     | 5                 | 2              | 4900.0
 Midwest   | 3                 | 2              | 2350.0
 Northeast | 1                 | 1              | 1900.0
+```
+
+For customer-segment product-mix breadth, run:
+
+```bash
+python -m src.offline_demo "Which customer segments bought the widest product mix?" --db-path examples/sales_mart.sqlite --limit 6
+```
+
+Expected result excerpt:
+
+```text
+segment            | distinct_products | category_count | revenue
+-------------------+-------------------+----------------+--------
+CPG                | 3                 | 2              | 3910.0
+Healthcare         | 3                 | 2              | 2650.0
+Logistics          | 3                 | 2              | 2350.0
+Retail             | 3                 | 2              | 2150.0
+Financial Services | 2                 | 1              | 2250.0
+Education          | 1                 | 1              | 1900.0
 ```
 
 
