@@ -197,6 +197,66 @@ def test_answer_sample_question_handles_segment_category_mix(tmp_path: Path) -> 
     assert "software_share_pct" in answer.table
 
 
+def test_answer_sample_question_handles_segment_software_share(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segments have the highest software revenue share?",
+        db_path=db_path,
+        limit=6,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "segment": "Financial Services",
+            "software_share_pct": 100.0,
+            "total_revenue": 2250.0,
+            "software_revenue": 2250.0,
+            "services_revenue": 0.0,
+        },
+        {
+            "segment": "CPG",
+            "software_share_pct": 69.31,
+            "total_revenue": 3910.0,
+            "software_revenue": 2710.0,
+            "services_revenue": 1200.0,
+        },
+        {
+            "segment": "Logistics",
+            "software_share_pct": 48.94,
+            "total_revenue": 2350.0,
+            "software_revenue": 1150.0,
+            "services_revenue": 1200.0,
+        },
+        {
+            "segment": "Retail",
+            "software_share_pct": 46.51,
+            "total_revenue": 2150.0,
+            "software_revenue": 1000.0,
+            "services_revenue": 1150.0,
+        },
+        {
+            "segment": "Healthcare",
+            "software_share_pct": 18.87,
+            "total_revenue": 2650.0,
+            "software_revenue": 500.0,
+            "services_revenue": 2150.0,
+        },
+        {
+            "segment": "Education",
+            "software_share_pct": 0.0,
+            "total_revenue": 1900.0,
+            "software_revenue": 0.0,
+            "services_revenue": 1900.0,
+        },
+    ]
+    assert answer.insight.headline == "Financial Services leads with software share pct of 100.00."
+    assert "ORDER BY software_share_pct DESC" in answer.sql
+    assert "Financial Services" in answer.table
+
+
 def test_answer_sample_question_handles_segment_discount_analysis(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

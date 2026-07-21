@@ -569,6 +569,42 @@ WHERE oi.unit_price < p.list_price
 GROUP BY c.segment
 ORDER BY discount_amount DESC, discounted_units DESC, c.segment;```"""
 
+        if (
+            "segment" in question_lower
+            and "software" in question_lower
+            and "revenue" in question_lower
+            and (
+                "share" in question_lower
+                or "percent" in question_lower
+                or "percentage" in question_lower
+                or "mix" in question_lower
+            )
+        ):
+            return """Rank customer segments by software revenue share from the sample sales mart by aggregating software, services, and total revenue per segment, then sorting by the software contribution percentage.
+
+```sql
+WITH segment_category_revenue AS (
+    SELECT c.segment,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Software' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS software_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Services' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS services_revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.segment
+)
+SELECT segment,
+       CASE
+           WHEN total_revenue = 0 THEN NULL
+           ELSE ROUND(software_revenue * 100.0 / total_revenue, 2)
+       END AS software_share_pct,
+       total_revenue,
+       software_revenue,
+       services_revenue
+FROM segment_category_revenue
+ORDER BY software_share_pct DESC, total_revenue DESC, segment;```"""
+
         if "segment" in question_lower and "revenue" in question_lower:
             return """Compare revenue by customer segment from the sample sales mart by joining customers, orders, and order items, then aggregating revenue and order count per segment.
 

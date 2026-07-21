@@ -807,6 +807,33 @@ ORDER BY total_revenue DESC, segment;
         },
         {
             "difficulty": "advanced",
+            "question": "Which customer segments have the highest software revenue share?",
+            "sql": """
+WITH segment_category_revenue AS (
+    SELECT c.segment,
+           ROUND(SUM(oi.quantity * oi.unit_price), 2) AS total_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Software' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS software_revenue,
+           ROUND(SUM(CASE WHEN p.category = 'Services' THEN oi.quantity * oi.unit_price ELSE 0 END), 2) AS services_revenue
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    JOIN order_items oi ON o.order_id = oi.order_id
+    JOIN products p ON oi.product_id = p.product_id
+    GROUP BY c.segment
+)
+SELECT segment,
+       CASE
+           WHEN total_revenue = 0 THEN NULL
+           ELSE ROUND(software_revenue * 100.0 / total_revenue, 2)
+       END AS software_share_pct,
+       total_revenue,
+       software_revenue,
+       services_revenue
+FROM segment_category_revenue
+ORDER BY software_share_pct DESC, total_revenue DESC, segment;
+""".strip(),
+        },
+        {
+            "difficulty": "advanced",
             "question": "Which customer segments received the largest discounts?",
             "sql": """
 SELECT c.segment,
