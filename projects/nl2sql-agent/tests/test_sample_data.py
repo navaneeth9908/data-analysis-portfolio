@@ -197,4 +197,11 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "software_share_pct" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which customer segments received the largest discounts?"
+        and "oi.unit_price < p.list_price" in example["sql"]
+        and "discount_amount" in example["sql"]
+        and "GROUP BY c.segment" in example["sql"]
+        for example in examples
+    )
 

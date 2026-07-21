@@ -551,6 +551,24 @@ JOIN products p ON oi.product_id = p.product_id
 GROUP BY c.segment
 ORDER BY distinct_products DESC, revenue DESC;```"""
 
+        if "segment" in question_lower and (
+            "discount" in question_lower
+            or "discounts" in question_lower
+        ):
+            return """Compare discount dollars by customer segment from the sample sales mart by joining customers, orders, line items, and products, then summing realized price variance below list price.
+
+```sql
+SELECT c.segment,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       SUM(oi.quantity) AS discounted_units
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY c.segment
+ORDER BY discount_amount DESC, discounted_units DESC, c.segment;```"""
+
         if "segment" in question_lower and "revenue" in question_lower:
             return """Compare revenue by customer segment from the sample sales mart by joining customers, orders, and order items, then aggregating revenue and order count per segment.
 

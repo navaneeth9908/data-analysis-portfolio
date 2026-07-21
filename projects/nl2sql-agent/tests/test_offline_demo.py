@@ -197,6 +197,26 @@ def test_answer_sample_question_handles_segment_category_mix(tmp_path: Path) -> 
     assert "software_share_pct" in answer.table
 
 
+def test_answer_sample_question_handles_segment_discount_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customer segments received the largest discounts?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {"segment": "Retail", "discount_amount": 1000.0, "discounted_units": 1},
+        {"segment": "CPG", "discount_amount": 40.0, "discounted_units": 1},
+    ]
+    assert answer.insight.headline == "Retail leads with discount amount of 1,000.00."
+    assert "oi.unit_price < p.list_price" in answer.sql
+    assert "discount_amount" in answer.table
+
+
 def test_answer_sample_question_handles_region_software_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
