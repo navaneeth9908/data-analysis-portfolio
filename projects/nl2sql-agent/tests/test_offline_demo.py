@@ -277,6 +277,38 @@ def test_answer_sample_question_handles_segment_discount_analysis(tmp_path: Path
     assert "discount_amount" in answer.table
 
 
+def test_answer_sample_question_handles_customer_discount_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which customers received the largest discounts?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "customer_name": "Acme Retail",
+            "region": "West",
+            "discount_amount": 1000.0,
+            "discounted_units": 1,
+            "discounted_orders": 1,
+        },
+        {
+            "customer_name": "Bluebird Foods",
+            "region": "West",
+            "discount_amount": 40.0,
+            "discounted_units": 1,
+            "discounted_orders": 1,
+        },
+    ]
+    assert answer.insight.headline == "Acme Retail leads with discount amount of 1,000.00."
+    assert "GROUP BY c.customer_name, c.region" in answer.sql
+    assert "discounted_orders" in answer.table
+
+
 def test_answer_sample_question_handles_region_software_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 

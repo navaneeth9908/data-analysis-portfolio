@@ -410,6 +410,21 @@ def test_mock_generation_answers_sample_mart_segment_discount_question() -> None
     assert result.validation_errors == []
 
 
+def test_mock_generation_answers_sample_mart_customer_discount_question() -> None:
+    generator = SQLGenerator(build_sample_mart_schema())
+
+    result = generator.generate("Which customers received the largest discounts?")
+
+    assert "c.customer_name" in result.sql
+    assert "discount_amount" in result.sql
+    assert "discounted_units" in result.sql
+    assert "discounted_orders" in result.sql
+    assert "oi.unit_price < p.list_price" in result.sql
+    assert "GROUP BY c.customer_name, c.region" in result.sql
+    assert result.tables_used == ["customers", "order_items", "orders", "products"]
+    assert result.validation_errors == []
+
+
 def test_mock_generation_answers_sample_mart_region_software_revenue_question() -> None:
     generator = SQLGenerator(build_sample_mart_schema())
 

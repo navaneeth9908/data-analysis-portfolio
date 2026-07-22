@@ -569,6 +569,26 @@ WHERE oi.unit_price < p.list_price
 GROUP BY c.segment
 ORDER BY discount_amount DESC, discounted_units DESC, c.segment;```"""
 
+        if "customer" in question_lower and (
+            "discount" in question_lower
+            or "discounts" in question_lower
+        ):
+            return """Rank customers by discount dollars from the sample sales mart by comparing realized line-item prices against product list prices, then counting affected units and orders per customer.
+
+```sql
+SELECT c.customer_name,
+       c.region,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       SUM(oi.quantity) AS discounted_units,
+       COUNT(DISTINCT o.order_id) AS discounted_orders
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.unit_price < p.list_price
+GROUP BY c.customer_name, c.region
+ORDER BY discount_amount DESC, discounted_units DESC, c.customer_name;```"""
+
         if (
             "segment" in question_lower
             and "software" in question_lower
