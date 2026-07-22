@@ -866,6 +866,27 @@ GROUP BY c.customer_name, c.region
 ORDER BY discount_amount DESC, discounted_units DESC, c.customer_name;
 """.strip(),
         },
+        {
+            "difficulty": "advanced",
+            "question": "Which regions received the largest discounts?",
+            "sql": """
+SELECT c.region,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       ROUND(
+           SUM((p.list_price - oi.unit_price) * oi.quantity) * 100.0
+           / SUM(p.list_price * oi.quantity),
+           2
+       ) AS discount_rate_pct,
+       SUM(CASE WHEN oi.unit_price < p.list_price THEN oi.quantity ELSE 0 END) AS discounted_units
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY c.region
+HAVING discount_amount > 0
+ORDER BY discount_amount DESC, discount_rate_pct DESC, c.region;
+""".strip(),
+        },
     ]
 
 

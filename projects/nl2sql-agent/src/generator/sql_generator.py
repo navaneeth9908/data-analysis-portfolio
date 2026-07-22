@@ -589,6 +589,29 @@ WHERE oi.unit_price < p.list_price
 GROUP BY c.customer_name, c.region
 ORDER BY discount_amount DESC, discounted_units DESC, c.customer_name;```"""
 
+        if "region" in question_lower and (
+            "discount" in question_lower
+            or "discounts" in question_lower
+        ):
+            return """Compare regional discount exposure from the sample sales mart by joining customers, orders, line items, and products, then calculating both discount dollars and the discount rate against list-price value.
+
+```sql
+SELECT c.region,
+       ROUND(SUM((p.list_price - oi.unit_price) * oi.quantity), 2) AS discount_amount,
+       ROUND(
+           SUM((p.list_price - oi.unit_price) * oi.quantity) * 100.0
+           / SUM(p.list_price * oi.quantity),
+           2
+       ) AS discount_rate_pct,
+       SUM(CASE WHEN oi.unit_price < p.list_price THEN oi.quantity ELSE 0 END) AS discounted_units
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY c.region
+HAVING discount_amount > 0
+ORDER BY discount_amount DESC, discount_rate_pct DESC, c.region;```"""
+
         if (
             "segment" in question_lower
             and "software" in question_lower

@@ -217,4 +217,11 @@ def test_default_question_examples_match_sales_mart_tables() -> None:
         and "GROUP BY c.customer_name, c.region" in example["sql"]
         for example in examples
     )
+    assert any(
+        example["question"] == "Which regions received the largest discounts?"
+        and "discount_rate_pct" in example["sql"]
+        and "discounted_units" in example["sql"]
+        and "GROUP BY c.region" in example["sql"]
+        for example in examples
+    )
 

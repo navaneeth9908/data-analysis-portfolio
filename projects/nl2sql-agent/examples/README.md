@@ -52,8 +52,9 @@ The generated database contains a small star schema:
 33. Which customer segments have the highest software revenue share?
 34. Which customer segments received the largest discounts?
 35. Which customers received the largest discounts?
+36. Which regions received the largest discounts?
 
-These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, customer-segment product-mix breadth, regional category revenue-mix analysis, customer-segment category revenue-mix analysis, customer-segment software-share ranking, customer-segment discount analysis, customer-level discount analysis, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
+These questions are covered by the offline rule-backed generator so the demo stays deterministic without API keys. They exercise joins, self-joins, grouping, ranking, category filtering, quantity analysis, realized-price analysis, repeat-customer analysis, repeat-customer regional concentration, repeat-customer rate analysis, regional product-mix breadth, customer-segment product-mix breadth, regional category revenue-mix analysis, customer-segment category revenue-mix analysis, customer-segment software-share ranking, customer-segment discount analysis, customer-level discount analysis, regional discount exposure analysis, top-product-by-region analysis, cross-category customer adoption, product affinity analysis, date bucketing, quarterly time bucketing, quarter-over-quarter variance calculations, regional quarter-over-quarter growth, product-level quarter-over-quarter growth, customer-segment quarter-over-quarter growth, customer-segment revenue analysis, regional software-revenue analysis, regional services-revenue analysis, customer concentration analysis, category mix analysis, revenue-share calculations, window functions, month-over-month variance calculations, order-level CTEs, list-price variance analysis, discount-rate analysis, and CTE-style reasoning in the SQL generator and executor.
 
 ## Offline demo runner
 
@@ -260,6 +261,20 @@ customer_name  | region | discount_amount | discounted_units | discounted_orders
 ---------------+--------+-----------------+------------------+------------------
 Acme Retail    | West   | 1000.0          | 1                | 1
 Bluebird Foods | West   | 40.0            | 1                | 1
+```
+
+For regional discount exposure, run:
+
+```bash
+python -m src.offline_demo "Which regions received the largest discounts?" --db-path examples/sales_mart.sqlite --limit 10
+```
+
+Expected result excerpt:
+
+```text
+region | discount_amount | discount_rate_pct | discounted_units
+-------+-----------------+-------------------+-----------------
+West   | 1040.0          | 14.65             | 2
 ```
 
 For customer concentration analysis, run:

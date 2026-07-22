@@ -309,6 +309,30 @@ def test_answer_sample_question_handles_customer_discount_analysis(tmp_path: Pat
     assert "discounted_orders" in answer.table
 
 
+def test_answer_sample_question_handles_region_discount_analysis(tmp_path: Path) -> None:
+    db_path = tmp_path / "sales_mart.sqlite"
+
+    answer = offline_demo.answer_sample_question(
+        "Which regions received the largest discounts?",
+        db_path=db_path,
+        limit=10,
+    )
+
+    assert answer.validation_errors == []
+    assert answer.tables_used == ["customers", "order_items", "orders", "products"]
+    assert answer.rows == [
+        {
+            "region": "West",
+            "discount_amount": 1040.0,
+            "discount_rate_pct": 14.65,
+            "discounted_units": 2,
+        }
+    ]
+    assert answer.insight.headline == "West leads with discount amount of 1,040.00."
+    assert "GROUP BY c.region" in answer.sql
+    assert "discount_rate_pct" in answer.table
+
+
 def test_answer_sample_question_handles_region_software_revenue_mix(tmp_path: Path) -> None:
     db_path = tmp_path / "sales_mart.sqlite"
 
