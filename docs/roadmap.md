@@ -50,6 +50,10 @@ Planned milestones:
 - evaluation questions
 - README with examples
 
+Progress:
+
+- Added an offline Markdown ingestion, keyword retrieval, and cited extractive-answer path under `projects/03-report-qa-agent`.
+
 ### 4. Competitive Intelligence Pipeline
 
 Build a structured market-research workflow that compares companies, products, or vendors using collected notes and scored criteria.
