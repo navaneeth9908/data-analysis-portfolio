@@ -5,6 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from report_qa.answer import answer_question
+from report_qa.cli import main
+from report_qa.evaluation import (
+    EvaluationQuestion,
+    evaluate_questions,
+    load_evaluation_questions,
+)
 from report_qa.ingest import load_markdown_chunks
 from report_qa.retrieval import search_chunks
 
@@ -73,3 +79,112 @@ def test_answer_question_returns_cited_extractive_answer(tmp_path: Path) -> None
     assert citation.start_line == 7
     assert citation.end_line == 9
     assert citation.label == "board_report.md#Risk watch:L7-L9"
+
+
+def test_evaluate_questions_marks_answer_and_citation_matches(tmp_path: Path) -> None:
+    report_path = write_board_report(tmp_path)
+    questions = (
+        EvaluationQuestion(
+            id="renewal_delay",
+            question="Why were enterprise renewals delayed?",
+            expected_answer_terms=("security review cycle",),
+            expected_citation="board_report.md#Risk watch:L7-L9",
+        ),
+    )
+
+    results = evaluate_questions(questions, [report_path], top_k=2)
+
+    assert len(results) == 1
+    result = results[0]
+    assert result.passed is True
+    assert result.matched_answer_terms == ("security review cycle",)
+    assert result.expected_citation_found is True
+    assert result.failure_reasons == ()
+
+
+def test_load_evaluation_questions_reads_json_question_set(tmp_path: Path) -> None:
+    eval_path = tmp_path / "questions.json"
+    eval_path.write_text(
+        """
+        {
+          "questions": [
+            {
+              "id": "pipeline_reliability",
+              "question": "What improved data pipeline reliability?",
+              "expected_answer_terms": ["data-quality gates", "weekly load"],
+              "expected_citation": "sample_board_report.md#Data operations:L12-L13"
+            }
+          ]
+        }
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    questions = load_evaluation_questions(eval_path)
+
+    assert questions == (
+        EvaluationQuestion(
+            id="pipeline_reliability",
+            question="What improved data pipeline reliability?",
+            expected_answer_terms=("data-quality gates", "weekly load"),
+            expected_citation="sample_board_report.md#Data operations:L12-L13",
+        ),
+    )
+
+
+def test_cli_evaluation_mode_prints_pass_summary(tmp_path: Path, capsys) -> None:
+    report_path = write_board_report(tmp_path)
+    eval_path = tmp_path / "questions.json"
+    eval_path.write_text(
+        """
+        {
+          "questions": [
+            {
+              "id": "renewal_delay",
+              "question": "Why were enterprise renewals delayed?",
+              "expected_answer_terms": ["security review cycle"],
+              "expected_citation": "board_report.md#Risk watch:L7-L9"
+            }
+          ]
+        }
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "--eval-file",
+            str(eval_path),
+            "--report",
+            str(report_path),
+            "--top-k",
+            "2",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Evaluation: 1/1 passed" in output
+    assert "PASS renewal_delay" in output
+    assert "board_report.md#Risk watch:L7-L9" in output
+
+
+def test_example_evaluation_questions_pass_against_sample_report() -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    questions = load_evaluation_questions(project_dir / "examples/evaluation_questions.json")
+
+    results = evaluate_questions(
+        questions,
+        [project_dir / "examples/sample_board_report.md"],
+        top_k=2,
+    )
+
+    assert [result.question.id for result in results] == [
+        "renewal_delay",
+        "pipeline_reliability",
+        "incremental_revenue_region",
+        "segment_label_validation",
+    ]
+    assert all(result.passed for result in results), [
+        (result.question.id, result.failure_reasons) for result in results
+    ]

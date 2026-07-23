@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "id": "renewal_delay",
+      "question": "Why were enterprise renewals delayed?",
+      "expected_answer_terms": ["security review cycle"],
+      "expected_citation": "sample_board_report.md#Risk watch:L9-L10"
+    },
+    {
+      "id": "pipeline_reliability",
+      "question": "What improved data pipeline reliability?",
+      "expected_answer_terms": ["data-quality gates", "weekly load"],
+      "expected_citation": "sample_board_report.md#Data operations:L12-L13"
+    },
+    {
+      "id": "incremental_revenue_region",
+      "question": "Which region contributed the largest incremental revenue?",
+      "expected_answer_terms": ["West-region expansion accounts", "largest incremental revenue"],
+      "expected_citation": "sample_board_report.md#Executive summary:L3-L4"
+    },
+    {
+      "id": "segment_label_validation",
+      "question": "What validation rule will data engineering add?",
+      "expected_answer_terms": ["segment-label validation rule", "monthly executive dashboard refresh"],
+      "expected_citation": "sample_board_report.md#Next actions:L15-L16"
+    }
+  ]
+}

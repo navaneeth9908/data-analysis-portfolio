@@ -61,4 +61,4 @@ Each project should include:
 
 The NL2SQL Analytics Agent is currently the most developed project. It includes a deterministic local sales mart, safe SQL generation patterns, executable sample questions, result insights, and focused tests.
 
-The Report Q&A Agent has started with a deterministic Markdown ingestion and keyword-retrieval workflow that returns extractive answers with line-level citations for offline demos.
+The Report Q&A Agent has started with a deterministic Markdown ingestion, keyword-retrieval, cited extractive-answer workflow, and an offline evaluation question set for citation checks.

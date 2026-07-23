@@ -16,10 +16,12 @@ Analytics and data-engineering roles often require turning long business reports
 ```text
 projects/03-report-qa-agent/
   examples/sample_board_report.md
+  examples/evaluation_questions.json
   src/report_qa/
     ingest.py       # Markdown chunking with heading + line spans
     retrieval.py    # deterministic keyword retrieval fallback
     answer.py       # extractive answer selection with citations
+    evaluation.py   # expected-answer checks for offline evaluation
     cli.py          # local smoke-test CLI
   tests/test_report_qa.py
 ```
@@ -34,6 +36,7 @@ source .venv/Scripts/activate  # Git Bash on Windows
 pip install -r requirements.txt
 PYTHONPATH=src pytest tests/ -q
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewals delayed?" examples/sample_board_report.md --top-k 2
+PYTHONPATH=src python -m report_qa.cli --eval-file examples/evaluation_questions.json --report examples/sample_board_report.md --top-k 2
 ```
 
 Expected answer excerpt:
@@ -48,12 +51,23 @@ Citations:
 - sample_board_report.md#Risk watch:L9-L10
 ```
 
+Expected evaluation excerpt:
+
+```text
+Evaluation: 4/4 passed
+PASS renewal_delay - Why were enterprise renewals delayed?
+PASS pipeline_reliability - What improved data pipeline reliability?
+PASS incremental_revenue_region - Which region contributed the largest incremental revenue?
+PASS segment_label_validation - What validation rule will data engineering add?
+```
+
 ## Current capabilities
 
 - Parses Markdown headings into citation-ready chunks.
 - Preserves source filename, heading, and line ranges for each chunk.
 - Ranks chunks using normalized question-term overlap with heading boosts.
 - Produces a deterministic extractive answer from the best evidence chunk.
+- Runs a local evaluation question set with expected answer terms and citations.
 - Handles no-evidence questions with a safe fallback answer.
 
 ## Example questions
@@ -67,6 +81,5 @@ Try these against `examples/sample_board_report.md`:
 ## Planned next milestones
 
 - Add plain-text and PDF extraction adapters.
-- Store evaluation questions and expected citations.
 - Add a lightweight local vector index option while keeping keyword fallback.
 - Generate a Markdown answer brief with supporting snippets.

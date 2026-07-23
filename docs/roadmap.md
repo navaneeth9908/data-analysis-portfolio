@@ -53,6 +53,7 @@ Planned milestones:
 Progress:
 
 - Added an offline Markdown ingestion, keyword retrieval, and cited extractive-answer path under `projects/03-report-qa-agent`.
+- Added a deterministic evaluation question set with expected answer terms, citation checks, and CLI pass/fail reporting.
 
 ### 4. Competitive Intelligence Pipeline
 
