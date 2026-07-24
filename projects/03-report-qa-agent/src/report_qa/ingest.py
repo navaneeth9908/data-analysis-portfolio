@@ -1,4 +1,4 @@
-"""Markdown ingestion and citation-preserving chunking."""
+"""Document ingestion and citation-preserving chunking for local reports."""
 
 from __future__ import annotations
 
@@ -59,12 +59,91 @@ def load_markdown_chunks(path: str | Path, max_chars: int = 900) -> list[Documen
     return chunks
 
 
+def load_text_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
+    """Load a plain-text report into citation-ready section chunks.
+
+    Plain-text exports often keep human-readable section labels without Markdown
+    markers. A line is treated as a heading when it is short, alphabetic, and
+    does not end like a sentence; following lines become the cited chunk body.
+    """
+    if max_chars < 120:
+        raise ValueError("max_chars must be at least 120 so chunks keep useful context")
+
+    report_path = Path(path)
+    lines = report_path.read_text(encoding="utf-8").splitlines()
+    chunks: list[DocumentChunk] = []
+    heading = report_path.stem.replace("_", " ").replace("-", " ").title()
+    section_start = 1
+    section_lines: list[tuple[int, str]] = []
+
+    def flush_section() -> None:
+        nonlocal section_lines
+        trimmed = _trim_blank_edges(section_lines)
+        if not trimmed:
+            section_lines = []
+            return
+        chunks.extend(
+            _split_section(
+                source=report_path.name,
+                heading=heading,
+                heading_line=section_start,
+                lines=trimmed,
+                max_chars=max_chars,
+            )
+        )
+        section_lines = []
+
+    for line_no, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if _looks_like_text_heading(stripped):
+            flush_section()
+            heading = stripped.rstrip(":")
+            section_start = line_no
+            section_lines = []
+            continue
+        section_lines.append((line_no, line))
+
+    flush_section()
+    return chunks
+
+
 def load_many_markdown(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
     """Load multiple Markdown files in deterministic path order."""
     chunks: list[DocumentChunk] = []
     for path in sorted(Path(p) for p in paths):
         chunks.extend(load_markdown_chunks(path, max_chars=max_chars))
     return chunks
+
+
+def load_document_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
+    """Load a supported report file into citation-ready chunks."""
+    report_path = Path(path)
+    suffix = report_path.suffix.lower()
+    if suffix in {".md", ".markdown"}:
+        return load_markdown_chunks(report_path, max_chars=max_chars)
+    if suffix == ".txt":
+        return load_text_chunks(report_path, max_chars=max_chars)
+    raise ValueError(f"unsupported report format: {report_path.suffix or '(no suffix)'}")
+
+
+def load_many_documents(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
+    """Load supported report files in deterministic path order."""
+    chunks: list[DocumentChunk] = []
+    for path in sorted(Path(p) for p in paths):
+        chunks.extend(load_document_chunks(path, max_chars=max_chars))
+    return chunks
+
+
+def _looks_like_text_heading(line: str) -> bool:
+    if not line:
+        return False
+    if len(line) > 80 or len(line.split()) > 8:
+        return False
+    if not any(character.isalpha() for character in line):
+        return False
+    if line.startswith(("-", "*", "•")):
+        return False
+    return not line.endswith((".", "!", "?", ";"))
 
 
 def _trim_blank_edges(lines: list[tuple[int, str]]) -> list[tuple[int, str]]:

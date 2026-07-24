@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import report_qa.ingest as ingest_module
 from report_qa.answer import answer_question
 from report_qa.cli import main
 from report_qa.evaluation import (
@@ -34,6 +35,54 @@ def write_board_report(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return report_path
+
+
+def write_plain_text_customer_memo(tmp_path: Path) -> Path:
+    """Create a plain-text report fixture with analyst-style section labels."""
+    report_path = tmp_path / "customer_success_memo.txt"
+    report_path.write_text(
+        "Customer Success Memo\n"
+        "\n"
+        "Executive Summary\n"
+        "West-region expansion accounts increased dashboard adoption among healthcare teams.\n"
+        "\n"
+        "Risk Watch\n"
+        "Enterprise renewal approvals were delayed because the customer's legal team needed a fresh data-processing addendum.\n"
+        "A renewal owner will escalate unresolved security questions every Friday.\n"
+        "\n"
+        "Next Actions\n"
+        "Sales operations will circulate a procurement checklist before the next steering committee.\n",
+        encoding="utf-8",
+    )
+    return report_path
+
+
+def test_load_text_chunks_preserves_section_citations(tmp_path: Path) -> None:
+    report_path = write_plain_text_customer_memo(tmp_path)
+
+    chunks = ingest_module.load_text_chunks(report_path, max_chars=280)
+
+    risk = next(chunk for chunk in chunks if chunk.heading == "Risk Watch")
+    assert risk.source == "customer_success_memo.txt"
+    assert risk.start_line == 6
+    assert risk.end_line == 8
+    assert "data-processing addendum" in risk.text
+
+
+def test_answer_question_supports_plain_text_reports_with_citations(tmp_path: Path) -> None:
+    report_path = write_plain_text_customer_memo(tmp_path)
+
+    answer = answer_question(
+        "Why were enterprise renewals delayed?",
+        [report_path],
+        top_k=2,
+    )
+
+    assert answer.answer == (
+        "Enterprise renewal approvals were delayed because the customer's legal "
+        "team needed a fresh data-processing addendum."
+    )
+    assert answer.citations[0].label == "customer_success_memo.txt#Risk Watch:L6-L8"
 
 
 def test_load_markdown_chunks_preserves_headings_and_citation_lines(tmp_path: Path) -> None:

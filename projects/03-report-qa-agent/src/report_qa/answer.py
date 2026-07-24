@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from collections.abc import Sequence
 
-from .ingest import load_many_markdown
+from .ingest import load_many_documents
 from .models import Answer, Citation, DocumentChunk, SearchHit
 from .retrieval import search_chunks, tokenize
 
@@ -21,7 +21,7 @@ def answer_question(
     max_chars: int = 900,
 ) -> Answer:
     """Answer a question using deterministic retrieval and source citations."""
-    chunks = load_many_markdown(paths, max_chars=max_chars)
+    chunks = load_many_documents(paths, max_chars=max_chars)
     hits = tuple(search_chunks(chunks, question, top_k=top_k))
     if not hits:
         return Answer(

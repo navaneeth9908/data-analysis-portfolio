@@ -54,6 +54,7 @@ Progress:
 
 - Added an offline Markdown ingestion, keyword retrieval, and cited extractive-answer path under `projects/03-report-qa-agent`.
 - Added a deterministic evaluation question set with expected answer terms, citation checks, and CLI pass/fail reporting.
+- Added plain-text report ingestion with heading-based line citations and a customer-success memo smoke example.
 
 ### 4. Competitive Intelligence Pipeline
 

@@ -16,7 +16,7 @@ def main(argv: list[str] | None = None) -> int:
         "reports",
         nargs="*",
         type=Path,
-        help="Markdown report files to search",
+        help="Markdown or plain-text report files to search",
     )
     parser.add_argument("--top-k", type=int, default=3, help="Number of chunks to retrieve")
     parser.add_argument(
@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
         dest="evaluation_reports",
         action="append",
         type=Path,
-        help="Report file to use in evaluation mode; repeat for multiple reports",
+        help="Report file to use in evaluation mode; repeat for multiple Markdown or plain-text reports",
     )
     args = parser.parse_args(argv)
 

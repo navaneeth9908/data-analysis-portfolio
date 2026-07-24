@@ -1,0 +1,14 @@
+Customer Success Memo
+
+Executive Summary
+West-region expansion accounts increased dashboard adoption among healthcare teams, while enterprise renewals need better coordination between procurement, legal, and security stakeholders.
+
+Risk Watch
+Enterprise renewal approvals were delayed because the customer's legal team needed a fresh data-processing addendum.
+A renewal owner will escalate unresolved security questions every Friday and record blockers in the shared risk tracker.
+
+Data Operations
+The analytics engineering team reduced weekly load errors after adding schema checks to the customer usage feed and alerting on missing segment labels.
+
+Next Actions
+Sales operations will circulate a procurement checklist before the next steering committee, and data engineering will validate segment labels before dashboard refreshes.

@@ -16,9 +16,10 @@ Analytics and data-engineering roles often require turning long business reports
 ```text
 projects/03-report-qa-agent/
   examples/sample_board_report.md
+  examples/customer_success_memo.txt
   examples/evaluation_questions.json
   src/report_qa/
-    ingest.py       # Markdown chunking with heading + line spans
+    ingest.py       # Markdown/plain-text chunking with heading + line spans
     retrieval.py    # deterministic keyword retrieval fallback
     answer.py       # extractive answer selection with citations
     evaluation.py   # expected-answer checks for offline evaluation
@@ -36,6 +37,7 @@ source .venv/Scripts/activate  # Git Bash on Windows
 pip install -r requirements.txt
 PYTHONPATH=src pytest tests/ -q
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewals delayed?" examples/sample_board_report.md --top-k 2
+PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewal approvals delayed?" examples/customer_success_memo.txt --top-k 2
 PYTHONPATH=src python -m report_qa.cli --eval-file examples/evaluation_questions.json --report examples/sample_board_report.md --top-k 2
 ```
 
@@ -51,6 +53,18 @@ Citations:
 - sample_board_report.md#Risk watch:L9-L10
 ```
 
+Plain-text memo smoke test excerpt:
+
+```text
+Question: Why were enterprise renewal approvals delayed?
+
+Answer:
+Enterprise renewal approvals were delayed because the customer's legal team needed a fresh data-processing addendum.
+
+Citations:
+- customer_success_memo.txt#Risk Watch:L6-L8
+```
+
 Expected evaluation excerpt:
 
 ```text
@@ -63,7 +77,7 @@ PASS segment_label_validation - What validation rule will data engineering add?
 
 ## Current capabilities
 
-- Parses Markdown headings into citation-ready chunks.
+- Parses Markdown and plain-text headings into citation-ready chunks.
 - Preserves source filename, heading, and line ranges for each chunk.
 - Ranks chunks using normalized question-term overlap with heading boosts.
 - Produces a deterministic extractive answer from the best evidence chunk.
@@ -72,14 +86,15 @@ PASS segment_label_validation - What validation rule will data engineering add?
 
 ## Example questions
 
-Try these against `examples/sample_board_report.md`:
+Try these against `examples/sample_board_report.md` and `examples/customer_success_memo.txt`:
 
 1. Why were enterprise renewals delayed?
 2. What improved data pipeline reliability?
 3. Which region contributed the largest incremental revenue?
+4. Why were enterprise renewal approvals delayed?
 
 ## Planned next milestones
 
-- Add plain-text and PDF extraction adapters.
+- Add PDF extraction adapters for report exports.
 - Add a lightweight local vector index option while keeping keyword fallback.
 - Generate a Markdown answer brief with supporting snippets.
