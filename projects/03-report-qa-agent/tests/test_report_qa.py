@@ -6,6 +6,7 @@ from pathlib import Path
 
 import report_qa.ingest as ingest_module
 from report_qa.answer import answer_question
+from report_qa.brief import render_answer_brief
 from report_qa.cli import main
 from report_qa.evaluation import (
     EvaluationQuestion,
@@ -128,6 +129,47 @@ def test_answer_question_returns_cited_extractive_answer(tmp_path: Path) -> None
     assert citation.start_line == 7
     assert citation.end_line == 9
     assert citation.label == "board_report.md#Risk watch:L7-L9"
+
+
+def test_render_answer_brief_includes_citations_and_supporting_snippets(tmp_path: Path) -> None:
+    report_path = write_board_report(tmp_path)
+    answer = answer_question(
+        "Why were enterprise renewals delayed?",
+        [report_path],
+        top_k=2,
+    )
+
+    brief = render_answer_brief(answer)
+
+    assert brief.startswith("# Report Q&A Brief\n")
+    assert "## Question\nWhy were enterprise renewals delayed?" in brief
+    assert "## Answer\nEnterprise renewal approvals were delayed" in brief
+    assert "- board_report.md#Risk watch:L7-L9" in brief
+    assert "### Evidence 1: board_report.md#Risk watch:L7-L9" in brief
+    assert "Matched terms: `delayed`, `enterprise`, `renewal`" in brief
+    assert "security review cycle took longer than planned" in brief
+
+
+def test_cli_writes_markdown_answer_brief(tmp_path: Path) -> None:
+    report_path = write_board_report(tmp_path)
+    brief_path = tmp_path / "renewal_brief.md"
+
+    exit_code = main(
+        [
+            "Why were enterprise renewals delayed?",
+            str(report_path),
+            "--top-k",
+            "2",
+            "--brief-output",
+            str(brief_path),
+        ]
+    )
+
+    assert exit_code == 0
+    brief = brief_path.read_text(encoding="utf-8")
+    assert "# Report Q&A Brief" in brief
+    assert "board_report.md#Risk watch:L7-L9" in brief
+    assert "security review cycle took longer than planned" in brief
 
 
 def test_evaluate_questions_marks_answer_and_citation_matches(tmp_path: Path) -> None:

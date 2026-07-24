@@ -6,11 +6,12 @@ import argparse
 from pathlib import Path
 
 from .answer import answer_question
+from .brief import render_answer_brief
 from .evaluation import evaluate_questions, load_evaluation_questions
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Ask a cited question over local Markdown reports.")
+    parser = argparse.ArgumentParser(description="Ask a cited question over local reports.")
     parser.add_argument("question", nargs="?", help="Business question to answer from the report corpus")
     parser.add_argument(
         "reports",
@@ -19,6 +20,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Markdown or plain-text report files to search",
     )
     parser.add_argument("--top-k", type=int, default=3, help="Number of chunks to retrieve")
+    parser.add_argument(
+        "--brief-output",
+        type=Path,
+        help="Write a Markdown answer brief with citations and supporting snippets",
+    )
     parser.add_argument(
         "--eval-file",
         type=Path,
@@ -69,6 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     for index, hit in enumerate(answer.hits, start=1):
         terms = ", ".join(hit.matched_terms)
         print(f"{index}. {hit.chunk.citation_label} (score={hit.score:.2f}; terms={terms})")
+
+    if args.brief_output:
+        args.brief_output.parent.mkdir(parents=True, exist_ok=True)
+        args.brief_output.write_text(render_answer_brief(answer), encoding="utf-8")
+        print(f"\nBrief written to {args.brief_output}")
     return 0
 
 
