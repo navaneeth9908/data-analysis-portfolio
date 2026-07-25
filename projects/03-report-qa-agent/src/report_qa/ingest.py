@@ -9,6 +9,12 @@ from typing import Iterable
 from .models import DocumentChunk
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+_PDF_STREAM_RE = re.compile(rb"stream\r?\n(.*?)\r?\nendstream", re.DOTALL)
+_PDF_TEXT_COMMAND_RE = re.compile(
+    r"\((?P<tj>(?:\\.|[^\\)])*)\)\s*Tj|\[(?P<array>.*?)\]\s*TJ",
+    re.DOTALL,
+)
+_PDF_STRING_RE = re.compile(r"\((?:\\.|[^\\)])*\)")
 
 
 def load_markdown_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
@@ -71,8 +77,75 @@ def load_text_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChu
 
     report_path = Path(path)
     lines = report_path.read_text(encoding="utf-8").splitlines()
+    return _load_text_like_chunks(
+        source=report_path.name,
+        default_heading=_default_heading(report_path),
+        lines=lines,
+        max_chars=max_chars,
+    )
+
+
+def load_pdf_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
+    """Load an uncompressed text-layer PDF report into citation-ready chunks.
+
+    This lightweight adapter is intentionally dependency-free for offline demos.
+    It supports simple report exports with extractable text commands; scanned or
+    compressed PDFs should be converted to text first or handled by a heavier PDF
+    extraction dependency in a production system.
+    """
+    if max_chars < 120:
+        raise ValueError("max_chars must be at least 120 so chunks keep useful context")
+
+    report_path = Path(path)
+    lines = _extract_pdf_text_lines(report_path)
+    if not any(line.strip() for line in lines):
+        raise ValueError(f"no extractable text layer found in {report_path.name}")
+    return _load_text_like_chunks(
+        source=report_path.name,
+        default_heading=_default_heading(report_path),
+        lines=lines,
+        max_chars=max_chars,
+    )
+
+
+def load_many_markdown(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
+    """Load multiple Markdown files in deterministic path order."""
     chunks: list[DocumentChunk] = []
-    heading = report_path.stem.replace("_", " ").replace("-", " ").title()
+    for path in sorted(Path(p) for p in paths):
+        chunks.extend(load_markdown_chunks(path, max_chars=max_chars))
+    return chunks
+
+
+def load_document_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
+    """Load a supported report file into citation-ready chunks."""
+    report_path = Path(path)
+    suffix = report_path.suffix.lower()
+    if suffix in {".md", ".markdown"}:
+        return load_markdown_chunks(report_path, max_chars=max_chars)
+    if suffix == ".txt":
+        return load_text_chunks(report_path, max_chars=max_chars)
+    if suffix == ".pdf":
+        return load_pdf_chunks(report_path, max_chars=max_chars)
+    raise ValueError(f"unsupported report format: {report_path.suffix or '(no suffix)'}")
+
+
+def load_many_documents(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
+    """Load supported report files in deterministic path order."""
+    chunks: list[DocumentChunk] = []
+    for path in sorted(Path(p) for p in paths):
+        chunks.extend(load_document_chunks(path, max_chars=max_chars))
+    return chunks
+
+
+def _load_text_like_chunks(
+    *,
+    source: str,
+    default_heading: str,
+    lines: list[str],
+    max_chars: int,
+) -> list[DocumentChunk]:
+    chunks: list[DocumentChunk] = []
+    heading = default_heading
     section_start = 1
     section_lines: list[tuple[int, str]] = []
 
@@ -84,7 +157,7 @@ def load_text_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChu
             return
         chunks.extend(
             _split_section(
-                source=report_path.name,
+                source=source,
                 heading=heading,
                 heading_line=section_start,
                 lines=trimmed,
@@ -107,31 +180,69 @@ def load_text_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChu
     return chunks
 
 
-def load_many_markdown(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
-    """Load multiple Markdown files in deterministic path order."""
-    chunks: list[DocumentChunk] = []
-    for path in sorted(Path(p) for p in paths):
-        chunks.extend(load_markdown_chunks(path, max_chars=max_chars))
-    return chunks
+def _extract_pdf_text_lines(path: Path) -> list[str]:
+    raw = path.read_bytes()
+    lines: list[str] = []
+    for stream_match in _PDF_STREAM_RE.finditer(raw):
+        stream_header = raw[max(0, stream_match.start() - 300) : stream_match.start()]
+        if b"/FlateDecode" in stream_header:
+            continue
+        stream_text = stream_match.group(1).decode("latin-1", errors="ignore")
+        for text_match in _PDF_TEXT_COMMAND_RE.finditer(stream_text):
+            if text_match.group("tj") is not None:
+                lines.extend(_split_pdf_text_line(_decode_pdf_literal(text_match.group("tj"))))
+                continue
+            array_payload = text_match.group("array") or ""
+            line = "".join(
+                _decode_pdf_literal(string_match.group(0)[1:-1])
+                for string_match in _PDF_STRING_RE.finditer(array_payload)
+            )
+            lines.extend(_split_pdf_text_line(line))
+    return lines
 
 
-def load_document_chunks(path: str | Path, max_chars: int = 900) -> list[DocumentChunk]:
-    """Load a supported report file into citation-ready chunks."""
-    report_path = Path(path)
-    suffix = report_path.suffix.lower()
-    if suffix in {".md", ".markdown"}:
-        return load_markdown_chunks(report_path, max_chars=max_chars)
-    if suffix == ".txt":
-        return load_text_chunks(report_path, max_chars=max_chars)
-    raise ValueError(f"unsupported report format: {report_path.suffix or '(no suffix)'}")
+def _split_pdf_text_line(text: str) -> list[str]:
+    return text.splitlines() or [""]
 
 
-def load_many_documents(paths: Iterable[str | Path], max_chars: int = 900) -> list[DocumentChunk]:
-    """Load supported report files in deterministic path order."""
-    chunks: list[DocumentChunk] = []
-    for path in sorted(Path(p) for p in paths):
-        chunks.extend(load_document_chunks(path, max_chars=max_chars))
-    return chunks
+def _decode_pdf_literal(value: str) -> str:
+    characters: list[str] = []
+    index = 0
+    escapes = {"n": "\n", "r": "\r", "t": "\t", "b": "\b", "f": "\f"}
+    while index < len(value):
+        character = value[index]
+        if character != "\\":
+            characters.append(character)
+            index += 1
+            continue
+
+        index += 1
+        if index >= len(value):
+            break
+        escaped = value[index]
+        if escaped in escapes:
+            characters.append(escapes[escaped])
+            index += 1
+        elif escaped in "()\\":
+            characters.append(escaped)
+            index += 1
+        elif escaped in "\r\n":
+            index += 1
+            if escaped == "\r" and index < len(value) and value[index] == "\n":
+                index += 1
+        elif escaped.isdigit():
+            start = index
+            while index < len(value) and index - start < 3 and value[index].isdigit():
+                index += 1
+            characters.append(chr(int(value[start:index], 8)))
+        else:
+            characters.append(escaped)
+            index += 1
+    return "".join(characters)
+
+
+def _default_heading(path: Path) -> str:
+    return path.stem.replace("_", " ").replace("-", " ").title()
 
 
 def _looks_like_text_heading(line: str) -> bool:

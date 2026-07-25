@@ -1,6 +1,6 @@
 # Report Q&A Agent
 
-A deterministic, offline report question-answering workflow for portfolio demos. The current milestone ingests Markdown and plain-text reports, retrieves relevant chunks with a transparent keyword fallback, returns extractive answers with line-level citations, and can export a Markdown answer brief for sharing.
+A deterministic, offline report question-answering workflow for portfolio demos. The current milestone ingests Markdown, plain-text, and simple text-layer PDF reports, retrieves relevant chunks with a transparent keyword fallback, returns extractive answers with line-level citations, and can export a Markdown answer brief for sharing.
 
 ## Why this project matters
 
@@ -17,10 +17,11 @@ Analytics and data-engineering roles often require turning long business reports
 projects/03-report-qa-agent/
   examples/sample_board_report.md
   examples/customer_success_memo.txt
+  examples/partner_launch_memo.pdf
   examples/evaluation_questions.json
   examples/renewal_delay_brief.md
   src/report_qa/
-    ingest.py       # Markdown/plain-text chunking with heading + line spans
+    ingest.py       # Markdown/text/PDF chunking with heading + line spans
     retrieval.py    # deterministic keyword retrieval fallback
     answer.py       # extractive answer selection with citations
     brief.py        # Markdown answer brief rendering
@@ -40,6 +41,7 @@ pip install -r requirements.txt
 PYTHONPATH=src pytest tests/ -q
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewals delayed?" examples/sample_board_report.md --top-k 2
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewal approvals delayed?" examples/customer_success_memo.txt --top-k 2
+PYTHONPATH=src python -m report_qa.cli "Why did the partner launch timing slip?" examples/partner_launch_memo.pdf --top-k 2
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewals delayed?" examples/sample_board_report.md --top-k 2 --brief-output examples/renewal_delay_brief.md
 PYTHONPATH=src python -m report_qa.cli --eval-file examples/evaluation_questions.json --report examples/sample_board_report.md --top-k 2
 ```
@@ -66,6 +68,18 @@ Enterprise renewal approvals were delayed because the customer's legal team need
 
 Citations:
 - customer_success_memo.txt#Risk Watch:L6-L8
+```
+
+Text-layer PDF smoke test excerpt:
+
+```text
+Question: Why did the partner launch timing slip?
+
+Answer:
+Launch timing slipped because partner security sign-off moved into the next compliance window.
+
+Citations:
+- partner_launch_memo.pdf#Recommendation:L3-L5
 ```
 
 Markdown brief excerpt (`examples/renewal_delay_brief.md`):
@@ -95,7 +109,7 @@ PASS segment_label_validation - What validation rule will data engineering add?
 
 ## Current capabilities
 
-- Parses Markdown and plain-text headings into citation-ready chunks.
+- Parses Markdown, plain-text, and simple uncompressed text-layer PDF headings into citation-ready chunks.
 - Preserves source filename, heading, and line ranges for each chunk.
 - Ranks chunks using normalized question-term overlap with heading boosts.
 - Produces a deterministic extractive answer from the best evidence chunk.
@@ -105,15 +119,16 @@ PASS segment_label_validation - What validation rule will data engineering add?
 
 ## Example questions
 
-Try these against `examples/sample_board_report.md` and `examples/customer_success_memo.txt`:
+Try these against `examples/sample_board_report.md`, `examples/customer_success_memo.txt`, and `examples/partner_launch_memo.pdf`:
 
 1. Why were enterprise renewals delayed?
 2. What improved data pipeline reliability?
 3. Which region contributed the largest incremental revenue?
 4. Why were enterprise renewal approvals delayed?
+5. Why did the partner launch timing slip?
 
 ## Planned next milestones
 
-- Add PDF extraction adapters for report exports.
+- Add an optional production-grade PDF parser/OCR fallback for compressed or scanned report exports.
 - Add a lightweight local vector index option while keeping keyword fallback.
 - Expand the Markdown answer brief into a multi-question report summary.

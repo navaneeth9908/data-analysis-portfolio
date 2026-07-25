@@ -58,6 +58,58 @@ def write_plain_text_customer_memo(tmp_path: Path) -> Path:
     return report_path
 
 
+def write_pdf_partner_memo(tmp_path: Path) -> Path:
+    """Create a small text-layer PDF fixture without external dependencies."""
+    report_path = tmp_path / "partner_launch_memo.pdf"
+    lines = [
+        "Partner Launch Memo",
+        "",
+        "Recommendation",
+        "Launch timing slipped because partner security sign-off moved into the next compliance window.",
+        "Sales engineering will complete connector certification before the public announcement.",
+        "",
+        "Next Actions",
+        "Publish a revised enablement calendar with owner, dependency, and sign-off date.",
+    ]
+    report_path.write_bytes(_build_simple_pdf(lines))
+    return report_path
+
+
+def _build_simple_pdf(lines: list[str]) -> bytes:
+    def escape_pdf_text(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+    text_commands = ["BT", "/F1 12 Tf", "72 720 Td", "14 TL"]
+    for line in lines:
+        text_commands.append(f"({escape_pdf_text(line)}) Tj")
+        text_commands.append("T*")
+    text_commands.append("ET")
+    content = "\n".join(text_commands).encode("latin-1")
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(content)).encode("ascii") + b" >>\nstream\n" + content + b"\nendstream",
+    ]
+    chunks = [b"%PDF-1.4\n"]
+    offsets = [0]
+    for object_id, payload in enumerate(objects, start=1):
+        offsets.append(sum(len(chunk) for chunk in chunks))
+        chunks.append(f"{object_id} 0 obj\n".encode("ascii") + payload + b"\nendobj\n")
+    xref_offset = sum(len(chunk) for chunk in chunks)
+    chunks.append(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    chunks.append(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        chunks.append(f"{offset:010d} 00000 n \n".encode("ascii"))
+    chunks.append(
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n".encode(
+            "ascii"
+        )
+    )
+    return b"".join(chunks)
+
+
 def test_load_text_chunks_preserves_section_citations(tmp_path: Path) -> None:
     report_path = write_plain_text_customer_memo(tmp_path)
 
@@ -84,6 +136,23 @@ def test_answer_question_supports_plain_text_reports_with_citations(tmp_path: Pa
         "team needed a fresh data-processing addendum."
     )
     assert answer.citations[0].label == "customer_success_memo.txt#Risk Watch:L6-L8"
+
+
+def test_answer_question_supports_text_layer_pdf_reports_with_citations(tmp_path: Path) -> None:
+    report_path = write_pdf_partner_memo(tmp_path)
+
+    answer = answer_question(
+        "Why did the partner launch timing slip?",
+        [report_path],
+        top_k=2,
+    )
+
+    assert answer.answer == (
+        "Launch timing slipped because partner security sign-off moved into "
+        "the next compliance window."
+    )
+    assert answer.citations[0].label == "partner_launch_memo.pdf#Recommendation:L3-L5"
+    assert answer.hits[0].chunk.text.startswith("Launch timing slipped")
 
 
 def test_load_markdown_chunks_preserves_headings_and_citation_lines(tmp_path: Path) -> None:
