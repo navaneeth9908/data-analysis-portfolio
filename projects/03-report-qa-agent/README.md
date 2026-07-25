@@ -19,12 +19,14 @@ projects/03-report-qa-agent/
   examples/customer_success_memo.txt
   examples/partner_launch_memo.pdf
   examples/evaluation_questions.json
+  examples/evaluation_summary.md
   examples/renewal_delay_brief.md
   src/report_qa/
     ingest.py       # Markdown/text/PDF chunking with heading + line spans
     retrieval.py    # deterministic keyword retrieval fallback
     answer.py       # extractive answer selection with citations
     brief.py        # Markdown answer brief rendering
+    summary.py      # multi-question evaluation summary rendering
     evaluation.py   # expected-answer checks for offline evaluation
     cli.py          # local smoke-test CLI
   tests/test_report_qa.py
@@ -44,6 +46,7 @@ PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewal approvals de
 PYTHONPATH=src python -m report_qa.cli "Why did the partner launch timing slip?" examples/partner_launch_memo.pdf --top-k 2
 PYTHONPATH=src python -m report_qa.cli "Why were enterprise renewals delayed?" examples/sample_board_report.md --top-k 2 --brief-output examples/renewal_delay_brief.md
 PYTHONPATH=src python -m report_qa.cli --eval-file examples/evaluation_questions.json --report examples/sample_board_report.md --top-k 2
+PYTHONPATH=src python -m report_qa.cli --eval-file examples/evaluation_questions.json --report examples/sample_board_report.md --top-k 2 --summary-output examples/evaluation_summary.md
 ```
 
 Expected answer excerpt:
@@ -107,6 +110,16 @@ PASS incremental_revenue_region - Which region contributed the largest increment
 PASS segment_label_validation - What validation rule will data engineering add?
 ```
 
+Evaluation summary excerpt (`examples/evaluation_summary.md`):
+
+```text
+# Report Q&A Evaluation Summary
+
+Overall: 4/4 questions passed
+
+| renewal_delay | PASS | Why were enterprise renewals delayed? | sample_board_report.md#Risk watch:L9-L10 |
+```
+
 ## Current capabilities
 
 - Parses Markdown, plain-text, and simple uncompressed text-layer PDF headings into citation-ready chunks.
@@ -115,6 +128,7 @@ PASS segment_label_validation - What validation rule will data engineering add?
 - Produces a deterministic extractive answer from the best evidence chunk.
 - Writes a portable Markdown answer brief with citations and ranked supporting snippets.
 - Runs a local evaluation question set with expected answer terms and citations.
+- Exports a multi-question Markdown evaluation summary with pass/fail status, answers, citations, and matched expected terms.
 - Handles no-evidence questions with a safe fallback answer.
 
 ## Example questions
@@ -131,4 +145,4 @@ Try these against `examples/sample_board_report.md`, `examples/customer_success_
 
 - Add an optional production-grade PDF parser/OCR fallback for compressed or scanned report exports.
 - Add a lightweight local vector index option while keeping keyword fallback.
-- Expand the Markdown answer brief into a multi-question report summary.
+- Add a batch question runner that combines multiple reports into a stakeholder-ready briefing.

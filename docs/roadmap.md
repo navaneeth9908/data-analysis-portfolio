@@ -57,6 +57,7 @@ Progress:
 - Added plain-text report ingestion with heading-based line citations and a customer-success memo smoke example.
 - Added Markdown answer brief rendering with citations, ranked supporting snippets, and a reproducible CLI output file.
 - Added a dependency-free text-layer PDF ingestion adapter with a partner-launch memo smoke example.
+- Added a multi-question Markdown evaluation summary export for offline evaluation runs.
 
 ### 4. Competitive Intelligence Pipeline
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from .answer import answer_question
 from .brief import render_answer_brief
 from .evaluation import evaluate_questions, load_evaluation_questions
+from .summary import render_evaluation_summary
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,6 +38,11 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Report file to use in evaluation mode; repeat for multiple Markdown or plain-text reports",
     )
+    parser.add_argument(
+        "--summary-output",
+        type=Path,
+        help="Write a Markdown multi-question evaluation summary in evaluation mode",
+    )
     args = parser.parse_args(argv)
 
     default_reports = [Path("examples/sample_board_report.md")]
@@ -53,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  citation: {result.question.expected_citation}")
             if result.failure_reasons:
                 print(f"  issues: {'; '.join(result.failure_reasons)}")
+        if args.summary_output:
+            args.summary_output.parent.mkdir(parents=True, exist_ok=True)
+            args.summary_output.write_text(render_evaluation_summary(results), encoding="utf-8")
+            print(f"Summary written to {args.summary_output}")
         return 0 if passed == len(results) else 1
 
     if args.question is None:

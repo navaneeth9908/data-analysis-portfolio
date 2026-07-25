@@ -292,6 +292,34 @@ def test_load_evaluation_questions_reads_json_question_set(tmp_path: Path) -> No
     )
 
 
+def test_render_evaluation_summary_includes_status_answers_and_citations(tmp_path: Path) -> None:
+    from report_qa.summary import render_evaluation_summary
+
+    report_path = write_board_report(tmp_path)
+    questions = (
+        EvaluationQuestion(
+            id="renewal_delay",
+            question="Why were enterprise renewals delayed?",
+            expected_answer_terms=("security review cycle",),
+            expected_citation="board_report.md#Risk watch:L7-L9",
+        ),
+    )
+    results = evaluate_questions(questions, [report_path], top_k=2)
+
+    summary = render_evaluation_summary(results, title="Board Q&A Evaluation Summary")
+
+    assert summary.startswith("# Board Q&A Evaluation Summary\n")
+    assert "Overall: 1/1 questions passed" in summary
+    assert (
+        "| renewal_delay | PASS | Why were enterprise renewals delayed? | "
+        "board_report.md#Risk watch:L7-L9 |"
+    ) in summary
+    assert "## renewal_delay" in summary
+    assert "**Answer:** Enterprise renewal approvals were delayed" in summary
+    assert "- board_report.md#Risk watch:L7-L9" in summary
+    assert "Matched expected terms: security review cycle" in summary
+
+
 def test_cli_evaluation_mode_prints_pass_summary(tmp_path: Path, capsys) -> None:
     report_path = write_board_report(tmp_path)
     eval_path = tmp_path / "questions.json"
@@ -327,6 +355,48 @@ def test_cli_evaluation_mode_prints_pass_summary(tmp_path: Path, capsys) -> None
     assert "Evaluation: 1/1 passed" in output
     assert "PASS renewal_delay" in output
     assert "board_report.md#Risk watch:L7-L9" in output
+
+
+def test_cli_evaluation_mode_writes_markdown_summary(tmp_path: Path, capsys) -> None:
+    report_path = write_board_report(tmp_path)
+    eval_path = tmp_path / "questions.json"
+    summary_path = tmp_path / "evaluation_summary.md"
+    eval_path.write_text(
+        """
+        {
+          "questions": [
+            {
+              "id": "renewal_delay",
+              "question": "Why were enterprise renewals delayed?",
+              "expected_answer_terms": ["security review cycle"],
+              "expected_citation": "board_report.md#Risk watch:L7-L9"
+            }
+          ]
+        }
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "--eval-file",
+            str(eval_path),
+            "--report",
+            str(report_path),
+            "--top-k",
+            "2",
+            "--summary-output",
+            str(summary_path),
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Summary written to {summary_path}" in output
+    summary = summary_path.read_text(encoding="utf-8")
+    assert summary.startswith("# Report Q&A Evaluation Summary\n")
+    assert "Overall: 1/1 questions passed" in summary
+    assert "| renewal_delay | PASS | Why were enterprise renewals delayed? |" in summary
 
 
 def test_example_evaluation_questions_pass_against_sample_report() -> None:
