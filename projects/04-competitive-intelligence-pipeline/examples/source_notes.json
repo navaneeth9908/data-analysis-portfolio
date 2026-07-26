@@ -1,0 +1,118 @@
+{
+  "notes": [
+    {
+      "id": "acme-finance-webinar-2026-06",
+      "company": "Acme Analytics",
+      "source_type": "webinar",
+      "source": "Finance analytics product webinar",
+      "published_date": "2026-06-18",
+      "summary": "Acme positioned governed self-service dashboards for finance and revenue operations teams.",
+      "signals": [
+        {
+          "theme": "product",
+          "sentiment": "strength",
+          "detail": "Finance-ready semantic layer templates shorten dashboard setup for common metrics.",
+          "confidence": 4
+        },
+        {
+          "theme": "pricing",
+          "sentiment": "risk",
+          "detail": "Enterprise packaging requires an annual platform commit before advanced governance features unlock.",
+          "confidence": 2
+        }
+      ]
+    },
+    {
+      "id": "acme-erp-connector-launch",
+      "company": "Acme Analytics",
+      "source_type": "press release",
+      "source": "ERP connector launch announcement",
+      "published_date": "2026-06-20",
+      "summary": "Acme announced a faster ERP connector rollout aimed at mid-market analytics teams.",
+      "signals": [
+        {
+          "theme": "delivery",
+          "sentiment": "strength",
+          "detail": "Implementation window for the ERP connector is marketed as four weeks with certified templates.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "id": "northstar-bi-customer-review",
+      "company": "Northstar BI",
+      "source_type": "review",
+      "source": "Public implementation review",
+      "published_date": "2026-06-11",
+      "summary": "Northstar BI customers praised onboarding support but noted manual metric-governance setup.",
+      "signals": [
+        {
+          "theme": "support",
+          "sentiment": "strength",
+          "detail": "Hands-on enablement reduced dashboard rollout risk for first-time analytics teams.",
+          "confidence": 5
+        },
+        {
+          "theme": "governance",
+          "sentiment": "gap",
+          "detail": "Metric definitions still require services-led configuration during early deployments.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "id": "northstar-bi-partner-page",
+      "company": "Northstar BI",
+      "source_type": "website",
+      "source": "Partner solutions page",
+      "published_date": "2026-06-16",
+      "summary": "Northstar promotes implementation partners for healthcare analytics rollouts.",
+      "signals": [
+        {
+          "theme": "ecosystem",
+          "sentiment": "strength",
+          "detail": "Healthcare-focused partner network helps Northstar compete in regulated segments.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "id": "orion-governance-analyst-note",
+      "company": "Orion Data Cloud",
+      "source_type": "analyst note",
+      "source": "Modern BI governance vendor note",
+      "published_date": "2026-06-14",
+      "summary": "Orion Data Cloud is viewed as strong on governed metrics and warehouse-native deployment.",
+      "signals": [
+        {
+          "theme": "governance",
+          "sentiment": "strength",
+          "detail": "Warehouse-native policy controls map analytics access to existing data-platform roles.",
+          "confidence": 4
+        },
+        {
+          "theme": "ecosystem",
+          "sentiment": "gap",
+          "detail": "Partner marketplace has fewer packaged accelerators than larger BI vendors.",
+          "confidence": 3
+        }
+      ]
+    },
+    {
+      "id": "orion-customer-success-job-posting",
+      "company": "Orion Data Cloud",
+      "source_type": "job posting",
+      "source": "Customer success implementation role",
+      "published_date": "2026-06-21",
+      "summary": "Orion is hiring implementation specialists to standardize customer onboarding playbooks.",
+      "signals": [
+        {
+          "theme": "onboarding",
+          "sentiment": "neutral",
+          "detail": "Hiring plan suggests investment in repeatable onboarding motions for enterprise customers.",
+          "confidence": 2
+        }
+      ]
+    }
+  ]
+}

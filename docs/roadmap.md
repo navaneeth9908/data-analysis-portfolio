@@ -71,6 +71,11 @@ Planned milestones:
 - summary report generation
 - tests for scoring logic
 
+Progress:
+
+- Added an offline JSON source-note format with normalized company, source, theme, sentiment, and confidence fields.
+- Added confidence-weighted competitor profile rollups and a Markdown landscape CLI over deterministic sample notes.
+
 ### 5. Financial Research Analyst
 
 Build a financial analytics project that combines market data, fundamentals-style metrics, and explanatory reporting.

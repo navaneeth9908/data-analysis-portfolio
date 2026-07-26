@@ -62,3 +62,5 @@ Each project should include:
 The NL2SQL Analytics Agent is currently the most developed project. It includes a deterministic local sales mart, safe SQL generation patterns, executable sample questions, result insights, and focused tests.
 
 The Report Q&A Agent has started with deterministic Markdown/plain-text/PDF ingestion, keyword retrieval, cited extractive-answer workflow, Markdown brief export, offline evaluation question set, and a shareable multi-question evaluation summary.
+
+The Competitive Intelligence Pipeline now has an initial offline source-note schema, normalization/scoring code, sample competitor notes, a Markdown landscape output, and tests for the CLI smoke path.
