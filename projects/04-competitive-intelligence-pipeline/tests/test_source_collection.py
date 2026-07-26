@@ -239,6 +239,36 @@ def test_cli_writes_landscape_markdown(tmp_path: Path, capsys) -> None:
     assert "| Northstar BI | 1 | 1 | 5 | 0 | 0 | support | review |" in markdown
 
 
+def test_cli_adds_buyer_fit_scorecard_when_priorities_are_supplied(tmp_path: Path, capsys) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    output_path = tmp_path / "landscape-with-fit.md"
+    from competitive_intel.cli import main
+
+    exit_code = main(
+        [
+            str(project_dir / "examples/source_notes.json"),
+            "--output",
+            str(output_path),
+            "--title",
+            "Sample Analytics Competitor Landscape",
+            "--priority",
+            "governance=2",
+            "--priority",
+            "support=2",
+            "--priority",
+            "delivery=1",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Landscape written to {output_path}" in output
+    markdown = output_path.read_text(encoding="utf-8")
+    assert "## Buyer-fit priority scorecard" in markdown
+    assert "| Orion Data Cloud | 8 | 8 | 0 | governance |" in markdown
+    assert "| Northstar BI | 4 | 10 | 6 | support, governance |" in markdown
+
+
 def test_example_source_notes_generate_expected_landscape() -> None:
     project_dir = Path(__file__).resolve().parents[1]
     notes = load_source_notes(project_dir / "examples/source_notes.json")
@@ -256,3 +286,48 @@ def test_example_source_notes_generate_expected_landscape() -> None:
     ]
     assert "| Acme Analytics | 2 | 3 | 7 | 0 | 2 | product, delivery, pricing |" in markdown
     assert "| Orion Data Cloud | 2 | 3 | 4 | 3 | 0 | governance, ecosystem, onboarding |" in markdown
+
+
+def test_build_buyer_fit_scores_ranks_competitors_by_weighted_priorities() -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    notes = load_source_notes(project_dir / "examples/source_notes.json")
+
+    scores = source_collection.build_buyer_fit_scores(
+        notes,
+        priorities={"governance": 2, "support": 2, "delivery": 1},
+    )
+
+    assert [score.company for score in scores] == [
+        "Orion Data Cloud",
+        "Northstar BI",
+        "Acme Analytics",
+    ]
+    orion = scores[0]
+    assert orion.fit_score == 8
+    assert orion.strength_points == 8
+    assert orion.concern_points == 0
+    assert orion.matched_themes == ("governance",)
+    northstar = scores[1]
+    assert northstar.fit_score == 4
+    assert northstar.strength_points == 10
+    assert northstar.concern_points == 6
+    assert northstar.matched_themes == ("support", "governance")
+
+
+def test_render_buyer_fit_markdown_formats_priority_scorecard() -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    notes = load_source_notes(project_dir / "examples/source_notes.json")
+    scores = source_collection.build_buyer_fit_scores(
+        notes,
+        priorities={"governance": 2, "support": 2, "delivery": 1},
+    )
+
+    markdown = source_collection.render_buyer_fit_markdown(
+        scores,
+        title="Healthcare analytics buyer fit",
+    )
+
+    assert markdown.startswith("## Healthcare analytics buyer fit\n")
+    assert "| Company | Fit score | Strength points | Concern points | Matched themes |" in markdown
+    assert "| Orion Data Cloud | 8 | 8 | 0 | governance |" in markdown
+    assert "| Northstar BI | 4 | 10 | 6 | support, governance |" in markdown

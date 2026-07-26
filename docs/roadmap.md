@@ -75,6 +75,7 @@ Progress:
 
 - Added an offline JSON source-note format with normalized company, source, theme, sentiment, and confidence fields.
 - Added confidence-weighted competitor profile rollups and a Markdown landscape CLI over deterministic sample notes.
+- Added buyer-specific priority scoring with weighted strength/gap/risk evidence and a CLI scorecard option.
 
 ### 5. Financial Research Analyst
 

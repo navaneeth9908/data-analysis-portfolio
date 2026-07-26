@@ -6,8 +6,10 @@ import argparse
 from pathlib import Path
 
 from competitive_intel.source_collection import (
+    build_buyer_fit_scores,
     build_competitor_profiles,
     load_source_notes,
+    render_buyer_fit_markdown,
     render_landscape_markdown,
 )
 
@@ -27,7 +29,28 @@ def build_parser() -> argparse.ArgumentParser:
         default="Competitive Intelligence Landscape",
         help="Markdown report title.",
     )
+    parser.add_argument(
+        "--priority",
+        action="append",
+        default=[],
+        metavar="THEME=WEIGHT",
+        help="Buyer priority theme and positive integer weight; repeat for multiple priorities.",
+    )
     return parser
+
+
+def _parse_priorities(raw_priorities: list[str]) -> dict[str, int]:
+    priorities: dict[str, int] = {}
+    for raw_priority in raw_priorities:
+        if "=" not in raw_priority:
+            raise ValueError("priority must use THEME=WEIGHT format")
+        theme, raw_weight = raw_priority.split("=", 1)
+        try:
+            weight = int(raw_weight)
+        except ValueError as exc:
+            raise ValueError(f"priority weight for {theme} must be an integer") from exc
+        priorities[theme] = weight
+    return priorities
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -36,6 +59,10 @@ def main(argv: list[str] | None = None) -> int:
     notes = load_source_notes(args.source_notes)
     profiles = build_competitor_profiles(notes)
     markdown = render_landscape_markdown(profiles, title=args.title)
+    priorities = _parse_priorities(args.priority)
+    if priorities:
+        scores = build_buyer_fit_scores(notes, priorities)
+        markdown += "\n" + render_buyer_fit_markdown(scores)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

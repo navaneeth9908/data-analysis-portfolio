@@ -32,7 +32,12 @@ python -m venv .venv
 source .venv/Scripts/activate  # Git Bash on Windows
 pip install -r requirements.txt
 pytest tests/ -q
-PYTHONPATH=src python -m competitive_intel.cli examples/source_notes.json --output examples/landscape.md --title "Sample Analytics Competitor Landscape"
+PYTHONPATH=src python -m competitive_intel.cli examples/source_notes.json \
+  --output examples/landscape.md \
+  --title "Sample Analytics Competitor Landscape" \
+  --priority governance=2 \
+  --priority support=2 \
+  --priority delivery=1
 ```
 
 Expected CLI message:
@@ -53,6 +58,16 @@ Scores are confidence-weighted rollups from public-source notes.
 | Acme Analytics | 2 | 3 | 7 | 0 | 2 | product, delivery, pricing | press release, webinar |
 | Northstar BI | 2 | 3 | 8 | 3 | 0 | support, ecosystem, governance | review, website |
 | Orion Data Cloud | 2 | 3 | 4 | 3 | 0 | governance, ecosystem, onboarding | analyst note, job posting |
+
+## Buyer-fit priority scorecard
+
+Strength signals add points; gap and risk signals subtract concern points.
+
+| Company | Fit score | Strength points | Concern points | Matched themes |
+| --- | ---: | ---: | ---: | --- |
+| Orion Data Cloud | 8 | 8 | 0 | governance |
+| Northstar BI | 4 | 10 | 6 | support, governance |
+| Acme Analytics | 3 | 3 | 0 | delivery |
 ```
 
 ## Source note format
@@ -86,11 +101,11 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Normalizes whitespace, source types, themes, and signal sentiment.
 - Validates required fields and 1-5 confidence scores.
 - Aggregates competitor profiles by note count, signal count, source types, latest source date, top themes, and confidence-weighted strength/gap/risk scores.
-- Renders a Markdown landscape table for portfolio demos or stakeholder briefings.
+- Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
+- Renders a Markdown landscape table and optional buyer-fit scorecard for portfolio demos or stakeholder briefings.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Add criteria-weighted competitor scoring for buyer-specific priorities.
 - Add evidence snippets beneath each competitor row.
 - Add a richer Markdown report with executive summary, watchlist, and recommended follow-up research.

@@ -46,6 +46,17 @@ class CompetitorProfile:
     top_themes: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class BuyerFitScore:
+    """Buyer-specific competitor score from weighted source-note priorities."""
+
+    company: str
+    fit_score: int
+    strength_points: int
+    concern_points: int
+    matched_themes: tuple[str, ...]
+
+
 def _clean_text(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
@@ -146,6 +157,91 @@ def build_competitor_profiles(notes: tuple[SourceNote, ...]) -> tuple[Competitor
             )
         )
     return tuple(sorted(profiles, key=lambda profile: profile.company))
+
+
+def build_buyer_fit_scores(
+    notes: tuple[SourceNote, ...],
+    priorities: dict[str, int],
+) -> tuple[BuyerFitScore, ...]:
+    """Rank competitors against buyer-specific weighted priority themes."""
+    normalized_priorities: dict[str, int] = {}
+    for theme, weight in priorities.items():
+        normalized_theme = _normalize_key(theme, "priority theme")
+        if not isinstance(weight, int) or weight <= 0:
+            raise ValueError(f"priority weight for {normalized_theme} must be a positive integer")
+        normalized_priorities[normalized_theme] = weight
+    if not normalized_priorities:
+        raise ValueError("at least one buyer priority is required")
+
+    grouped: dict[str, list[SourceNote]] = defaultdict(list)
+    for note in notes:
+        grouped[note.company].append(note)
+
+    scores: list[BuyerFitScore] = []
+    for company, company_notes in grouped.items():
+        strength_points = 0
+        concern_points = 0
+        theme_points: dict[str, int] = defaultdict(int)
+        for note in company_notes:
+            for signal in note.signals:
+                if signal.theme not in normalized_priorities:
+                    continue
+                weighted_points = signal.confidence * normalized_priorities[signal.theme]
+                theme_points[signal.theme] += weighted_points
+                if signal.sentiment == "strength":
+                    strength_points += weighted_points
+                elif signal.sentiment in {"gap", "risk"}:
+                    concern_points += weighted_points
+        matched_themes = tuple(
+            theme
+            for theme, _points in sorted(
+                theme_points.items(), key=lambda item: (-item[1], item[0])
+            )
+        )
+        scores.append(
+            BuyerFitScore(
+                company=company,
+                fit_score=strength_points - concern_points,
+                strength_points=strength_points,
+                concern_points=concern_points,
+                matched_themes=matched_themes,
+            )
+        )
+    return tuple(
+        sorted(
+            scores,
+            key=lambda score: (
+                -score.fit_score,
+                -score.strength_points,
+                score.concern_points,
+                score.company,
+            ),
+        )
+    )
+
+
+def render_buyer_fit_markdown(
+    scores: tuple[BuyerFitScore, ...],
+    *,
+    title: str = "Buyer-fit priority scorecard",
+) -> str:
+    """Render buyer-specific weighted scores as a Markdown table."""
+    lines = [
+        f"## {title}",
+        "",
+        "Strength signals add points; gap and risk signals subtract concern points.",
+        "",
+        "| Company | Fit score | Strength points | Concern points | Matched themes |",
+        "| --- | ---: | ---: | ---: | --- |",
+    ]
+    for score in scores:
+        themes = ", ".join(score.matched_themes) if score.matched_themes else "None"
+        lines.append(
+            "| "
+            f"{score.company} | {score.fit_score} | {score.strength_points} | "
+            f"{score.concern_points} | {themes} |"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def render_landscape_markdown(
