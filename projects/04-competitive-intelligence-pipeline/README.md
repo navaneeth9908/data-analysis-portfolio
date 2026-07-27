@@ -37,7 +37,9 @@ PYTHONPATH=src python -m competitive_intel.cli examples/source_notes.json \
   --title "Sample Analytics Competitor Landscape" \
   --priority governance=2 \
   --priority support=2 \
-  --priority delivery=1
+  --priority delivery=1 \
+  --coverage-as-of 2026-07-02 \
+  --max-note-age-days 7
 ```
 
 Expected CLI message:
@@ -75,6 +77,12 @@ Source-backed snippets show why each competitor earned its score.
 
 ### Orion Data Cloud
 - **2026-06-21 · job posting · Customer success implementation role** — Orion is hiring implementation specialists to standardize customer onboarding playbooks.
+
+## Research coverage watchlist
+
+Use these checks before turning the landscape into buying recommendations.
+
+- **Acme Analytics · stale-latest-source** — Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
 ```
 
 ## Source note format
@@ -109,10 +117,10 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Validates required fields and 1-5 confidence scores.
 - Aggregates competitor profiles by note count, signal count, source types, latest source date, top themes, and confidence-weighted strength/gap/risk scores.
 - Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
-- Renders a Markdown landscape table, optional buyer-fit scorecard, and source-backed evidence highlights for portfolio demos or stakeholder briefings.
+- Renders a Markdown landscape table, optional buyer-fit scorecard, source-backed evidence highlights, and source coverage watchlist for portfolio demos or stakeholder briefings.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Add a richer Markdown report with executive summary, watchlist, and recommended follow-up research.
-- Add source coverage checks for stale or single-source competitor profiles.
+- Add a richer Markdown report with executive summary and recommended follow-up research.
+- Add lightweight trend deltas across repeated landscape runs.

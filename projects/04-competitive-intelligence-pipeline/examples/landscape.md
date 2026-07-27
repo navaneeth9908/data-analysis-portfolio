@@ -42,3 +42,11 @@ Source-backed snippets show why each competitor earned its score.
 - **2026-06-14 · analyst note · Modern BI governance vendor note** — Orion Data Cloud is viewed as strong on governed metrics and warehouse-native deployment.
   - governance / strength / confidence 4: Warehouse-native policy controls map analytics access to existing data-platform roles.
   - ecosystem / gap / confidence 3: Partner marketplace has fewer packaged accelerators than larger BI vendors.
+
+## Research coverage watchlist
+
+Use these checks before turning the landscape into buying recommendations.
+
+- **Acme Analytics · stale-latest-source** — Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
+- **Northstar BI · stale-latest-source** — Northstar BI's latest source is 16 days old as of 2026-07-02; refresh threshold is 7 days.
+- **Orion Data Cloud · stale-latest-source** — Orion Data Cloud's latest source is 11 days old as of 2026-07-02; refresh threshold is 7 days.

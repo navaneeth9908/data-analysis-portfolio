@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 
@@ -55,6 +56,15 @@ class BuyerFitScore:
     strength_points: int
     concern_points: int
     matched_themes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SourceCoverageWarning:
+    """Research coverage gap for a competitor profile."""
+
+    company: str
+    issue: str
+    detail: str
 
 
 def _clean_text(value: object, field_name: str) -> str:
@@ -220,6 +230,65 @@ def build_buyer_fit_scores(
     )
 
 
+def build_source_coverage_warnings(
+    notes: tuple[SourceNote, ...],
+    *,
+    as_of_date: str,
+    max_note_age_days: int = 30,
+    min_note_count: int = 2,
+    min_source_types: int = 2,
+) -> tuple[SourceCoverageWarning, ...]:
+    """Flag competitor profiles that need more recent or diverse source coverage."""
+    as_of = date.fromisoformat(as_of_date)
+    grouped: dict[str, list[SourceNote]] = defaultdict(list)
+    for note in notes:
+        grouped[note.company].append(note)
+
+    warnings: list[SourceCoverageWarning] = []
+    for company in sorted(grouped):
+        company_notes = grouped[company]
+        source_types = tuple(sorted({note.source_type for note in company_notes}))
+        latest_source_date = max(date.fromisoformat(note.published_date) for note in company_notes)
+        note_count = len(company_notes)
+        if note_count < min_note_count:
+            noun = "note" if note_count == 1 else "notes"
+            warnings.append(
+                SourceCoverageWarning(
+                    company=company,
+                    issue="low-note-count",
+                    detail=(
+                        f"{company} has {note_count} {noun}; target is at least "
+                        f"{min_note_count}."
+                    ),
+                )
+            )
+        if len(source_types) < min_source_types:
+            warnings.append(
+                SourceCoverageWarning(
+                    company=company,
+                    issue="single-source",
+                    detail=(
+                        f"{company} uses {len(source_types)} source type "
+                        f"({', '.join(source_types)}); target is at least "
+                        f"{min_source_types}."
+                    ),
+                )
+            )
+        source_age_days = (as_of - latest_source_date).days
+        if source_age_days > max_note_age_days:
+            warnings.append(
+                SourceCoverageWarning(
+                    company=company,
+                    issue="stale-latest-source",
+                    detail=(
+                        f"{company}'s latest source is {source_age_days} days old "
+                        f"as of {as_of_date}; refresh threshold is {max_note_age_days} days."
+                    ),
+                )
+            )
+    return tuple(warnings)
+
+
 def render_buyer_fit_markdown(
     scores: tuple[BuyerFitScore, ...],
     *,
@@ -307,3 +376,22 @@ def render_source_evidence_markdown(
                 )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def render_source_coverage_markdown(
+    warnings: tuple[SourceCoverageWarning, ...],
+    *,
+    title: str = "Research coverage watchlist",
+) -> str:
+    """Render coverage warnings that guide follow-up competitor research."""
+    lines = [
+        f"## {title}",
+        "",
+        "Use these checks before turning the landscape into buying recommendations.",
+        "",
+    ]
+    if not warnings:
+        lines.append("No source coverage gaps flagged with the current thresholds.")
+    for warning in warnings:
+        lines.append(f"- **{warning.company} · {warning.issue}** — {warning.detail}")
+    return "\n".join(lines) + "\n"

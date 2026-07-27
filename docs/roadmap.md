@@ -77,6 +77,7 @@ Progress:
 - Added confidence-weighted competitor profile rollups and a Markdown landscape CLI over deterministic sample notes.
 - Added buyer-specific priority scoring with weighted strength/gap/risk evidence and a CLI scorecard option.
 - Added source-backed evidence highlights beneath the scorecard so each competitor profile links back to the newest public notes and signal details.
+- Added source coverage checks that flag stale latest notes, thin note counts, or single-source profiles before turning a landscape into buying recommendations.
 
 ### 5. Financial Research Analyst
 

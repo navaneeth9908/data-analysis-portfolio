@@ -308,6 +308,45 @@ def test_cli_adds_buyer_fit_scorecard_when_priorities_are_supplied(tmp_path: Pat
     )
 
 
+def test_cli_adds_source_coverage_watchlist_when_as_of_date_is_supplied(
+    tmp_path: Path, capsys
+) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    output_path = tmp_path / "landscape-with-coverage.md"
+    from competitive_intel.cli import main
+
+    exit_code = main(
+        [
+            str(project_dir / "examples/source_notes.json"),
+            "--output",
+            str(output_path),
+            "--title",
+            "Sample Analytics Competitor Landscape",
+            "--coverage-as-of",
+            "2026-07-02",
+            "--max-note-age-days",
+            "7",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Landscape written to {output_path}" in output
+    markdown = output_path.read_text(encoding="utf-8")
+    assert "## Research coverage watchlist" in markdown
+    assert (
+        "- **Acme Analytics · stale-latest-source** — Acme Analytics's latest source "
+        "is 12 days old as of 2026-07-02; refresh threshold is 7 days."
+        in markdown
+    )
+    assert (
+        "- **Northstar BI · stale-latest-source** — Northstar BI's latest source "
+        "is 16 days old as of 2026-07-02; refresh threshold is 7 days."
+        in markdown
+    )
+    assert "No source coverage gaps flagged" not in markdown
+
+
 def test_example_source_notes_generate_expected_landscape() -> None:
     project_dir = Path(__file__).resolve().parents[1]
     notes = load_source_notes(project_dir / "examples/source_notes.json")
@@ -370,3 +409,95 @@ def test_render_buyer_fit_markdown_formats_priority_scorecard() -> None:
     assert "| Company | Fit score | Strength points | Concern points | Matched themes |" in markdown
     assert "| Orion Data Cloud | 8 | 8 | 0 | governance |" in markdown
     assert "| Northstar BI | 4 | 10 | 6 | support, governance |" in markdown
+
+
+def test_build_source_coverage_warnings_flags_stale_and_thin_profiles() -> None:
+    notes = (
+        source_collection.SourceNote(
+            id="beacon-single-blog",
+            company="Beacon Metrics",
+            source_type="blog",
+            source="Founder roadmap post",
+            published_date="2026-06-01",
+            summary="Beacon described a planned analytics governance launch.",
+            signals=(
+                source_collection.SourceSignal(
+                    theme="governance",
+                    sentiment="neutral",
+                    detail="Roadmap mentions a governed metrics workspace.",
+                    confidence=3,
+                ),
+            ),
+        ),
+        source_collection.SourceNote(
+            id="northstar-review",
+            company="Northstar BI",
+            source_type="review",
+            source="Public implementation review",
+            published_date="2026-06-18",
+            summary="Northstar customers praised implementation support.",
+            signals=(
+                source_collection.SourceSignal(
+                    theme="support",
+                    sentiment="strength",
+                    detail="Hands-on enablement reduced rollout risk.",
+                    confidence=5,
+                ),
+            ),
+        ),
+        source_collection.SourceNote(
+            id="northstar-website",
+            company="Northstar BI",
+            source_type="website",
+            source="Partner solutions page",
+            published_date="2026-06-16",
+            summary="Northstar promotes implementation partners.",
+            signals=(
+                source_collection.SourceSignal(
+                    theme="ecosystem",
+                    sentiment="strength",
+                    detail="Partner network supports regulated rollouts.",
+                    confidence=3,
+                ),
+            ),
+        ),
+    )
+
+    warnings = source_collection.build_source_coverage_warnings(
+        notes,
+        as_of_date="2026-06-20",
+        max_note_age_days=10,
+        min_note_count=2,
+        min_source_types=2,
+    )
+
+    assert [(warning.company, warning.issue) for warning in warnings] == [
+        ("Beacon Metrics", "low-note-count"),
+        ("Beacon Metrics", "single-source"),
+        ("Beacon Metrics", "stale-latest-source"),
+    ]
+    assert "1 note" in warnings[0].detail
+    assert "blog" in warnings[1].detail
+    assert "19 days old" in warnings[2].detail
+
+
+def test_render_source_coverage_markdown_lists_watchlist_warnings() -> None:
+    warnings = (
+        source_collection.SourceCoverageWarning(
+            company="Beacon Metrics",
+            issue="low-note-count",
+            detail="Beacon Metrics has 1 note; target is at least 2.",
+        ),
+        source_collection.SourceCoverageWarning(
+            company="Beacon Metrics",
+            issue="stale-latest-source",
+            detail="Beacon Metrics's latest source is 19 days old as of 2026-06-20.",
+        ),
+    )
+
+    markdown = source_collection.render_source_coverage_markdown(warnings)
+
+    assert markdown.startswith("## Research coverage watchlist\n")
+    assert "Use these checks before turning the landscape into buying recommendations." in markdown
+    assert "- **Beacon Metrics · low-note-count** — Beacon Metrics has 1 note; target is at least 2." in markdown
+    assert "- **Beacon Metrics · stale-latest-source** — Beacon Metrics's latest source is 19 days old as of 2026-06-20." in markdown

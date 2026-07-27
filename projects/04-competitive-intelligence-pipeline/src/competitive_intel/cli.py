@@ -8,9 +8,11 @@ from pathlib import Path
 from competitive_intel.source_collection import (
     build_buyer_fit_scores,
     build_competitor_profiles,
+    build_source_coverage_warnings,
     load_source_notes,
     render_buyer_fit_markdown,
     render_landscape_markdown,
+    render_source_coverage_markdown,
     render_source_evidence_markdown,
 )
 
@@ -36,6 +38,28 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         metavar="THEME=WEIGHT",
         help="Buyer priority theme and positive integer weight; repeat for multiple priorities.",
+    )
+    parser.add_argument(
+        "--coverage-as-of",
+        help="Optional YYYY-MM-DD date that enables source coverage freshness checks.",
+    )
+    parser.add_argument(
+        "--max-note-age-days",
+        type=int,
+        default=30,
+        help="Maximum acceptable age for latest competitor source notes when coverage checks run.",
+    )
+    parser.add_argument(
+        "--min-note-count",
+        type=int,
+        default=2,
+        help="Minimum source-note count expected per competitor in coverage checks.",
+    )
+    parser.add_argument(
+        "--min-source-types",
+        type=int,
+        default=2,
+        help="Minimum distinct source types expected per competitor in coverage checks.",
     )
     return parser
 
@@ -65,6 +89,15 @@ def main(argv: list[str] | None = None) -> int:
         scores = build_buyer_fit_scores(notes, priorities)
         markdown += "\n" + render_buyer_fit_markdown(scores)
     markdown += "\n" + render_source_evidence_markdown(notes)
+    if args.coverage_as_of:
+        coverage_warnings = build_source_coverage_warnings(
+            notes,
+            as_of_date=args.coverage_as_of,
+            max_note_age_days=args.max_note_age_days,
+            min_note_count=args.min_note_count,
+            min_source_types=args.min_source_types,
+        )
+        markdown += "\n" + render_source_coverage_markdown(coverage_warnings)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
