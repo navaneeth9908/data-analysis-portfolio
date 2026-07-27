@@ -174,6 +174,33 @@ def test_render_landscape_markdown_summarizes_profiles(tmp_path: Path) -> None:
     assert "Scores are confidence-weighted rollups from public-source notes." in markdown
 
 
+def test_render_source_evidence_markdown_groups_latest_notes_by_competitor() -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    notes = load_source_notes(project_dir / "examples/source_notes.json")
+
+    markdown = source_collection.render_source_evidence_markdown(
+        notes,
+        max_notes_per_company=1,
+    )
+
+    assert markdown.startswith("## Evidence highlights\n")
+    assert "Source-backed snippets show why each competitor earned its score." in markdown
+    assert "### Acme Analytics" in markdown
+    assert "### Northstar BI" in markdown
+    assert markdown.index("### Acme Analytics") < markdown.index("### Northstar BI")
+    assert (
+        "- **2026-06-20 · press release · ERP connector launch announcement** — "
+        "Acme announced a faster ERP connector rollout aimed at mid-market analytics teams."
+        in markdown
+    )
+    assert (
+        "  - delivery / strength / confidence 3: Implementation window for the ERP connector "
+        "is marketed as four weeks with certified templates."
+        in markdown
+    )
+    assert "Finance analytics product webinar" not in markdown
+
+
 def test_cli_writes_landscape_markdown(tmp_path: Path, capsys) -> None:
     notes_path = tmp_path / "source_notes.json"
     output_path = tmp_path / "landscape.md"
@@ -267,6 +294,18 @@ def test_cli_adds_buyer_fit_scorecard_when_priorities_are_supplied(tmp_path: Pat
     assert "## Buyer-fit priority scorecard" in markdown
     assert "| Orion Data Cloud | 8 | 8 | 0 | governance |" in markdown
     assert "| Northstar BI | 4 | 10 | 6 | support, governance |" in markdown
+    assert "## Evidence highlights" in markdown
+    assert "### Orion Data Cloud" in markdown
+    assert (
+        "- **2026-06-21 · job posting · Customer success implementation role** — "
+        "Orion is hiring implementation specialists to standardize customer onboarding playbooks."
+        in markdown
+    )
+    assert (
+        "  - onboarding / neutral / confidence 2: Hiring plan suggests investment in "
+        "repeatable onboarding motions for enterprise customers."
+        in markdown
+    )
 
 
 def test_example_source_notes_generate_expected_landscape() -> None:

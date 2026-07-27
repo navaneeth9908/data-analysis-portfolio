@@ -11,6 +11,7 @@ from competitive_intel.source_collection import (
     load_source_notes,
     render_buyer_fit_markdown,
     render_landscape_markdown,
+    render_source_evidence_markdown,
 )
 
 
@@ -63,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     if priorities:
         scores = build_buyer_fit_scores(notes, priorities)
         markdown += "\n" + render_buyer_fit_markdown(scores)
+    markdown += "\n" + render_source_evidence_markdown(notes)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

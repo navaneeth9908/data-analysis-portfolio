@@ -266,3 +266,44 @@ def render_landscape_markdown(
             f"{', '.join(profile.top_themes)} | {', '.join(profile.source_types)} |"
         )
     return "\n".join(lines) + "\n"
+
+
+def render_source_evidence_markdown(
+    notes: tuple[SourceNote, ...],
+    *,
+    title: str = "Evidence highlights",
+    max_notes_per_company: int = 2,
+) -> str:
+    """Render source-backed evidence snippets grouped by competitor."""
+    if max_notes_per_company <= 0:
+        raise ValueError("max_notes_per_company must be positive")
+
+    grouped: dict[str, list[SourceNote]] = defaultdict(list)
+    for note in notes:
+        grouped[note.company].append(note)
+
+    lines = [
+        f"## {title}",
+        "",
+        "Source-backed snippets show why each competitor earned its score.",
+        "",
+    ]
+    for company in sorted(grouped):
+        lines.append(f"### {company}")
+        company_notes = sorted(
+            grouped[company],
+            key=lambda note: (note.published_date, note.id),
+            reverse=True,
+        )
+        for note in company_notes[:max_notes_per_company]:
+            lines.append(
+                f"- **{note.published_date} · {note.source_type} · {note.source}** — "
+                f"{note.summary}"
+            )
+            for signal in note.signals:
+                lines.append(
+                    f"  - {signal.theme} / {signal.sentiment} / confidence "
+                    f"{signal.confidence}: {signal.detail}"
+                )
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"

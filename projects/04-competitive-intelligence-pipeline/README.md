@@ -68,6 +68,13 @@ Strength signals add points; gap and risk signals subtract concern points.
 | Orion Data Cloud | 8 | 8 | 0 | governance |
 | Northstar BI | 4 | 10 | 6 | support, governance |
 | Acme Analytics | 3 | 3 | 0 | delivery |
+
+## Evidence highlights
+
+Source-backed snippets show why each competitor earned its score.
+
+### Orion Data Cloud
+- **2026-06-21 · job posting · Customer success implementation role** — Orion is hiring implementation specialists to standardize customer onboarding playbooks.
 ```
 
 ## Source note format
@@ -102,10 +109,10 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Validates required fields and 1-5 confidence scores.
 - Aggregates competitor profiles by note count, signal count, source types, latest source date, top themes, and confidence-weighted strength/gap/risk scores.
 - Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
-- Renders a Markdown landscape table and optional buyer-fit scorecard for portfolio demos or stakeholder briefings.
+- Renders a Markdown landscape table, optional buyer-fit scorecard, and source-backed evidence highlights for portfolio demos or stakeholder briefings.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Add evidence snippets beneath each competitor row.
 - Add a richer Markdown report with executive summary, watchlist, and recommended follow-up research.
+- Add source coverage checks for stale or single-source competitor profiles.
