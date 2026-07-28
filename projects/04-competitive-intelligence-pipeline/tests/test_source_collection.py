@@ -501,3 +501,105 @@ def test_render_source_coverage_markdown_lists_watchlist_warnings() -> None:
     assert "Use these checks before turning the landscape into buying recommendations." in markdown
     assert "- **Beacon Metrics · low-note-count** — Beacon Metrics has 1 note; target is at least 2." in markdown
     assert "- **Beacon Metrics · stale-latest-source** — Beacon Metrics's latest source is 19 days old as of 2026-06-20." in markdown
+
+
+def test_render_executive_summary_highlights_key_portfolio_findings() -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    notes = load_source_notes(project_dir / "examples/source_notes.json")
+    profiles = build_competitor_profiles(notes)
+    buyer_scores = source_collection.build_buyer_fit_scores(
+        notes,
+        priorities={"governance": 2, "support": 2, "delivery": 1},
+    )
+    warnings = source_collection.build_source_coverage_warnings(
+        notes,
+        as_of_date="2026-07-02",
+        max_note_age_days=7,
+    )
+
+    markdown = source_collection.render_executive_summary_markdown(
+        profiles,
+        buyer_fit_scores=buyer_scores,
+        coverage_warnings=warnings,
+    )
+
+    assert markdown.startswith("## Executive summary\n")
+    assert "- Tracked 3 competitors across 6 public notes and 9 extracted signals." in markdown
+    assert "- Highest strength signal: Northstar BI with 8 confidence-weighted strength points." in markdown
+    assert "- Best buyer-priority fit: Orion Data Cloud with score 8 across governance." in markdown
+    assert "- Coverage watchlist: 3 warnings across 3 companies before buyer recommendations." in markdown
+
+
+def test_render_follow_up_research_markdown_turns_coverage_gaps_into_actions() -> None:
+    warnings = (
+        source_collection.SourceCoverageWarning(
+            company="Beacon Metrics",
+            issue="low-note-count",
+            detail="Beacon Metrics has 1 note; target is at least 2.",
+        ),
+        source_collection.SourceCoverageWarning(
+            company="Beacon Metrics",
+            issue="single-source",
+            detail="Beacon Metrics uses 1 source type (blog); target is at least 2.",
+        ),
+        source_collection.SourceCoverageWarning(
+            company="Acme Analytics",
+            issue="stale-latest-source",
+            detail="Acme Analytics's latest source is 12 days old as of 2026-07-02.",
+        ),
+    )
+
+    markdown = source_collection.render_follow_up_research_markdown(warnings)
+
+    assert markdown.startswith("## Recommended follow-up research\n")
+    assert "Use the watchlist to queue concrete analyst collection tasks." in markdown
+    assert (
+        "- **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source. "
+        "Acme Analytics's latest source is 12 days old as of 2026-07-02."
+        in markdown
+    )
+    assert (
+        "- **Beacon Metrics · low-note-count** — Add more public notes before relying on this profile. "
+        "Beacon Metrics has 1 note; target is at least 2."
+        in markdown
+    )
+    assert (
+        "- **Beacon Metrics · single-source** — Diversify the source mix with another independent source type. "
+        "Beacon Metrics uses 1 source type (blog); target is at least 2."
+        in markdown
+    )
+
+
+def test_cli_adds_executive_summary_and_follow_up_research(tmp_path: Path, capsys) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    output_path = tmp_path / "landscape-with-summary.md"
+    from competitive_intel.cli import main
+
+    exit_code = main(
+        [
+            str(project_dir / "examples/source_notes.json"),
+            "--output",
+            str(output_path),
+            "--title",
+            "Sample Analytics Competitor Landscape",
+            "--priority",
+            "governance=2",
+            "--priority",
+            "support=2",
+            "--priority",
+            "delivery=1",
+            "--coverage-as-of",
+            "2026-07-02",
+            "--max-note-age-days",
+            "7",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Landscape written to {output_path}" in output
+    markdown = output_path.read_text(encoding="utf-8")
+    assert "## Executive summary" in markdown
+    assert "- Best buyer-priority fit: Orion Data Cloud with score 8 across governance." in markdown
+    assert "## Recommended follow-up research" in markdown
+    assert "- **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source." in markdown

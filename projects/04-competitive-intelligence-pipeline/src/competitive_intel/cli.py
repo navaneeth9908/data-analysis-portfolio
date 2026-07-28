@@ -11,6 +11,8 @@ from competitive_intel.source_collection import (
     build_source_coverage_warnings,
     load_source_notes,
     render_buyer_fit_markdown,
+    render_executive_summary_markdown,
+    render_follow_up_research_markdown,
     render_landscape_markdown,
     render_source_coverage_markdown,
     render_source_evidence_markdown,
@@ -83,12 +85,12 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     notes = load_source_notes(args.source_notes)
     profiles = build_competitor_profiles(notes)
-    markdown = render_landscape_markdown(profiles, title=args.title)
     priorities = _parse_priorities(args.priority)
+    scores = ()
     if priorities:
         scores = build_buyer_fit_scores(notes, priorities)
-        markdown += "\n" + render_buyer_fit_markdown(scores)
-    markdown += "\n" + render_source_evidence_markdown(notes)
+
+    coverage_warnings = ()
     if args.coverage_as_of:
         coverage_warnings = build_source_coverage_warnings(
             notes,
@@ -97,7 +99,19 @@ def main(argv: list[str] | None = None) -> int:
             min_note_count=args.min_note_count,
             min_source_types=args.min_source_types,
         )
+
+    markdown = render_landscape_markdown(profiles, title=args.title)
+    markdown += "\n" + render_executive_summary_markdown(
+        profiles,
+        buyer_fit_scores=scores,
+        coverage_warnings=coverage_warnings,
+    )
+    if scores:
+        markdown += "\n" + render_buyer_fit_markdown(scores)
+    markdown += "\n" + render_source_evidence_markdown(notes)
+    if args.coverage_as_of:
         markdown += "\n" + render_source_coverage_markdown(coverage_warnings)
+        markdown += "\n" + render_follow_up_research_markdown(coverage_warnings)
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

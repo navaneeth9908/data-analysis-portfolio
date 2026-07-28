@@ -8,6 +8,13 @@ Scores are confidence-weighted rollups from public-source notes.
 | Northstar BI | 2 | 3 | 8 | 3 | 0 | support, ecosystem, governance | review, website |
 | Orion Data Cloud | 2 | 3 | 4 | 3 | 0 | governance, ecosystem, onboarding | analyst note, job posting |
 
+## Executive summary
+
+- Tracked 3 competitors across 6 public notes and 9 extracted signals.
+- Highest strength signal: Northstar BI with 8 confidence-weighted strength points.
+- Best buyer-priority fit: Orion Data Cloud with score 8 across governance.
+- Coverage watchlist: 3 warnings across 3 companies before buyer recommendations.
+
 ## Buyer-fit priority scorecard
 
 Strength signals add points; gap and risk signals subtract concern points.
@@ -50,3 +57,11 @@ Use these checks before turning the landscape into buying recommendations.
 - **Acme Analytics · stale-latest-source** — Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
 - **Northstar BI · stale-latest-source** — Northstar BI's latest source is 16 days old as of 2026-07-02; refresh threshold is 7 days.
 - **Orion Data Cloud · stale-latest-source** — Orion Data Cloud's latest source is 11 days old as of 2026-07-02; refresh threshold is 7 days.
+
+## Recommended follow-up research
+
+Use the watchlist to queue concrete analyst collection tasks.
+
+- **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source. Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
+- **Northstar BI · stale-latest-source** — Refresh the profile with a newer public source. Northstar BI's latest source is 16 days old as of 2026-07-02; refresh threshold is 7 days.
+- **Orion Data Cloud · stale-latest-source** — Refresh the profile with a newer public source. Orion Data Cloud's latest source is 11 days old as of 2026-07-02; refresh threshold is 7 days.

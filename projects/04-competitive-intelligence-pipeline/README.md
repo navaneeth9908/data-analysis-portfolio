@@ -61,6 +61,13 @@ Scores are confidence-weighted rollups from public-source notes.
 | Northstar BI | 2 | 3 | 8 | 3 | 0 | support, ecosystem, governance | review, website |
 | Orion Data Cloud | 2 | 3 | 4 | 3 | 0 | governance, ecosystem, onboarding | analyst note, job posting |
 
+## Executive summary
+
+- Tracked 3 competitors across 6 public notes and 9 extracted signals.
+- Highest strength signal: Northstar BI with 8 confidence-weighted strength points.
+- Best buyer-priority fit: Orion Data Cloud with score 8 across governance.
+- Coverage watchlist: 3 warnings across 3 companies before buyer recommendations.
+
 ## Buyer-fit priority scorecard
 
 Strength signals add points; gap and risk signals subtract concern points.
@@ -83,6 +90,12 @@ Source-backed snippets show why each competitor earned its score.
 Use these checks before turning the landscape into buying recommendations.
 
 - **Acme Analytics · stale-latest-source** — Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
+
+## Recommended follow-up research
+
+Use the watchlist to queue concrete analyst collection tasks.
+
+- **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source. Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
 ```
 
 ## Source note format
@@ -117,10 +130,9 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Validates required fields and 1-5 confidence scores.
 - Aggregates competitor profiles by note count, signal count, source types, latest source date, top themes, and confidence-weighted strength/gap/risk scores.
 - Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
-- Renders a Markdown landscape table, optional buyer-fit scorecard, source-backed evidence highlights, and source coverage watchlist for portfolio demos or stakeholder briefings.
+- Renders a Markdown landscape table, executive summary, optional buyer-fit scorecard, source-backed evidence highlights, source coverage watchlist, and recommended follow-up research for portfolio demos or stakeholder briefings.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Add a richer Markdown report with executive summary and recommended follow-up research.
 - Add lightweight trend deltas across repeated landscape runs.

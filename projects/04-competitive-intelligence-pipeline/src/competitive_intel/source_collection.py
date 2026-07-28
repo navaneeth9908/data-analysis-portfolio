@@ -337,6 +337,86 @@ def render_landscape_markdown(
     return "\n".join(lines) + "\n"
 
 
+def render_executive_summary_markdown(
+    profiles: tuple[CompetitorProfile, ...],
+    *,
+    buyer_fit_scores: tuple[BuyerFitScore, ...] = (),
+    coverage_warnings: tuple[SourceCoverageWarning, ...] = (),
+) -> str:
+    """Render a concise decision-ready summary of the landscape."""
+    lines = ["## Executive summary", ""]
+    if not profiles:
+        lines.append("- No competitor profiles are available yet.")
+        return "\n".join(lines) + "\n"
+
+    competitor_count = len(profiles)
+    note_count = sum(profile.note_count for profile in profiles)
+    signal_count = sum(profile.signal_count for profile in profiles)
+    strongest_profile = sorted(
+        profiles,
+        key=lambda profile: (-profile.strength_score, profile.company),
+    )[0]
+    lines.append(
+        f"- Tracked {competitor_count} competitors across {note_count} public notes "
+        f"and {signal_count} extracted signals."
+    )
+    lines.append(
+        f"- Highest strength signal: {strongest_profile.company} with "
+        f"{strongest_profile.strength_score} confidence-weighted strength points."
+    )
+
+    if buyer_fit_scores:
+        best_fit = buyer_fit_scores[0]
+        matched_themes = ", ".join(best_fit.matched_themes) or "no matched priority themes"
+        lines.append(
+            f"- Best buyer-priority fit: {best_fit.company} with score "
+            f"{best_fit.fit_score} across {matched_themes}."
+        )
+
+    if coverage_warnings:
+        warning_companies = {warning.company for warning in coverage_warnings}
+        lines.append(
+            f"- Coverage watchlist: {len(coverage_warnings)} warnings across "
+            f"{len(warning_companies)} companies before buyer recommendations."
+        )
+    else:
+        lines.append("- Coverage watchlist: no source coverage gaps flagged.")
+    return "\n".join(lines) + "\n"
+
+
+def _follow_up_action(issue: str) -> str:
+    actions = {
+        "low-note-count": "Add more public notes before relying on this profile.",
+        "single-source": "Diversify the source mix with another independent source type.",
+        "stale-latest-source": "Refresh the profile with a newer public source.",
+    }
+    return actions.get(issue, "Investigate this coverage gap before publishing recommendations.")
+
+
+def render_follow_up_research_markdown(
+    warnings: tuple[SourceCoverageWarning, ...],
+    *,
+    title: str = "Recommended follow-up research",
+) -> str:
+    """Turn source coverage warnings into analyst collection tasks."""
+    lines = [
+        f"## {title}",
+        "",
+        "Use the watchlist to queue concrete analyst collection tasks.",
+        "",
+    ]
+    if not warnings:
+        lines.append("No immediate research follow-ups are required with the current thresholds.")
+        return "\n".join(lines) + "\n"
+
+    for warning in sorted(warnings, key=lambda item: (item.company, item.issue)):
+        lines.append(
+            f"- **{warning.company} · {warning.issue}** — "
+            f"{_follow_up_action(warning.issue)} {warning.detail}"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def render_source_evidence_markdown(
     notes: tuple[SourceNote, ...],
     *,
