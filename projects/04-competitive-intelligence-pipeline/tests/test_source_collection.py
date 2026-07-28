@@ -174,6 +174,144 @@ def test_render_landscape_markdown_summarizes_profiles(tmp_path: Path) -> None:
     assert "Scores are confidence-weighted rollups from public-source notes." in markdown
 
 
+def test_build_profile_trend_deltas_compares_previous_and_current_profiles() -> None:
+    previous_profiles = (
+        source_collection.CompetitorProfile(
+            company="Acme Analytics",
+            note_count=2,
+            signal_count=3,
+            strength_score=7,
+            gap_score=0,
+            risk_score=2,
+            latest_source_date="2026-06-20",
+            source_types=("press release", "webinar"),
+            top_themes=("product", "pricing"),
+        ),
+        source_collection.CompetitorProfile(
+            company="Northstar BI",
+            note_count=2,
+            signal_count=3,
+            strength_score=8,
+            gap_score=3,
+            risk_score=0,
+            latest_source_date="2026-06-16",
+            source_types=("review", "website"),
+            top_themes=("support", "governance"),
+        ),
+    )
+    current_profiles = (
+        source_collection.CompetitorProfile(
+            company="Acme Analytics",
+            note_count=3,
+            signal_count=5,
+            strength_score=9,
+            gap_score=1,
+            risk_score=2,
+            latest_source_date="2026-06-25",
+            source_types=("press release", "review", "webinar"),
+            top_themes=("product", "delivery"),
+        ),
+        source_collection.CompetitorProfile(
+            company="Beacon Metrics",
+            note_count=1,
+            signal_count=2,
+            strength_score=4,
+            gap_score=0,
+            risk_score=1,
+            latest_source_date="2026-06-23",
+            source_types=("blog",),
+            top_themes=("governance", "pricing"),
+        ),
+    )
+
+    deltas = source_collection.build_profile_trend_deltas(
+        current_profiles=current_profiles,
+        previous_profiles=previous_profiles,
+    )
+
+    assert [(delta.company, delta.status) for delta in deltas] == [
+        ("Acme Analytics", "changed"),
+        ("Beacon Metrics", "new"),
+        ("Northstar BI", "removed"),
+    ]
+    acme = deltas[0]
+    assert acme.note_delta == 1
+    assert acme.signal_delta == 2
+    assert acme.strength_delta == 2
+    assert acme.gap_delta == 1
+    assert acme.risk_delta == 0
+    assert acme.added_themes == ("delivery",)
+    assert acme.removed_themes == ("pricing",)
+    beacon = deltas[1]
+    assert beacon.added_themes == ("governance", "pricing")
+    northstar = deltas[2]
+    assert northstar.note_delta == -2
+    assert northstar.removed_themes == ("support", "governance")
+
+
+def test_profile_snapshot_round_trip_preserves_profile_metrics(tmp_path: Path) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    profiles = build_competitor_profiles(load_source_notes(project_dir / "examples/source_notes.json"))
+    snapshot_path = tmp_path / "profile_snapshot.json"
+
+    source_collection.write_profile_snapshot(
+        profiles,
+        snapshot_path,
+        as_of_date="2026-07-02",
+    )
+    loaded_profiles = source_collection.load_profile_snapshot(snapshot_path)
+
+    assert loaded_profiles == profiles
+    payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    assert payload["as_of_date"] == "2026-07-02"
+    assert payload["profiles"][0] == {
+        "company": "Acme Analytics",
+        "note_count": 2,
+        "signal_count": 3,
+        "strength_score": 7,
+        "gap_score": 0,
+        "risk_score": 2,
+        "latest_source_date": "2026-06-20",
+        "source_types": ["press release", "webinar"],
+        "top_themes": ["product", "delivery", "pricing"],
+    }
+
+
+def test_render_profile_trends_markdown_summarizes_signed_changes() -> None:
+    deltas = (
+        source_collection.ProfileTrendDelta(
+            company="Acme Analytics",
+            status="changed",
+            note_delta=1,
+            signal_delta=2,
+            strength_delta=2,
+            gap_delta=1,
+            risk_delta=0,
+            added_themes=("delivery",),
+            removed_themes=("pricing",),
+        ),
+        source_collection.ProfileTrendDelta(
+            company="Northstar BI",
+            status="removed",
+            note_delta=-2,
+            signal_delta=-3,
+            strength_delta=-8,
+            gap_delta=-3,
+            risk_delta=0,
+            added_themes=(),
+            removed_themes=("support", "governance"),
+        ),
+    )
+
+    markdown = source_collection.render_profile_trends_markdown(deltas)
+
+    assert markdown.startswith("## Landscape trend deltas\n")
+    assert "Positive values show growth versus the previous profile snapshot." in markdown
+    assert "| Company | Status | Notes Δ | Signals Δ | Strength Δ | Gap Δ | Risk Δ | Theme changes |" in markdown
+    assert "| Acme Analytics | changed | +1 | +2 | +2 | +1 | 0 | + delivery; - pricing |" in markdown
+    assert "| Northstar BI | removed | -2 | -3 | -8 | -3 | 0 | - support, governance |" in markdown
+
+
 def test_render_source_evidence_markdown_groups_latest_notes_by_competitor() -> None:
     project_dir = Path(__file__).resolve().parents[1]
     notes = load_source_notes(project_dir / "examples/source_notes.json")
@@ -568,6 +706,66 @@ def test_render_follow_up_research_markdown_turns_coverage_gaps_into_actions() -
         "Beacon Metrics uses 1 source type (blog); target is at least 2."
         in markdown
     )
+
+
+def test_cli_adds_trend_deltas_and_writes_profile_snapshot(tmp_path: Path, capsys) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    previous_snapshot = tmp_path / "previous_profile_snapshot.json"
+    output_path = tmp_path / "landscape-with-trends.md"
+    current_snapshot = tmp_path / "current_profile_snapshot.json"
+    previous_snapshot.write_text(
+        json.dumps(
+            {
+                "as_of_date": "2026-06-18",
+                "profiles": [
+                    {
+                        "company": "Acme Analytics",
+                        "note_count": 1,
+                        "signal_count": 2,
+                        "strength_score": 4,
+                        "gap_score": 0,
+                        "risk_score": 2,
+                        "latest_source_date": "2026-06-18",
+                        "source_types": ["webinar"],
+                        "top_themes": ["product", "pricing"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    from competitive_intel.cli import main
+
+    exit_code = main(
+        [
+            str(project_dir / "examples/source_notes.json"),
+            "--output",
+            str(output_path),
+            "--title",
+            "Sample Analytics Competitor Landscape",
+            "--previous-profile-snapshot",
+            str(previous_snapshot),
+            "--profile-snapshot-output",
+            str(current_snapshot),
+            "--snapshot-as-of",
+            "2026-07-02",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Landscape written to {output_path}" in output
+    assert f"Profile snapshot written to {current_snapshot}" in output
+    markdown = output_path.read_text(encoding="utf-8")
+    assert "## Landscape trend deltas" in markdown
+    assert "| Acme Analytics | changed | +1 | +1 | +3 | 0 | 0 | + delivery |" in markdown
+    assert "| Orion Data Cloud | new | +2 | +3 | +4 | +3 | 0 | + governance, ecosystem, onboarding |" in markdown
+    current_profiles = source_collection.load_profile_snapshot(current_snapshot)
+    assert [profile.company for profile in current_profiles] == [
+        "Acme Analytics",
+        "Northstar BI",
+        "Orion Data Cloud",
+    ]
 
 
 def test_cli_adds_executive_summary_and_follow_up_research(tmp_path: Path, capsys) -> None:

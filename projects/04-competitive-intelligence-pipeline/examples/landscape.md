@@ -15,6 +15,16 @@ Scores are confidence-weighted rollups from public-source notes.
 - Best buyer-priority fit: Orion Data Cloud with score 8 across governance.
 - Coverage watchlist: 3 warnings across 3 companies before buyer recommendations.
 
+## Landscape trend deltas
+
+Positive values show growth versus the previous profile snapshot.
+
+| Company | Status | Notes Δ | Signals Δ | Strength Δ | Gap Δ | Risk Δ | Theme changes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Acme Analytics | changed | +1 | +1 | +3 | 0 | 0 | + delivery |
+| Northstar BI | changed | +1 | +1 | +3 | 0 | 0 | + ecosystem |
+| Orion Data Cloud | changed | +1 | +1 | 0 | 0 | 0 | + onboarding |
+
 ## Buyer-fit priority scorecard
 
 Strength signals add points; gap and risk signals subtract concern points.

@@ -1,6 +1,6 @@
 # Competitive Intelligence Pipeline
 
-A deterministic, offline workflow for turning public-source competitor notes into a structured landscape summary. The current milestone focuses on source collection, normalization, confidence-weighted signal rollups, and a Markdown CLI output that can be reproduced from a clean checkout.
+A deterministic, offline workflow for turning public-source competitor notes into a structured landscape summary. The current milestone focuses on source collection, normalization, confidence-weighted signal rollups, trend deltas across repeated snapshots, and a Markdown CLI output that can be reproduced from a clean checkout.
 
 ## Why this project matters
 
@@ -15,8 +15,10 @@ Competitive intelligence work is most useful when analysts can trace summary cla
 
 ```text
 projects/04-competitive-intelligence-pipeline/
-  examples/source_notes.json      # deterministic public-source note fixture
-  examples/landscape.md           # generated sample competitor landscape
+  examples/source_notes.json              # deterministic public-source note fixture
+  examples/previous_profile_snapshot.json # prior rollup for trend comparison
+  examples/current_profile_snapshot.json  # generated current profile snapshot
+  examples/landscape.md                   # generated sample competitor landscape
   src/competitive_intel/
     source_collection.py          # note models, normalization, scoring, rendering
     cli.py                        # Markdown report CLI
@@ -39,13 +41,17 @@ PYTHONPATH=src python -m competitive_intel.cli examples/source_notes.json \
   --priority support=2 \
   --priority delivery=1 \
   --coverage-as-of 2026-07-02 \
-  --max-note-age-days 7
+  --max-note-age-days 7 \
+  --previous-profile-snapshot examples/previous_profile_snapshot.json \
+  --profile-snapshot-output examples/current_profile_snapshot.json \
+  --snapshot-as-of 2026-07-02
 ```
 
 Expected CLI message:
 
 ```text
 Landscape written to examples\landscape.md
+Profile snapshot written to examples\current_profile_snapshot.json
 ```
 
 Expected landscape excerpt:
@@ -67,6 +73,16 @@ Scores are confidence-weighted rollups from public-source notes.
 - Highest strength signal: Northstar BI with 8 confidence-weighted strength points.
 - Best buyer-priority fit: Orion Data Cloud with score 8 across governance.
 - Coverage watchlist: 3 warnings across 3 companies before buyer recommendations.
+
+## Landscape trend deltas
+
+Positive values show growth versus the previous profile snapshot.
+
+| Company | Status | Notes Δ | Signals Δ | Strength Δ | Gap Δ | Risk Δ | Theme changes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Acme Analytics | changed | +1 | +1 | +3 | 0 | 0 | + delivery |
+| Northstar BI | changed | +1 | +1 | +3 | 0 | 0 | + ecosystem |
+| Orion Data Cloud | changed | +1 | +1 | 0 | 0 | 0 | + onboarding |
 
 ## Buyer-fit priority scorecard
 
@@ -130,9 +146,10 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Validates required fields and 1-5 confidence scores.
 - Aggregates competitor profiles by note count, signal count, source types, latest source date, top themes, and confidence-weighted strength/gap/risk scores.
 - Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
-- Renders a Markdown landscape table, executive summary, optional buyer-fit scorecard, source-backed evidence highlights, source coverage watchlist, and recommended follow-up research for portfolio demos or stakeholder briefings.
+- Renders a Markdown landscape table, executive summary, optional trend deltas, optional buyer-fit scorecard, source-backed evidence highlights, source coverage watchlist, and recommended follow-up research for portfolio demos or stakeholder briefings.
+- Writes and reloads compact profile snapshots so repeated landscape runs can show metric and theme changes over time.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Add lightweight trend deltas across repeated landscape runs.
+- Export report tables as CSV files for analyst handoff.

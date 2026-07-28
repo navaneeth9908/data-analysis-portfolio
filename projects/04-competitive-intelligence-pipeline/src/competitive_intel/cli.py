@@ -8,14 +8,18 @@ from pathlib import Path
 from competitive_intel.source_collection import (
     build_buyer_fit_scores,
     build_competitor_profiles,
+    build_profile_trend_deltas,
     build_source_coverage_warnings,
+    load_profile_snapshot,
     load_source_notes,
     render_buyer_fit_markdown,
     render_executive_summary_markdown,
     render_follow_up_research_markdown,
     render_landscape_markdown,
+    render_profile_trends_markdown,
     render_source_coverage_markdown,
     render_source_evidence_markdown,
+    write_profile_snapshot,
 )
 
 
@@ -63,6 +67,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=2,
         help="Minimum distinct source types expected per competitor in coverage checks.",
     )
+    parser.add_argument(
+        "--previous-profile-snapshot",
+        type=Path,
+        help="Optional prior profile snapshot JSON for rendering trend deltas.",
+    )
+    parser.add_argument(
+        "--profile-snapshot-output",
+        type=Path,
+        help="Optional path for writing the current profile snapshot JSON.",
+    )
+    parser.add_argument(
+        "--snapshot-as-of",
+        help="Optional YYYY-MM-DD metadata date to include in --profile-snapshot-output.",
+    )
     return parser
 
 
@@ -100,12 +118,22 @@ def main(argv: list[str] | None = None) -> int:
             min_source_types=args.min_source_types,
         )
 
+    trend_deltas = ()
+    if args.previous_profile_snapshot:
+        previous_profiles = load_profile_snapshot(args.previous_profile_snapshot)
+        trend_deltas = build_profile_trend_deltas(
+            current_profiles=profiles,
+            previous_profiles=previous_profiles,
+        )
+
     markdown = render_landscape_markdown(profiles, title=args.title)
     markdown += "\n" + render_executive_summary_markdown(
         profiles,
         buyer_fit_scores=scores,
         coverage_warnings=coverage_warnings,
     )
+    if trend_deltas:
+        markdown += "\n" + render_profile_trends_markdown(trend_deltas)
     if scores:
         markdown += "\n" + render_buyer_fit_markdown(scores)
     markdown += "\n" + render_source_evidence_markdown(notes)
@@ -119,6 +147,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Landscape written to {args.output}")
     else:
         print(markdown, end="")
+
+    if args.profile_snapshot_output:
+        write_profile_snapshot(
+            profiles,
+            args.profile_snapshot_output,
+            as_of_date=args.snapshot_as_of or args.coverage_as_of,
+        )
+        print(f"Profile snapshot written to {args.profile_snapshot_output}")
     return 0
 
 

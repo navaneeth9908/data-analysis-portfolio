@@ -1,0 +1,59 @@
+{
+  "profiles": [
+    {
+      "company": "Acme Analytics",
+      "note_count": 2,
+      "signal_count": 3,
+      "strength_score": 7,
+      "gap_score": 0,
+      "risk_score": 2,
+      "latest_source_date": "2026-06-20",
+      "source_types": [
+        "press release",
+        "webinar"
+      ],
+      "top_themes": [
+        "product",
+        "delivery",
+        "pricing"
+      ]
+    },
+    {
+      "company": "Northstar BI",
+      "note_count": 2,
+      "signal_count": 3,
+      "strength_score": 8,
+      "gap_score": 3,
+      "risk_score": 0,
+      "latest_source_date": "2026-06-16",
+      "source_types": [
+        "review",
+        "website"
+      ],
+      "top_themes": [
+        "support",
+        "ecosystem",
+        "governance"
+      ]
+    },
+    {
+      "company": "Orion Data Cloud",
+      "note_count": 2,
+      "signal_count": 3,
+      "strength_score": 4,
+      "gap_score": 3,
+      "risk_score": 0,
+      "latest_source_date": "2026-06-21",
+      "source_types": [
+        "analyst note",
+        "job posting"
+      ],
+      "top_themes": [
+        "governance",
+        "ecosystem",
+        "onboarding"
+      ]
+    }
+  ],
+  "as_of_date": "2026-07-02"
+}

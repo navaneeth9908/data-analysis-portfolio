@@ -67,6 +67,21 @@ class SourceCoverageWarning:
     detail: str
 
 
+@dataclass(frozen=True)
+class ProfileTrendDelta:
+    """Signed change between a previous and current competitor profile snapshot."""
+
+    company: str
+    status: str
+    note_delta: int
+    signal_delta: int
+    strength_delta: int
+    gap_delta: int
+    risk_delta: int
+    added_themes: tuple[str, ...]
+    removed_themes: tuple[str, ...]
+
+
 def _clean_text(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
@@ -164,6 +179,146 @@ def build_competitor_profiles(notes: tuple[SourceNote, ...]) -> tuple[Competitor
                 latest_source_date=latest_source_date,
                 source_types=tuple(sorted(source_types)),
                 top_themes=top_themes,
+            )
+        )
+    return tuple(sorted(profiles, key=lambda profile: profile.company))
+
+
+def build_profile_trend_deltas(
+    *,
+    current_profiles: tuple[CompetitorProfile, ...],
+    previous_profiles: tuple[CompetitorProfile, ...],
+) -> tuple[ProfileTrendDelta, ...]:
+    """Compare previous and current profile snapshots with signed metric deltas."""
+    current_by_company = {profile.company: profile for profile in current_profiles}
+    previous_by_company = {profile.company: profile for profile in previous_profiles}
+
+    deltas: list[ProfileTrendDelta] = []
+    for company in sorted(set(current_by_company) | set(previous_by_company)):
+        current = current_by_company.get(company)
+        previous = previous_by_company.get(company)
+
+        if previous is None and current is not None:
+            status = "new"
+        elif current is None and previous is not None:
+            status = "removed"
+        else:
+            status = "changed"
+
+        note_delta = (current.note_count if current else 0) - (previous.note_count if previous else 0)
+        signal_delta = (current.signal_count if current else 0) - (
+            previous.signal_count if previous else 0
+        )
+        strength_delta = (current.strength_score if current else 0) - (
+            previous.strength_score if previous else 0
+        )
+        gap_delta = (current.gap_score if current else 0) - (previous.gap_score if previous else 0)
+        risk_delta = (current.risk_score if current else 0) - (
+            previous.risk_score if previous else 0
+        )
+        current_themes = current.top_themes if current else ()
+        previous_themes = previous.top_themes if previous else ()
+        added_themes = tuple(theme for theme in current_themes if theme not in previous_themes)
+        removed_themes = tuple(theme for theme in previous_themes if theme not in current_themes)
+
+        if status == "changed" and not any(
+            (
+                note_delta,
+                signal_delta,
+                strength_delta,
+                gap_delta,
+                risk_delta,
+                added_themes,
+                removed_themes,
+            )
+        ):
+            status = "unchanged"
+
+        deltas.append(
+            ProfileTrendDelta(
+                company=company,
+                status=status,
+                note_delta=note_delta,
+                signal_delta=signal_delta,
+                strength_delta=strength_delta,
+                gap_delta=gap_delta,
+                risk_delta=risk_delta,
+                added_themes=added_themes,
+                removed_themes=removed_themes,
+            )
+        )
+    return tuple(deltas)
+
+
+def _profile_to_dict(profile: CompetitorProfile) -> dict[str, object]:
+    return {
+        "company": profile.company,
+        "note_count": profile.note_count,
+        "signal_count": profile.signal_count,
+        "strength_score": profile.strength_score,
+        "gap_score": profile.gap_score,
+        "risk_score": profile.risk_score,
+        "latest_source_date": profile.latest_source_date,
+        "source_types": list(profile.source_types),
+        "top_themes": list(profile.top_themes),
+    }
+
+
+def write_profile_snapshot(
+    profiles: tuple[CompetitorProfile, ...],
+    path: Path,
+    *,
+    as_of_date: str | None = None,
+) -> None:
+    """Write aggregated competitor profiles as a reusable JSON snapshot."""
+    payload: dict[str, object] = {
+        "profiles": [_profile_to_dict(profile) for profile in profiles]
+    }
+    if as_of_date:
+        payload["as_of_date"] = as_of_date
+    snapshot_path = Path(path)
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _read_int_field(raw_profile: dict[str, object], field_name: str) -> int:
+    value = raw_profile.get(field_name)
+    if not isinstance(value, int):
+        raise ValueError(f"profile {field_name} must be an integer")
+    return value
+
+
+def _read_string_tuple(raw_profile: dict[str, object], field_name: str) -> tuple[str, ...]:
+    raw_values = raw_profile.get(field_name, [])
+    if not isinstance(raw_values, list):
+        raise ValueError(f"profile {field_name} must be a list")
+    return tuple(_clean_text(value, f"profile {field_name}") for value in raw_values)
+
+
+def load_profile_snapshot(path: Path) -> tuple[CompetitorProfile, ...]:
+    """Load profile metrics from a previous JSON snapshot."""
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    raw_profiles = payload.get("profiles", [])
+    if not isinstance(raw_profiles, list):
+        raise ValueError("profile snapshot must contain a profiles list")
+
+    profiles: list[CompetitorProfile] = []
+    for raw_profile in raw_profiles:
+        if not isinstance(raw_profile, dict):
+            raise ValueError("each profile snapshot row must be an object")
+        profiles.append(
+            CompetitorProfile(
+                company=_clean_text(raw_profile.get("company"), "profile company"),
+                note_count=_read_int_field(raw_profile, "note_count"),
+                signal_count=_read_int_field(raw_profile, "signal_count"),
+                strength_score=_read_int_field(raw_profile, "strength_score"),
+                gap_score=_read_int_field(raw_profile, "gap_score"),
+                risk_score=_read_int_field(raw_profile, "risk_score"),
+                latest_source_date=_clean_text(
+                    raw_profile.get("latest_source_date"), "profile latest_source_date"
+                ),
+                source_types=_read_string_tuple(raw_profile, "source_types"),
+                top_themes=_read_string_tuple(raw_profile, "top_themes"),
             )
         )
     return tuple(sorted(profiles, key=lambda profile: profile.company))
@@ -333,6 +488,47 @@ def render_landscape_markdown(
             f"{profile.company} | {profile.note_count} | {profile.signal_count} | "
             f"{profile.strength_score} | {profile.gap_score} | {profile.risk_score} | "
             f"{', '.join(profile.top_themes)} | {', '.join(profile.source_types)} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _format_signed_delta(value: int) -> str:
+    if value > 0:
+        return f"+{value}"
+    return str(value)
+
+
+def _format_theme_changes(delta: ProfileTrendDelta) -> str:
+    changes: list[str] = []
+    if delta.added_themes:
+        changes.append(f"+ {', '.join(delta.added_themes)}")
+    if delta.removed_themes:
+        changes.append(f"- {', '.join(delta.removed_themes)}")
+    return "; ".join(changes) if changes else "None"
+
+
+def render_profile_trends_markdown(
+    deltas: tuple[ProfileTrendDelta, ...],
+    *,
+    title: str = "Landscape trend deltas",
+) -> str:
+    """Render signed changes between previous and current profile snapshots."""
+    lines = [
+        f"## {title}",
+        "",
+        "Positive values show growth versus the previous profile snapshot.",
+        "",
+        "| Company | Status | Notes Δ | Signals Δ | Strength Δ | Gap Δ | Risk Δ | Theme changes |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for delta in deltas:
+        lines.append(
+            "| "
+            f"{delta.company} | {delta.status} | {_format_signed_delta(delta.note_delta)} | "
+            f"{_format_signed_delta(delta.signal_delta)} | "
+            f"{_format_signed_delta(delta.strength_delta)} | "
+            f"{_format_signed_delta(delta.gap_delta)} | "
+            f"{_format_signed_delta(delta.risk_delta)} | {_format_theme_changes(delta)} |"
         )
     return "\n".join(lines) + "\n"
 
