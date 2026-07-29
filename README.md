@@ -64,3 +64,5 @@ The NL2SQL Analytics Agent is currently the most developed project. It includes 
 The Report Q&A Agent has started with deterministic Markdown/plain-text/PDF ingestion, keyword retrieval, cited extractive-answer workflow, Markdown brief export, offline evaluation question set, and a shareable multi-question evaluation summary.
 
 The Competitive Intelligence Pipeline now has an initial offline source-note schema, normalization/scoring code, sample competitor notes, a Markdown landscape output, buyer-specific priority scoring, source-backed evidence highlights, source coverage watchlist checks, executive summary bullets, recommended follow-up research tasks, reusable profile snapshots, trend-delta reporting, analyst-handoff CSV table exports, and tests for the CLI smoke path.
+
+The Financial Research Analyst has started with deterministic local price-history data, return/risk metric calculations, benchmark comparison, Markdown brief rendering, and tests for the CLI smoke path.

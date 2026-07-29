@@ -94,6 +94,10 @@ Planned milestones:
 - notebook or report output
 - tests for calculations
 
+Progress:
+
+- Started the Financial Research Analyst with deterministic local price-history CSV data, return/risk metric calculations, benchmark comparison, Markdown brief rendering, and a tested CLI smoke path.
+
 ### 6. Research Briefing Generator
 
 Build a briefing generator that converts collected articles or source notes into a ranked digest with key points and follow-up questions.
