@@ -20,6 +20,7 @@ from competitive_intel.source_collection import (
     render_source_coverage_markdown,
     render_source_evidence_markdown,
     write_profile_snapshot,
+    write_report_tables_csv,
 )
 
 
@@ -80,6 +81,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--snapshot-as-of",
         help="Optional YYYY-MM-DD metadata date to include in --profile-snapshot-output.",
+    )
+    parser.add_argument(
+        "--csv-output-dir",
+        type=Path,
+        help="Optional directory for analyst-handoff CSV tables.",
     )
     return parser
 
@@ -155,6 +161,15 @@ def main(argv: list[str] | None = None) -> int:
             as_of_date=args.snapshot_as_of or args.coverage_as_of,
         )
         print(f"Profile snapshot written to {args.profile_snapshot_output}")
+    if args.csv_output_dir:
+        write_report_tables_csv(
+            args.csv_output_dir,
+            profiles=profiles,
+            buyer_fit_scores=scores,
+            coverage_warnings=coverage_warnings,
+            trend_deltas=trend_deltas,
+        )
+        print(f"CSV tables written to {args.csv_output_dir}")
     return 0
 
 

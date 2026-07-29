@@ -1,0 +1,4 @@
+company,issue,detail
+Acme Analytics,stale-latest-source,Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
+Northstar BI,stale-latest-source,Northstar BI's latest source is 16 days old as of 2026-07-02; refresh threshold is 7 days.
+Orion Data Cloud,stale-latest-source,Orion Data Cloud's latest source is 11 days old as of 2026-07-02; refresh threshold is 7 days.

@@ -1,0 +1,4 @@
+company,note_count,signal_count,strength_score,gap_score,risk_score,latest_source_date,top_themes,source_types
+Acme Analytics,2,3,7,0,2,2026-06-20,product; delivery; pricing,press release; webinar
+Northstar BI,2,3,8,3,0,2026-06-16,support; ecosystem; governance,review; website
+Orion Data Cloud,2,3,4,3,0,2026-06-21,governance; ecosystem; onboarding,analyst note; job posting

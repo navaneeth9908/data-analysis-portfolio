@@ -1,0 +1,4 @@
+company,status,note_delta,signal_delta,strength_delta,gap_delta,risk_delta,added_themes,removed_themes
+Acme Analytics,changed,1,1,3,0,0,delivery,
+Northstar BI,changed,1,1,3,0,0,ecosystem,
+Orion Data Cloud,changed,1,1,0,0,0,onboarding,

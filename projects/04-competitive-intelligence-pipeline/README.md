@@ -19,6 +19,7 @@ projects/04-competitive-intelligence-pipeline/
   examples/previous_profile_snapshot.json # prior rollup for trend comparison
   examples/current_profile_snapshot.json  # generated current profile snapshot
   examples/landscape.md                   # generated sample competitor landscape
+  examples/report_tables/                 # generated CSV handoff tables
   src/competitive_intel/
     source_collection.py          # note models, normalization, scoring, rendering
     cli.py                        # Markdown report CLI
@@ -44,7 +45,8 @@ PYTHONPATH=src python -m competitive_intel.cli examples/source_notes.json \
   --max-note-age-days 7 \
   --previous-profile-snapshot examples/previous_profile_snapshot.json \
   --profile-snapshot-output examples/current_profile_snapshot.json \
-  --snapshot-as-of 2026-07-02
+  --snapshot-as-of 2026-07-02 \
+  --csv-output-dir examples/report_tables
 ```
 
 Expected CLI message:
@@ -52,6 +54,7 @@ Expected CLI message:
 ```text
 Landscape written to examples\landscape.md
 Profile snapshot written to examples\current_profile_snapshot.json
+CSV tables written to examples\report_tables
 ```
 
 Expected landscape excerpt:
@@ -114,6 +117,24 @@ Use the watchlist to queue concrete analyst collection tasks.
 - **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source. Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.
 ```
 
+## Analyst CSV handoff
+
+The same CLI can write flat files under `examples/report_tables/` for spreadsheet review or BI import:
+
+```text
+profile_summary.csv      # competitor-level rollups
+buyer_fit_scorecard.csv  # weighted buyer-priority ranking
+trend_deltas.csv         # signed changes versus previous snapshot
+coverage_watchlist.csv   # source freshness and coverage warnings
+```
+
+`profile_summary.csv` begins with:
+
+```csv
+company,note_count,signal_count,strength_score,gap_score,risk_score,latest_source_date,top_themes,source_types
+Acme Analytics,2,3,7,0,2,2026-06-20,product; delivery; pricing,press release; webinar
+```
+
 ## Source note format
 
 Each note captures one public observation about one competitor:
@@ -148,8 +169,9 @@ Supported score buckets are `strength`, `gap`, and `risk`. Other sentiments are 
 - Ranks competitors against buyer-specific priority themes using weighted strength, gap, and risk evidence.
 - Renders a Markdown landscape table, executive summary, optional trend deltas, optional buyer-fit scorecard, source-backed evidence highlights, source coverage watchlist, and recommended follow-up research for portfolio demos or stakeholder briefings.
 - Writes and reloads compact profile snapshots so repeated landscape runs can show metric and theme changes over time.
+- Exports analyst-handoff CSV tables for competitor rollups, buyer-fit scoring, trend deltas, and coverage watchlists.
 - Provides a small CLI smoke path with reproducible sample data.
 
 ## Planned next milestones
 
-- Export report tables as CSV files for analyst handoff.
+- Use the completed competitor landscape as a portfolio reference while moving into the Financial Research Analyst project.

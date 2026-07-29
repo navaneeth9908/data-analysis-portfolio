@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from collections import defaultdict
 from dataclasses import dataclass
@@ -671,3 +672,144 @@ def render_source_coverage_markdown(
     for warning in warnings:
         lines.append(f"- **{warning.company} · {warning.issue}** — {warning.detail}")
     return "\n".join(lines) + "\n"
+
+
+def _join_csv_values(values: tuple[str, ...]) -> str:
+    return "; ".join(values)
+
+
+def _write_csv_table(
+    output_dir: Path,
+    filename: str,
+    fieldnames: tuple[str, ...],
+    rows: list[dict[str, object]],
+) -> Path:
+    path = output_dir / filename
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    return path
+
+
+def write_report_tables_csv(
+    output_dir: Path,
+    *,
+    profiles: tuple[CompetitorProfile, ...],
+    buyer_fit_scores: tuple[BuyerFitScore, ...] = (),
+    coverage_warnings: tuple[SourceCoverageWarning, ...] = (),
+    trend_deltas: tuple[ProfileTrendDelta, ...] = (),
+) -> tuple[Path, ...]:
+    """Write analyst-handoff CSV tables from the rendered landscape inputs."""
+    csv_dir = Path(output_dir)
+    csv_dir.mkdir(parents=True, exist_ok=True)
+    written_paths: list[Path] = []
+
+    written_paths.append(
+        _write_csv_table(
+            csv_dir,
+            "profile_summary.csv",
+            (
+                "company",
+                "note_count",
+                "signal_count",
+                "strength_score",
+                "gap_score",
+                "risk_score",
+                "latest_source_date",
+                "top_themes",
+                "source_types",
+            ),
+            [
+                {
+                    "company": profile.company,
+                    "note_count": profile.note_count,
+                    "signal_count": profile.signal_count,
+                    "strength_score": profile.strength_score,
+                    "gap_score": profile.gap_score,
+                    "risk_score": profile.risk_score,
+                    "latest_source_date": profile.latest_source_date,
+                    "top_themes": _join_csv_values(profile.top_themes),
+                    "source_types": _join_csv_values(profile.source_types),
+                }
+                for profile in profiles
+            ],
+        )
+    )
+
+    if buyer_fit_scores:
+        written_paths.append(
+            _write_csv_table(
+                csv_dir,
+                "buyer_fit_scorecard.csv",
+                (
+                    "company",
+                    "fit_score",
+                    "strength_points",
+                    "concern_points",
+                    "matched_themes",
+                ),
+                [
+                    {
+                        "company": score.company,
+                        "fit_score": score.fit_score,
+                        "strength_points": score.strength_points,
+                        "concern_points": score.concern_points,
+                        "matched_themes": _join_csv_values(score.matched_themes),
+                    }
+                    for score in buyer_fit_scores
+                ],
+            )
+        )
+
+    if trend_deltas:
+        written_paths.append(
+            _write_csv_table(
+                csv_dir,
+                "trend_deltas.csv",
+                (
+                    "company",
+                    "status",
+                    "note_delta",
+                    "signal_delta",
+                    "strength_delta",
+                    "gap_delta",
+                    "risk_delta",
+                    "added_themes",
+                    "removed_themes",
+                ),
+                [
+                    {
+                        "company": delta.company,
+                        "status": delta.status,
+                        "note_delta": delta.note_delta,
+                        "signal_delta": delta.signal_delta,
+                        "strength_delta": delta.strength_delta,
+                        "gap_delta": delta.gap_delta,
+                        "risk_delta": delta.risk_delta,
+                        "added_themes": _join_csv_values(delta.added_themes),
+                        "removed_themes": _join_csv_values(delta.removed_themes),
+                    }
+                    for delta in trend_deltas
+                ],
+            )
+        )
+
+    if coverage_warnings:
+        written_paths.append(
+            _write_csv_table(
+                csv_dir,
+                "coverage_watchlist.csv",
+                ("company", "issue", "detail"),
+                [
+                    {
+                        "company": warning.company,
+                        "issue": warning.issue,
+                        "detail": warning.detail,
+                    }
+                    for warning in coverage_warnings
+                ],
+            )
+        )
+
+    return tuple(written_paths)

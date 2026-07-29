@@ -80,6 +80,7 @@ Progress:
 - Added source coverage checks that flag stale latest notes, thin note counts, or single-source profiles before turning a landscape into buying recommendations.
 - Added executive summary bullets and recommended follow-up research tasks so the Markdown landscape is closer to a stakeholder-ready intelligence brief.
 - Added reusable profile snapshots and Markdown trend deltas so repeated landscape runs show source, signal, score, and theme movement over time.
+- Added analyst-handoff CSV table exports for competitor rollups, buyer-fit scoring, trend deltas, and source coverage watchlists.
 
 ### 5. Financial Research Analyst
 

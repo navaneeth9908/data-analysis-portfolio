@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -801,3 +802,116 @@ def test_cli_adds_executive_summary_and_follow_up_research(tmp_path: Path, capsy
     assert "- Best buyer-priority fit: Orion Data Cloud with score 8 across governance." in markdown
     assert "## Recommended follow-up research" in markdown
     assert "- **Acme Analytics · stale-latest-source** — Refresh the profile with a newer public source." in markdown
+
+
+def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def test_write_report_tables_csv_exports_analyst_handoff_tables(tmp_path: Path) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    notes = load_source_notes(project_dir / "examples/source_notes.json")
+    profiles = build_competitor_profiles(notes)
+    scores = source_collection.build_buyer_fit_scores(
+        notes,
+        priorities={"governance": 2, "support": 2, "delivery": 1},
+    )
+    warnings = source_collection.build_source_coverage_warnings(
+        notes,
+        as_of_date="2026-07-02",
+        max_note_age_days=7,
+    )
+    previous_profiles = source_collection.load_profile_snapshot(
+        project_dir / "examples/previous_profile_snapshot.json"
+    )
+    trend_deltas = source_collection.build_profile_trend_deltas(
+        current_profiles=profiles,
+        previous_profiles=previous_profiles,
+    )
+
+    written_paths = source_collection.write_report_tables_csv(
+        tmp_path / "report_tables",
+        profiles=profiles,
+        buyer_fit_scores=scores,
+        coverage_warnings=warnings,
+        trend_deltas=trend_deltas,
+    )
+
+    assert [path.name for path in written_paths] == [
+        "profile_summary.csv",
+        "buyer_fit_scorecard.csv",
+        "trend_deltas.csv",
+        "coverage_watchlist.csv",
+    ]
+    profile_rows = _read_csv_rows(tmp_path / "report_tables/profile_summary.csv")
+    assert profile_rows[0] == {
+        "company": "Acme Analytics",
+        "note_count": "2",
+        "signal_count": "3",
+        "strength_score": "7",
+        "gap_score": "0",
+        "risk_score": "2",
+        "latest_source_date": "2026-06-20",
+        "top_themes": "product; delivery; pricing",
+        "source_types": "press release; webinar",
+    }
+    buyer_fit_rows = _read_csv_rows(tmp_path / "report_tables/buyer_fit_scorecard.csv")
+    assert buyer_fit_rows[0] == {
+        "company": "Orion Data Cloud",
+        "fit_score": "8",
+        "strength_points": "8",
+        "concern_points": "0",
+        "matched_themes": "governance",
+    }
+    trend_rows = _read_csv_rows(tmp_path / "report_tables/trend_deltas.csv")
+    assert trend_rows[0]["company"] == "Acme Analytics"
+    assert trend_rows[0]["note_delta"] == "1"
+    assert trend_rows[0]["added_themes"] == "delivery"
+    coverage_rows = _read_csv_rows(tmp_path / "report_tables/coverage_watchlist.csv")
+    assert coverage_rows[0] == {
+        "company": "Acme Analytics",
+        "issue": "stale-latest-source",
+        "detail": "Acme Analytics's latest source is 12 days old as of 2026-07-02; refresh threshold is 7 days.",
+    }
+
+
+def test_cli_writes_csv_report_tables_for_analyst_handoff(tmp_path: Path, capsys) -> None:
+    project_dir = Path(__file__).resolve().parents[1]
+    output_path = tmp_path / "landscape.md"
+    csv_dir = tmp_path / "report_tables"
+    from competitive_intel.cli import main
+
+    exit_code = main(
+        [
+            str(project_dir / "examples/source_notes.json"),
+            "--output",
+            str(output_path),
+            "--title",
+            "Sample Analytics Competitor Landscape",
+            "--priority",
+            "governance=2",
+            "--priority",
+            "support=2",
+            "--priority",
+            "delivery=1",
+            "--coverage-as-of",
+            "2026-07-02",
+            "--max-note-age-days",
+            "7",
+            "--previous-profile-snapshot",
+            str(project_dir / "examples/previous_profile_snapshot.json"),
+            "--csv-output-dir",
+            str(csv_dir),
+        ]
+    )
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert f"Landscape written to {output_path}" in output
+    assert f"CSV tables written to {csv_dir}" in output
+    assert (csv_dir / "profile_summary.csv").exists()
+    assert (csv_dir / "buyer_fit_scorecard.csv").exists()
+    assert (csv_dir / "trend_deltas.csv").exists()
+    assert (csv_dir / "coverage_watchlist.csv").exists()
+    assert _read_csv_rows(csv_dir / "buyer_fit_scorecard.csv")[0]["company"] == "Orion Data Cloud"
