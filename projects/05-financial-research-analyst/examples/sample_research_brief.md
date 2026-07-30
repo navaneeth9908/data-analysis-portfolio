@@ -26,6 +26,7 @@ Benchmark: MKT
 Signal: **uptrend**
 
 ## Risk notes
-- Annualized volatility is estimated from the supplied periodic return series.
-- Maximum drawdown measures the deepest peak-to-trough decline in the sample.
+- Annualized volatility is elevated at 54.36%; review position sizing and scenario-test wider return swings.
+- Cumulative return led MKT by 5.00 percentage points over the sample window.
+- Moving-average signal is uptrend; latest close is 5.16% above the 5-day moving average.
 - Educational portfolio demo, not investment advice.

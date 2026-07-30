@@ -181,6 +181,61 @@ def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[
     return tuple(sorted(price_points, key=lambda point: point.date))
 
 
+def build_risk_notes(
+    summary: PerformanceSummary,
+    *,
+    benchmark: PerformanceSummary | None = None,
+    trend: MovingAverageTrend | None = None,
+    volatility_warning_threshold_pct: float = 40.0,
+    drawdown_warning_threshold_pct: float = -10.0,
+) -> tuple[str, ...]:
+    """Build deterministic analyst risk notes from return, benchmark, and trend metrics."""
+    notes: list[str] = []
+
+    if summary.annualized_volatility_pct >= volatility_warning_threshold_pct:
+        notes.append(
+            "- Annualized volatility is elevated at "
+            f"{summary.annualized_volatility_pct:.2f}%; review position sizing and "
+            "scenario-test wider return swings."
+        )
+
+    if summary.max_drawdown_pct <= drawdown_warning_threshold_pct:
+        notes.append(
+            f"- Maximum drawdown reached {summary.max_drawdown_pct:.2f}%, beyond the "
+            f"{drawdown_warning_threshold_pct:.2f}% review threshold."
+        )
+
+    if benchmark is not None:
+        cumulative_delta = summary.cumulative_return_pct - benchmark.cumulative_return_pct
+        if cumulative_delta >= 0:
+            notes.append(
+                f"- Cumulative return led {benchmark.ticker} by "
+                f"{cumulative_delta:.2f} percentage points over the sample window."
+            )
+        else:
+            notes.append(
+                f"- Cumulative return trailed {benchmark.ticker} by "
+                f"{abs(cumulative_delta):.2f} percentage points over the sample window."
+            )
+
+    if trend is not None:
+        if trend.trend_label == "uptrend":
+            notes.append(
+                "- Moving-average signal is uptrend; latest close is "
+                f"{abs(trend.close_vs_long_ma_pct):.2f}% above the "
+                f"{trend.long_window}-day moving average."
+            )
+        elif trend.trend_label == "downtrend":
+            notes.append(
+                "- Moving-average signal is downtrend; latest close is "
+                f"{abs(trend.close_vs_long_ma_pct):.2f}% below the "
+                f"{trend.long_window}-day moving average."
+            )
+
+    notes.append("- Educational portfolio demo, not investment advice.")
+    return tuple(notes)
+
+
 def render_research_brief(
     summary: PerformanceSummary,
     *,
@@ -268,14 +323,6 @@ def render_research_brief(
             ]
         )
 
-    lines.extend(
-        [
-            "",
-            "## Risk notes",
-            "- Annualized volatility is estimated from the supplied periodic return series.",
-            "- Maximum drawdown measures the deepest peak-to-trough decline in the sample.",
-            "- Educational portfolio demo, not investment advice.",
-            "",
-        ]
-    )
+    risk_notes = build_risk_notes(summary, benchmark=benchmark, trend=trend)
+    lines.extend(["", "## Risk notes", *risk_notes, ""])
     return "\n".join(lines)

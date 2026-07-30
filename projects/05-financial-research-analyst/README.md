@@ -7,7 +7,7 @@ A deterministic, offline financial analytics project for turning simple price-hi
 Financial research workflows need transparent calculations before adding live data feeds or narrative layers. This project demonstrates an analytics-engineering foundation for investment-style reporting:
 
 - ingest a tidy price-history file with dates, tickers, closes, and volume
-- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, and moving-average trend signals
+- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, and rule-backed risk notes
 - compare an asset against a benchmark using deterministic sample data
 - generate a Markdown brief that is easy to review, version, and share
 
@@ -77,6 +77,12 @@ Benchmark: MKT
 | 3-day vs 5-day MA | +1.98% |
 
 Signal: **uptrend**
+
+## Risk notes
+- Annualized volatility is elevated at 54.36%; review position sizing and scenario-test wider return swings.
+- Cumulative return led MKT by 5.00 percentage points over the sample window.
+- Moving-average signal is uptrend; latest close is 5.16% above the 5-day moving average.
+- Educational portfolio demo, not investment advice.
 ```
 
 ## Input format
@@ -99,14 +105,14 @@ date,ticker,close,volume
 - Loads deterministic local price-history CSV files.
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
-- Calculates cumulative return, average return, annualized volatility, maximum drawdown, and short-vs-long moving-average trend signals.
-- Renders an asset-vs-benchmark Markdown brief with a reproducible trend section suitable for a portfolio demo.
+- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, and rule-backed risk notes.
+- Renders an asset-vs-benchmark Markdown brief with reproducible trend and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 
 ## Planned next milestones
 
 - Add a small fundamentals-style metrics fixture for valuation and profitability ratios.
-- Add richer risk notes that flag volatility, drawdown, benchmark underperformance, and weak trend signals.
+- Add scenario comparison notes that separate market-wide drawdowns from asset-specific weakness.
 - Package a final notebook or HTML report view after the metric layer is stable.
 
 > Educational portfolio demo, not investment advice.
