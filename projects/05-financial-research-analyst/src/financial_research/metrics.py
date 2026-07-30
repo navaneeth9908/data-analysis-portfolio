@@ -36,6 +36,23 @@ class PerformanceSummary:
     max_drawdown_pct: float
 
 
+@dataclass(frozen=True)
+class MovingAverageTrend:
+    """Simple moving-average trend snapshot for a ticker price series."""
+
+    ticker: str
+    observation_count: int
+    latest_date: date
+    latest_close: float
+    short_window: int
+    long_window: int
+    short_moving_average: float
+    long_moving_average: float
+    close_vs_long_ma_pct: float
+    short_vs_long_ma_pct: float
+    trend_label: str
+
+
 def summarize_price_history(
     prices: list[PricePoint] | tuple[PricePoint, ...],
     *,
@@ -87,6 +104,50 @@ def summarize_price_history(
     )
 
 
+def summarize_moving_average_trend(
+    prices: list[PricePoint] | tuple[PricePoint, ...],
+    *,
+    short_window: int = 3,
+    long_window: int = 5,
+) -> MovingAverageTrend:
+    """Calculate a short-vs-long moving-average trend snapshot."""
+    if short_window <= 0 or long_window <= 0:
+        raise ValueError("moving-average windows must be positive")
+    if short_window >= long_window:
+        raise ValueError("short_window must be smaller than long_window")
+
+    summary = summarize_price_history(prices)
+    ordered = sorted(prices, key=lambda point: point.date)
+    if len(ordered) < long_window:
+        raise ValueError(f"at least {long_window} observations are required")
+
+    closes = [point.close for point in ordered]
+    short_moving_average = mean(closes[-short_window:])
+    long_moving_average = mean(closes[-long_window:])
+    latest_close = closes[-1]
+
+    if short_moving_average > long_moving_average and latest_close >= short_moving_average:
+        trend_label = "uptrend"
+    elif short_moving_average < long_moving_average and latest_close <= short_moving_average:
+        trend_label = "downtrend"
+    else:
+        trend_label = "mixed"
+
+    return MovingAverageTrend(
+        ticker=summary.ticker,
+        observation_count=summary.observation_count,
+        latest_date=summary.end_date,
+        latest_close=latest_close,
+        short_window=short_window,
+        long_window=long_window,
+        short_moving_average=short_moving_average,
+        long_moving_average=long_moving_average,
+        close_vs_long_ma_pct=(latest_close / long_moving_average - 1) * 100,
+        short_vs_long_ma_pct=(short_moving_average / long_moving_average - 1) * 100,
+        trend_label=trend_label,
+    )
+
+
 def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[PricePoint, ...]:
     """Load adjusted close observations from a CSV file.
 
@@ -124,6 +185,7 @@ def render_research_brief(
     summary: PerformanceSummary,
     *,
     benchmark: PerformanceSummary | None = None,
+    trend: MovingAverageTrend | None = None,
 ) -> str:
     """Render a concise Markdown performance brief for analyst review."""
 
@@ -132,6 +194,9 @@ def render_research_brief(
 
     def pts(asset_value: float, benchmark_value: float) -> str:
         return f"{asset_value - benchmark_value:+.2f} pts"
+
+    def signed_pct(value: float) -> str:
+        return f"{value:+.2f}%"
 
     lines = [
         f"# {summary.ticker} Financial Research Brief",
@@ -178,6 +243,28 @@ def render_research_brief(
                 f"| Average daily return | {pct(summary.average_return_pct)} |",
                 f"| Annualized volatility | {pct(summary.annualized_volatility_pct)} |",
                 f"| Maximum drawdown | {pct(summary.max_drawdown_pct)} |",
+            ]
+        )
+
+    if trend is not None:
+        lines.extend(
+            [
+                "",
+                "## Moving-average trend",
+                "",
+                "| Metric | Value |",
+                "| --- | ---: |",
+                f"| Latest close | {trend.latest_close:.2f} |",
+                f"| {trend.short_window}-day moving average | "
+                f"{trend.short_moving_average:.2f} |",
+                f"| {trend.long_window}-day moving average | "
+                f"{trend.long_moving_average:.2f} |",
+                f"| Close vs {trend.long_window}-day MA | "
+                f"{signed_pct(trend.close_vs_long_ma_pct)} |",
+                f"| {trend.short_window}-day vs {trend.long_window}-day MA | "
+                f"{signed_pct(trend.short_vs_long_ma_pct)} |",
+                "",
+                f"Signal: **{trend.trend_label}**",
             ]
         )
 

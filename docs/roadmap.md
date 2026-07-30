@@ -96,7 +96,7 @@ Planned milestones:
 
 Progress:
 
-- Started the Financial Research Analyst with deterministic local price-history CSV data, return/risk metric calculations, benchmark comparison, Markdown brief rendering, and a tested CLI smoke path.
+- Started the Financial Research Analyst with deterministic local price-history CSV data, return/risk metric calculations, benchmark comparison, short-vs-long moving-average trend signals, Markdown brief rendering, and a tested CLI smoke path.
 
 ### 6. Research Briefing Generator
 

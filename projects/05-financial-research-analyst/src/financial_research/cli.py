@@ -8,6 +8,7 @@ from pathlib import Path
 from financial_research.metrics import (
     load_price_history,
     render_research_brief,
+    summarize_moving_average_trend,
     summarize_price_history,
 )
 
@@ -20,6 +21,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ticker", required=True, help="Ticker to analyze")
     parser.add_argument("--benchmark", help="Optional benchmark ticker from the same CSV")
     parser.add_argument("--output", type=Path, required=True, help="Markdown output path")
+    parser.add_argument(
+        "--trend-short-window",
+        type=int,
+        default=3,
+        help="Short moving-average window for the trend section (default: 3)",
+    )
+    parser.add_argument(
+        "--trend-long-window",
+        type=int,
+        default=5,
+        help="Long moving-average window for the trend section (default: 5)",
+    )
     return parser
 
 
@@ -28,13 +41,18 @@ def main(argv: list[str] | None = None) -> int:
 
     asset_prices = load_price_history(args.price_file, ticker=args.ticker)
     asset_summary = summarize_price_history(asset_prices)
+    trend = summarize_moving_average_trend(
+        asset_prices,
+        short_window=args.trend_short_window,
+        long_window=args.trend_long_window,
+    )
 
     benchmark_summary = None
     if args.benchmark:
         benchmark_prices = load_price_history(args.price_file, ticker=args.benchmark)
         benchmark_summary = summarize_price_history(benchmark_prices)
 
-    markdown = render_research_brief(asset_summary, benchmark=benchmark_summary)
+    markdown = render_research_brief(asset_summary, benchmark=benchmark_summary, trend=trend)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(markdown, encoding="utf-8")
     print(f"Research brief written to {args.output}")

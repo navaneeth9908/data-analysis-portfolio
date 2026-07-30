@@ -42,3 +42,6 @@ def test_cli_writes_research_brief_from_price_history(tmp_path) -> None:
     assert markdown.startswith("# NOVA Financial Research Brief")
     assert "Benchmark: MKT" in markdown
     assert "| Cumulative return | 10.00% | 5.00% | +5.00 pts |" in markdown
+    assert "## Moving-average trend" in markdown
+    assert "| 3-day moving average | 106.67 |" in markdown
+    assert "Signal: **uptrend**" in markdown
