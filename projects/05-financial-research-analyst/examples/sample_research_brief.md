@@ -13,6 +13,16 @@ Benchmark: MKT
 | Annualized volatility | 54.36% | 19.06% | +35.29 pts |
 | Maximum drawdown | -1.89% | -0.98% | -0.91 pts |
 
+## Fundamentals snapshot
+
+As of: 2026-01-07 (TTM inputs)
+
+| Metric | Value |
+| --- | ---: |
+| Price-to-sales | 5.00x |
+| Net margin | 15.00% |
+| Return on equity | 20.00% |
+
 ## Moving-average trend
 
 | Metric | Value |

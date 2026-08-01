@@ -7,7 +7,7 @@ A deterministic, offline financial analytics project for turning simple price-hi
 Financial research workflows need transparent calculations before adding live data feeds or narrative layers. This project demonstrates an analytics-engineering foundation for investment-style reporting:
 
 - ingest a tidy price-history file with dates, tickers, closes, and volume
-- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, and rule-backed risk notes
+- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, and rule-backed risk notes
 - compare an asset against a benchmark using deterministic sample data
 - generate a Markdown brief that is easy to review, version, and share
 
@@ -16,6 +16,7 @@ Financial research workflows need transparent calculations before adding live da
 ```text
 projects/05-financial-research-analyst/
   examples/sample_prices.csv          # deterministic asset + benchmark prices
+  examples/sample_fundamentals.csv    # deterministic TTM valuation/profitability inputs
   examples/sample_research_brief.md   # generated Markdown report
   src/financial_research/
     metrics.py                        # CSV loading, calculations, Markdown renderer
@@ -37,6 +38,7 @@ pytest tests/ -q
 PYTHONPATH=src python -m financial_research.cli examples/sample_prices.csv \
   --ticker NOVA \
   --benchmark MKT \
+  --fundamentals-file examples/sample_fundamentals.csv \
   --trend-short-window 3 \
   --trend-long-window 5 \
   --output examples/sample_research_brief.md
@@ -65,6 +67,16 @@ Benchmark: MKT
 | Average daily return | 1.97% | 0.99% | +0.98 pts |
 | Annualized volatility | 54.36% | 19.06% | +35.29 pts |
 | Maximum drawdown | -1.89% | -0.98% | -0.91 pts |
+
+## Fundamentals snapshot
+
+As of: 2026-01-07 (TTM inputs)
+
+| Metric | Value |
+| --- | ---: |
+| Price-to-sales | 5.00x |
+| Net margin | 15.00% |
+| Return on equity | 20.00% |
 
 ## Moving-average trend
 
@@ -100,19 +112,32 @@ date,ticker,close,volume
 - `close` must be positive.
 - `volume` cannot be negative.
 
+### Optional fundamentals format
+
+Pass `--fundamentals-file` to add a point-in-time valuation/profitability snapshot for the selected ticker. The loader selects that ticker's newest `as_of_date` row, making small historical fixtures safe to extend.
+
+```csv
+as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
+2026-01-07,NOVA,500000000,100000000,15000000,75000000
+```
+
+- `market_cap`, `revenue_ttm`, and `total_equity` must be positive because they are ratio denominators.
+- `net_income_ttm` can be negative; the generated net margin and return-on-equity values retain its sign.
+- The report adds price-to-sales, net margin, and return on equity from the supplied trailing-twelve-month inputs.
+
 ## Current capabilities
 
 - Loads deterministic local price-history CSV files.
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
-- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, and rule-backed risk notes.
-- Renders an asset-vs-benchmark Markdown brief with reproducible trend and risk sections suitable for a portfolio demo.
+- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, and rule-backed risk notes.
+- Renders an asset-vs-benchmark Markdown brief with optional fundamentals, reproducible trend, and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 
 ## Planned next milestones
 
-- Add a small fundamentals-style metrics fixture for valuation and profitability ratios.
 - Add scenario comparison notes that separate market-wide drawdowns from asset-specific weakness.
+- Add valuation trend comparisons across multiple fundamentals snapshots.
 - Package a final notebook or HTML report view after the metric layer is stable.
 
 > Educational portfolio demo, not investment advice.

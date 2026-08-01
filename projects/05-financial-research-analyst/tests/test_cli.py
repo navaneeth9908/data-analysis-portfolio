@@ -3,6 +3,46 @@
 from __future__ import annotations
 
 
+def test_cli_includes_optional_fundamentals_snapshot(tmp_path) -> None:
+    price_file = tmp_path / "prices.csv"
+    price_file.write_text(
+        "date,ticker,close,volume\n"
+        "2026-01-02,NOVA,100,1200000\n"
+        "2026-01-03,NOVA,102,1300000\n"
+        "2026-01-04,NOVA,101,1100000\n"
+        "2026-01-05,NOVA,106,1500000\n"
+        "2026-01-06,NOVA,104,1400000\n"
+        "2026-01-07,NOVA,110,1800000\n",
+        encoding="utf-8",
+    )
+    fundamentals_file = tmp_path / "fundamentals.csv"
+    fundamentals_file.write_text(
+        "as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity\n"
+        "2026-01-07,NOVA,500000000,100000000,15000000,75000000\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "brief.md"
+
+    from financial_research.cli import main
+
+    exit_code = main(
+        [
+            str(price_file),
+            "--ticker",
+            "NOVA",
+            "--fundamentals-file",
+            str(fundamentals_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    markdown = output_file.read_text(encoding="utf-8")
+    assert "## Fundamentals snapshot" in markdown
+    assert "| Price-to-sales | 5.00x |" in markdown
+
+
 def test_cli_writes_research_brief_from_price_history(tmp_path) -> None:
     price_file = tmp_path / "sample_prices.csv"
     price_file.write_text(

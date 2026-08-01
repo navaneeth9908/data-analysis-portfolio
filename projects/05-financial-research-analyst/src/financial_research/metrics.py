@@ -37,6 +37,33 @@ class PerformanceSummary:
 
 
 @dataclass(frozen=True)
+class FundamentalSnapshot:
+    """One point-in-time fundamentals input used for an equity research brief."""
+
+    ticker: str
+    as_of_date: date
+    market_cap: float
+    revenue_ttm: float
+    net_income_ttm: float
+    total_equity: float
+
+
+@dataclass(frozen=True)
+class FundamentalsSummary:
+    """Valuation and profitability ratios calculated from a fundamentals snapshot."""
+
+    ticker: str
+    as_of_date: date
+    market_cap: float
+    revenue_ttm: float
+    net_income_ttm: float
+    total_equity: float
+    price_to_sales_ratio: float
+    net_margin_pct: float
+    return_on_equity_pct: float
+
+
+@dataclass(frozen=True)
 class MovingAverageTrend:
     """Simple moving-average trend snapshot for a ticker price series."""
 
@@ -101,6 +128,31 @@ def summarize_price_history(
         average_return_pct=average_return_pct,
         annualized_volatility_pct=annualized_volatility_pct,
         max_drawdown_pct=max_drawdown * 100,
+    )
+
+
+def summarize_fundamentals(snapshot: FundamentalSnapshot) -> FundamentalsSummary:
+    """Calculate transparent valuation and profitability ratios from TTM inputs."""
+    ticker = snapshot.ticker.strip().upper()
+    if not ticker:
+        raise ValueError("ticker is required")
+    if snapshot.market_cap <= 0:
+        raise ValueError("market capitalization must be positive")
+    if snapshot.revenue_ttm <= 0:
+        raise ValueError("TTM revenue must be positive")
+    if snapshot.total_equity <= 0:
+        raise ValueError("total equity must be positive")
+
+    return FundamentalsSummary(
+        ticker=ticker,
+        as_of_date=snapshot.as_of_date,
+        market_cap=snapshot.market_cap,
+        revenue_ttm=snapshot.revenue_ttm,
+        net_income_ttm=snapshot.net_income_ttm,
+        total_equity=snapshot.total_equity,
+        price_to_sales_ratio=snapshot.market_cap / snapshot.revenue_ttm,
+        net_margin_pct=(snapshot.net_income_ttm / snapshot.revenue_ttm) * 100,
+        return_on_equity_pct=(snapshot.net_income_ttm / snapshot.total_equity) * 100,
     )
 
 
@@ -181,6 +233,46 @@ def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[
     return tuple(sorted(price_points, key=lambda point: point.date))
 
 
+def load_fundamental_snapshot(path: str | Path, *, ticker: str) -> FundamentalSnapshot:
+    """Load the latest point-in-time fundamentals row for a ticker from a CSV file."""
+    selected_ticker = ticker.strip().upper()
+    if not selected_ticker:
+        raise ValueError("ticker is required")
+
+    required_columns = {
+        "as_of_date",
+        "ticker",
+        "market_cap",
+        "revenue_ttm",
+        "net_income_ttm",
+        "total_equity",
+    }
+    snapshots: list[FundamentalSnapshot] = []
+    with Path(path).open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if not required_columns.issubset(reader.fieldnames or []):
+            missing = ", ".join(sorted(required_columns - set(reader.fieldnames or [])))
+            raise ValueError(f"fundamentals data is missing required columns: {missing}")
+
+        for row in reader:
+            if row["ticker"].strip().upper() != selected_ticker:
+                continue
+            snapshots.append(
+                FundamentalSnapshot(
+                    ticker=selected_ticker,
+                    as_of_date=date.fromisoformat(row["as_of_date"].strip()),
+                    market_cap=float(row["market_cap"]),
+                    revenue_ttm=float(row["revenue_ttm"]),
+                    net_income_ttm=float(row["net_income_ttm"]),
+                    total_equity=float(row["total_equity"]),
+                )
+            )
+
+    if not snapshots:
+        raise ValueError(f"no fundamentals rows found for ticker: {selected_ticker}")
+    return max(snapshots, key=lambda snapshot: snapshot.as_of_date)
+
+
 def build_risk_notes(
     summary: PerformanceSummary,
     *,
@@ -241,6 +333,7 @@ def render_research_brief(
     *,
     benchmark: PerformanceSummary | None = None,
     trend: MovingAverageTrend | None = None,
+    fundamentals: FundamentalsSummary | None = None,
 ) -> str:
     """Render a concise Markdown performance brief for analyst review."""
 
@@ -298,6 +391,24 @@ def render_research_brief(
                 f"| Average daily return | {pct(summary.average_return_pct)} |",
                 f"| Annualized volatility | {pct(summary.annualized_volatility_pct)} |",
                 f"| Maximum drawdown | {pct(summary.max_drawdown_pct)} |",
+            ]
+        )
+
+    if fundamentals is not None:
+        if fundamentals.ticker != summary.ticker:
+            raise ValueError("fundamentals ticker must match the performance summary ticker")
+        lines.extend(
+            [
+                "",
+                "## Fundamentals snapshot",
+                "",
+                f"As of: {fundamentals.as_of_date.isoformat()} (TTM inputs)",
+                "",
+                "| Metric | Value |",
+                "| --- | ---: |",
+                f"| Price-to-sales | {fundamentals.price_to_sales_ratio:.2f}x |",
+                f"| Net margin | {fundamentals.net_margin_pct:.2f}% |",
+                f"| Return on equity | {fundamentals.return_on_equity_pct:.2f}% |",
             ]
         )
 

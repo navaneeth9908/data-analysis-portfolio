@@ -39,6 +39,39 @@ def test_summarize_price_history_calculates_key_return_and_risk_metrics() -> Non
     assert summary.max_drawdown_pct == pytest.approx(-1.886792, abs=0.000001)
 
 
+def test_summarize_fundamentals_calculates_valuation_and_profitability_ratios() -> None:
+    snapshot = metrics.FundamentalSnapshot(
+        ticker="NOVA",
+        as_of_date=date(2026, 1, 7),
+        market_cap=500_000_000.0,
+        revenue_ttm=100_000_000.0,
+        net_income_ttm=15_000_000.0,
+        total_equity=75_000_000.0,
+    )
+
+    summary = metrics.summarize_fundamentals(snapshot)
+
+    assert summary.ticker == "NOVA"
+    assert summary.as_of_date == date(2026, 1, 7)
+    assert summary.price_to_sales_ratio == pytest.approx(5.0)
+    assert summary.net_margin_pct == pytest.approx(15.0)
+    assert summary.return_on_equity_pct == pytest.approx(20.0)
+
+
+def test_summarize_fundamentals_rejects_non_positive_ratio_denominators() -> None:
+    snapshot = metrics.FundamentalSnapshot(
+        ticker="NOVA",
+        as_of_date=date(2026, 1, 7),
+        market_cap=500_000_000.0,
+        revenue_ttm=0.0,
+        net_income_ttm=15_000_000.0,
+        total_equity=75_000_000.0,
+    )
+
+    with pytest.raises(ValueError, match="TTM revenue must be positive"):
+        metrics.summarize_fundamentals(snapshot)
+
+
 def test_summarize_moving_average_trend_flags_current_uptrend() -> None:
     prices = [
         PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
@@ -130,6 +163,20 @@ def test_build_risk_notes_flags_drawdown_underperformance_and_downtrend() -> Non
     ) in notes
 
 
+def test_package_exports_fundamentals_api() -> None:
+    from financial_research import (
+        FundamentalSnapshot,
+        FundamentalsSummary,
+        load_fundamental_snapshot,
+        summarize_fundamentals,
+    )
+
+    assert FundamentalSnapshot is metrics.FundamentalSnapshot
+    assert FundamentalsSummary is metrics.FundamentalsSummary
+    assert load_fundamental_snapshot is metrics.load_fundamental_snapshot
+    assert summarize_fundamentals is metrics.summarize_fundamentals
+
+
 def test_package_exports_moving_average_trend_and_risk_note_api() -> None:
     from financial_research import (
         MovingAverageTrend,
@@ -162,6 +209,65 @@ def test_load_price_history_filters_ticker_and_sorts_rows(tmp_path) -> None:
     ]
     assert [point.close for point in prices] == [100.0, 102.0, 101.0]
     assert all(point.ticker == "NOVA" for point in prices)
+
+
+def test_load_fundamental_snapshot_filters_ticker_and_normalizes_input(tmp_path) -> None:
+    fundamentals_file = tmp_path / "fundamentals.csv"
+    fundamentals_file.write_text(
+        "as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity\n"
+        "2026-01-07,NOVA,500000000,100000000,15000000,75000000\n"
+        "2026-01-07,MKT,900000000,200000000,30000000,250000000\n",
+        encoding="utf-8",
+    )
+
+    snapshot = metrics.load_fundamental_snapshot(fundamentals_file, ticker="nova")
+
+    assert snapshot.ticker == "NOVA"
+    assert snapshot.as_of_date == date(2026, 1, 7)
+    assert snapshot.market_cap == 500_000_000.0
+    assert snapshot.net_income_ttm == 15_000_000.0
+
+
+def test_load_fundamental_snapshot_uses_the_most_recent_ticker_row(tmp_path) -> None:
+    fundamentals_file = tmp_path / "fundamentals.csv"
+    fundamentals_file.write_text(
+        "as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity\n"
+        "2026-01-03,NOVA,450000000,90000000,12000000,70000000\n"
+        "2026-01-07,NOVA,500000000,100000000,15000000,75000000\n",
+        encoding="utf-8",
+    )
+
+    snapshot = metrics.load_fundamental_snapshot(fundamentals_file, ticker="NOVA")
+
+    assert snapshot.as_of_date == date(2026, 1, 7)
+    assert snapshot.market_cap == 500_000_000.0
+
+
+def test_render_research_brief_includes_fundamentals_snapshot() -> None:
+    asset = summarize_price_history(
+        [
+            PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+            PricePoint(date(2026, 1, 7), "NOVA", 110.0, 1_800_000),
+        ]
+    )
+    fundamentals = metrics.summarize_fundamentals(
+        metrics.FundamentalSnapshot(
+            ticker="NOVA",
+            as_of_date=date(2026, 1, 7),
+            market_cap=500_000_000.0,
+            revenue_ttm=100_000_000.0,
+            net_income_ttm=15_000_000.0,
+            total_equity=75_000_000.0,
+        )
+    )
+
+    markdown = render_research_brief(asset, fundamentals=fundamentals)
+
+    assert "## Fundamentals snapshot" in markdown
+    assert "As of: 2026-01-07 (TTM inputs)" in markdown
+    assert "| Price-to-sales | 5.00x |" in markdown
+    assert "| Net margin | 15.00% |" in markdown
+    assert "| Return on equity | 20.00% |" in markdown
 
 
 def test_render_research_brief_compares_asset_to_benchmark() -> None:

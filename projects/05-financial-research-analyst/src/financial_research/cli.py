@@ -6,8 +6,10 @@ import argparse
 from pathlib import Path
 
 from financial_research.metrics import (
+    load_fundamental_snapshot,
     load_price_history,
     render_research_brief,
+    summarize_fundamentals,
     summarize_moving_average_trend,
     summarize_price_history,
 )
@@ -20,6 +22,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("price_file", type=Path, help="CSV with date,ticker,close,volume columns")
     parser.add_argument("--ticker", required=True, help="Ticker to analyze")
     parser.add_argument("--benchmark", help="Optional benchmark ticker from the same CSV")
+    parser.add_argument(
+        "--fundamentals-file",
+        type=Path,
+        help="Optional CSV with as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity",
+    )
     parser.add_argument("--output", type=Path, required=True, help="Markdown output path")
     parser.add_argument(
         "--trend-short-window",
@@ -52,7 +59,20 @@ def main(argv: list[str] | None = None) -> int:
         benchmark_prices = load_price_history(args.price_file, ticker=args.benchmark)
         benchmark_summary = summarize_price_history(benchmark_prices)
 
-    markdown = render_research_brief(asset_summary, benchmark=benchmark_summary, trend=trend)
+    fundamentals_summary = None
+    if args.fundamentals_file:
+        fundamentals_snapshot = load_fundamental_snapshot(
+            args.fundamentals_file,
+            ticker=args.ticker,
+        )
+        fundamentals_summary = summarize_fundamentals(fundamentals_snapshot)
+
+    markdown = render_research_brief(
+        asset_summary,
+        benchmark=benchmark_summary,
+        trend=trend,
+        fundamentals=fundamentals_summary,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(markdown, encoding="utf-8")
     print(f"Research brief written to {args.output}")
