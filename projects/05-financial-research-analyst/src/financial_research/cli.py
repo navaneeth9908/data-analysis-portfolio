@@ -6,10 +6,11 @@ import argparse
 from pathlib import Path
 
 from financial_research.metrics import (
-    load_fundamental_snapshot,
+    load_fundamental_history,
     load_price_history,
     render_research_brief,
     summarize_fundamentals,
+    summarize_fundamentals_trend,
     summarize_moving_average_trend,
     summarize_price_history,
 )
@@ -60,18 +61,22 @@ def main(argv: list[str] | None = None) -> int:
         benchmark_summary = summarize_price_history(benchmark_prices)
 
     fundamentals_summary = None
+    fundamentals_trend = None
     if args.fundamentals_file:
-        fundamentals_snapshot = load_fundamental_snapshot(
+        fundamentals_history = load_fundamental_history(
             args.fundamentals_file,
             ticker=args.ticker,
         )
-        fundamentals_summary = summarize_fundamentals(fundamentals_snapshot)
+        fundamentals_summary = summarize_fundamentals(fundamentals_history[-1])
+        if len(fundamentals_history) >= 2:
+            fundamentals_trend = summarize_fundamentals_trend(fundamentals_history)
 
     markdown = render_research_brief(
         asset_summary,
         benchmark=benchmark_summary,
         trend=trend,
         fundamentals=fundamentals_summary,
+        fundamentals_trend=fundamentals_trend,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(markdown, encoding="utf-8")

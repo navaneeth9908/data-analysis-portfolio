@@ -58,6 +58,39 @@ def test_summarize_fundamentals_calculates_valuation_and_profitability_ratios() 
     assert summary.return_on_equity_pct == pytest.approx(20.0)
 
 
+def test_summarize_fundamentals_trend_compares_oldest_and_latest_snapshots() -> None:
+    trend = metrics.summarize_fundamentals_trend(
+        [
+            metrics.FundamentalSnapshot(
+                ticker="NOVA",
+                as_of_date=date(2025, 10, 7),
+                market_cap=400_000_000.0,
+                revenue_ttm=90_000_000.0,
+                net_income_ttm=12_000_000.0,
+                total_equity=70_000_000.0,
+            ),
+            metrics.FundamentalSnapshot(
+                ticker="NOVA",
+                as_of_date=date(2026, 1, 7),
+                market_cap=500_000_000.0,
+                revenue_ttm=100_000_000.0,
+                net_income_ttm=15_000_000.0,
+                total_equity=75_000_000.0,
+            ),
+        ]
+    )
+
+    assert trend.ticker == "NOVA"
+    assert trend.observation_count == 2
+    assert trend.start_date == date(2025, 10, 7)
+    assert trend.end_date == date(2026, 1, 7)
+    assert trend.start_price_to_sales_ratio == pytest.approx(4.444444)
+    assert trend.end_price_to_sales_ratio == pytest.approx(5.0)
+    assert trend.price_to_sales_change == pytest.approx(0.555556)
+    assert trend.net_margin_change_points == pytest.approx(1.666667)
+    assert trend.return_on_equity_change_points == pytest.approx(2.857143)
+
+
 def test_summarize_fundamentals_rejects_non_positive_ratio_denominators() -> None:
     snapshot = metrics.FundamentalSnapshot(
         ticker="NOVA",
@@ -177,6 +210,18 @@ def test_package_exports_fundamentals_api() -> None:
     assert summarize_fundamentals is metrics.summarize_fundamentals
 
 
+def test_package_exports_fundamentals_trend_api() -> None:
+    from financial_research import (
+        FundamentalsTrend,
+        load_fundamental_history,
+        summarize_fundamentals_trend,
+    )
+
+    assert FundamentalsTrend is metrics.FundamentalsTrend
+    assert load_fundamental_history is metrics.load_fundamental_history
+    assert summarize_fundamentals_trend is metrics.summarize_fundamentals_trend
+
+
 def test_package_exports_moving_average_trend_and_risk_note_api() -> None:
     from financial_research import (
         MovingAverageTrend,
@@ -268,6 +313,47 @@ def test_render_research_brief_includes_fundamentals_snapshot() -> None:
     assert "| Price-to-sales | 5.00x |" in markdown
     assert "| Net margin | 15.00% |" in markdown
     assert "| Return on equity | 20.00% |" in markdown
+
+
+def test_render_research_brief_includes_fundamentals_trend_comparison() -> None:
+    asset = summarize_price_history(
+        [
+            PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+            PricePoint(date(2026, 1, 7), "NOVA", 110.0, 1_800_000),
+        ]
+    )
+    snapshots = [
+        metrics.FundamentalSnapshot(
+            ticker="NOVA",
+            as_of_date=date(2025, 10, 7),
+            market_cap=400_000_000.0,
+            revenue_ttm=90_000_000.0,
+            net_income_ttm=12_000_000.0,
+            total_equity=70_000_000.0,
+        ),
+        metrics.FundamentalSnapshot(
+            ticker="NOVA",
+            as_of_date=date(2026, 1, 7),
+            market_cap=500_000_000.0,
+            revenue_ttm=100_000_000.0,
+            net_income_ttm=15_000_000.0,
+            total_equity=75_000_000.0,
+        ),
+    ]
+    fundamentals = metrics.summarize_fundamentals(snapshots[-1])
+    trend = metrics.summarize_fundamentals_trend(snapshots)
+
+    markdown = render_research_brief(
+        asset,
+        fundamentals=fundamentals,
+        fundamentals_trend=trend,
+    )
+
+    assert "## Fundamentals trend" in markdown
+    assert "Coverage: 2025-10-07 to 2026-01-07 (2 observations)." in markdown
+    assert "| Price-to-sales | 4.44x | 5.00x | +0.56x |" in markdown
+    assert "| Net margin | 13.33% | 15.00% | +1.67 pts |" in markdown
+    assert "| Return on equity | 17.14% | 20.00% | +2.86 pts |" in markdown
 
 
 def test_render_research_brief_compares_asset_to_benchmark() -> None:

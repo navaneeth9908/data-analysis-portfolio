@@ -23,6 +23,16 @@ As of: 2026-01-07 (TTM inputs)
 | Net margin | 15.00% |
 | Return on equity | 20.00% |
 
+## Fundamentals trend
+
+Coverage: 2025-10-07 to 2026-01-07 (2 observations).
+
+| Metric | Start | Latest | Change |
+| --- | ---: | ---: | ---: |
+| Price-to-sales | 4.44x | 5.00x | +0.56x |
+| Net margin | 13.33% | 15.00% | +1.67 pts |
+| Return on equity | 17.14% | 20.00% | +2.86 pts |
+
 ## Moving-average trend
 
 | Metric | Value |

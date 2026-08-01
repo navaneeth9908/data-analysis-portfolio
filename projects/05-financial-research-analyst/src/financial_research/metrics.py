@@ -64,6 +64,25 @@ class FundamentalsSummary:
 
 
 @dataclass(frozen=True)
+class FundamentalsTrend:
+    """Change in valuation and profitability ratios across fundamentals snapshots."""
+
+    ticker: str
+    observation_count: int
+    start_date: date
+    end_date: date
+    start_price_to_sales_ratio: float
+    end_price_to_sales_ratio: float
+    price_to_sales_change: float
+    start_net_margin_pct: float
+    end_net_margin_pct: float
+    net_margin_change_points: float
+    start_return_on_equity_pct: float
+    end_return_on_equity_pct: float
+    return_on_equity_change_points: float
+
+
+@dataclass(frozen=True)
 class MovingAverageTrend:
     """Simple moving-average trend snapshot for a ticker price series."""
 
@@ -156,6 +175,39 @@ def summarize_fundamentals(snapshot: FundamentalSnapshot) -> FundamentalsSummary
     )
 
 
+def summarize_fundamentals_trend(
+    snapshots: list[FundamentalSnapshot] | tuple[FundamentalSnapshot, ...],
+) -> FundamentalsTrend:
+    """Compare the oldest and newest TTM fundamentals snapshots for one ticker."""
+    if len(snapshots) < 2:
+        raise ValueError("at least two fundamentals snapshots are required")
+
+    summaries = tuple(
+        summarize_fundamentals(snapshot)
+        for snapshot in sorted(snapshots, key=lambda item: item.as_of_date)
+    )
+    ticker = summaries[0].ticker
+    if any(summary.ticker != ticker for summary in summaries[1:]):
+        raise ValueError("all fundamentals snapshots must use the same ticker")
+
+    start, end = summaries[0], summaries[-1]
+    return FundamentalsTrend(
+        ticker=ticker,
+        observation_count=len(summaries),
+        start_date=start.as_of_date,
+        end_date=end.as_of_date,
+        start_price_to_sales_ratio=start.price_to_sales_ratio,
+        end_price_to_sales_ratio=end.price_to_sales_ratio,
+        price_to_sales_change=end.price_to_sales_ratio - start.price_to_sales_ratio,
+        start_net_margin_pct=start.net_margin_pct,
+        end_net_margin_pct=end.net_margin_pct,
+        net_margin_change_points=end.net_margin_pct - start.net_margin_pct,
+        start_return_on_equity_pct=start.return_on_equity_pct,
+        end_return_on_equity_pct=end.return_on_equity_pct,
+        return_on_equity_change_points=end.return_on_equity_pct - start.return_on_equity_pct,
+    )
+
+
 def summarize_moving_average_trend(
     prices: list[PricePoint] | tuple[PricePoint, ...],
     *,
@@ -233,8 +285,8 @@ def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[
     return tuple(sorted(price_points, key=lambda point: point.date))
 
 
-def load_fundamental_snapshot(path: str | Path, *, ticker: str) -> FundamentalSnapshot:
-    """Load the latest point-in-time fundamentals row for a ticker from a CSV file."""
+def load_fundamental_history(path: str | Path, *, ticker: str) -> tuple[FundamentalSnapshot, ...]:
+    """Load chronological point-in-time fundamentals snapshots for one ticker."""
     selected_ticker = ticker.strip().upper()
     if not selected_ticker:
         raise ValueError("ticker is required")
@@ -270,7 +322,12 @@ def load_fundamental_snapshot(path: str | Path, *, ticker: str) -> FundamentalSn
 
     if not snapshots:
         raise ValueError(f"no fundamentals rows found for ticker: {selected_ticker}")
-    return max(snapshots, key=lambda snapshot: snapshot.as_of_date)
+    return tuple(sorted(snapshots, key=lambda snapshot: snapshot.as_of_date))
+
+
+def load_fundamental_snapshot(path: str | Path, *, ticker: str) -> FundamentalSnapshot:
+    """Load the latest point-in-time fundamentals row for a ticker from a CSV file."""
+    return load_fundamental_history(path, ticker=ticker)[-1]
 
 
 def build_risk_notes(
@@ -334,6 +391,7 @@ def render_research_brief(
     benchmark: PerformanceSummary | None = None,
     trend: MovingAverageTrend | None = None,
     fundamentals: FundamentalsSummary | None = None,
+    fundamentals_trend: FundamentalsTrend | None = None,
 ) -> str:
     """Render a concise Markdown performance brief for analyst review."""
 
@@ -409,6 +467,36 @@ def render_research_brief(
                 f"| Price-to-sales | {fundamentals.price_to_sales_ratio:.2f}x |",
                 f"| Net margin | {fundamentals.net_margin_pct:.2f}% |",
                 f"| Return on equity | {fundamentals.return_on_equity_pct:.2f}% |",
+            ]
+        )
+
+    if fundamentals_trend is not None:
+        if fundamentals_trend.ticker != summary.ticker:
+            raise ValueError("fundamentals trend ticker must match the performance summary ticker")
+        lines.extend(
+            [
+                "",
+                "## Fundamentals trend",
+                "",
+                "Coverage: "
+                f"{fundamentals_trend.start_date.isoformat()} to "
+                f"{fundamentals_trend.end_date.isoformat()} "
+                f"({fundamentals_trend.observation_count} observations).",
+                "",
+                "| Metric | Start | Latest | Change |",
+                "| --- | ---: | ---: | ---: |",
+                "| Price-to-sales | "
+                f"{fundamentals_trend.start_price_to_sales_ratio:.2f}x | "
+                f"{fundamentals_trend.end_price_to_sales_ratio:.2f}x | "
+                f"{fundamentals_trend.price_to_sales_change:+.2f}x |",
+                "| Net margin | "
+                f"{fundamentals_trend.start_net_margin_pct:.2f}% | "
+                f"{fundamentals_trend.end_net_margin_pct:.2f}% | "
+                f"{fundamentals_trend.net_margin_change_points:+.2f} pts |",
+                "| Return on equity | "
+                f"{fundamentals_trend.start_return_on_equity_pct:.2f}% | "
+                f"{fundamentals_trend.end_return_on_equity_pct:.2f}% | "
+                f"{fundamentals_trend.return_on_equity_change_points:+.2f} pts |",
             ]
         )
 

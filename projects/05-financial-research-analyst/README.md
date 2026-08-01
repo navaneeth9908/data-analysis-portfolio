@@ -7,7 +7,7 @@ A deterministic, offline financial analytics project for turning simple price-hi
 Financial research workflows need transparent calculations before adding live data feeds or narrative layers. This project demonstrates an analytics-engineering foundation for investment-style reporting:
 
 - ingest a tidy price-history file with dates, tickers, closes, and volume
-- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, and rule-backed risk notes
+- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes
 - compare an asset against a benchmark using deterministic sample data
 - generate a Markdown brief that is easy to review, version, and share
 
@@ -78,6 +78,16 @@ As of: 2026-01-07 (TTM inputs)
 | Net margin | 15.00% |
 | Return on equity | 20.00% |
 
+## Fundamentals trend
+
+Coverage: 2025-10-07 to 2026-01-07 (2 observations).
+
+| Metric | Start | Latest | Change |
+| --- | ---: | ---: | ---: |
+| Price-to-sales | 4.44x | 5.00x | +0.56x |
+| Net margin | 13.33% | 15.00% | +1.67 pts |
+| Return on equity | 17.14% | 20.00% | +2.86 pts |
+
 ## Moving-average trend
 
 | Metric | Value |
@@ -114,10 +124,11 @@ date,ticker,close,volume
 
 ### Optional fundamentals format
 
-Pass `--fundamentals-file` to add a point-in-time valuation/profitability snapshot for the selected ticker. The loader selects that ticker's newest `as_of_date` row, making small historical fixtures safe to extend.
+Pass `--fundamentals-file` to add a point-in-time valuation/profitability snapshot for the selected ticker. The loader selects that ticker's newest `as_of_date` row for the snapshot. When two or more dated rows are present, it also adds a start-to-latest trend table for price-to-sales, net margin, and return on equity.
 
 ```csv
 as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
+2025-10-07,NOVA,400000000,90000000,12000000,70000000
 2026-01-07,NOVA,500000000,100000000,15000000,75000000
 ```
 
@@ -130,14 +141,14 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 - Loads deterministic local price-history CSV files.
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
-- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, and rule-backed risk notes.
-- Renders an asset-vs-benchmark Markdown brief with optional fundamentals, reproducible trend, and risk sections suitable for a portfolio demo.
+- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes.
+- Renders an asset-vs-benchmark Markdown brief with optional fundamentals snapshot/trend tables, reproducible technical signals, and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 
 ## Planned next milestones
 
 - Add scenario comparison notes that separate market-wide drawdowns from asset-specific weakness.
-- Add valuation trend comparisons across multiple fundamentals snapshots.
+- Make the annualization period configurable in the CLI for non-daily price histories.
 - Package a final notebook or HTML report view after the metric layer is stable.
 
 > Educational portfolio demo, not investment advice.
