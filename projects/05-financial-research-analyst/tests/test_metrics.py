@@ -196,6 +196,62 @@ def test_build_risk_notes_flags_drawdown_underperformance_and_downtrend() -> Non
     ) in notes
 
 
+def test_build_risk_notes_identifies_asset_specific_drawdown_against_benchmark() -> None:
+    asset_prices = [
+        PricePoint(date(2026, 2, 2), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 2, 3), "NOVA", 98.0, 1_250_000),
+        PricePoint(date(2026, 2, 4), "NOVA", 95.0, 1_300_000),
+        PricePoint(date(2026, 2, 5), "NOVA", 93.0, 1_350_000),
+        PricePoint(date(2026, 2, 6), "NOVA", 90.0, 1_400_000),
+        PricePoint(date(2026, 2, 7), "NOVA", 88.0, 1_450_000),
+    ]
+    benchmark_prices = [
+        PricePoint(date(2026, 2, 2), "MKT", 100.0, 4_200_000),
+        PricePoint(date(2026, 2, 3), "MKT", 101.0, 4_300_000),
+        PricePoint(date(2026, 2, 4), "MKT", 102.0, 4_100_000),
+        PricePoint(date(2026, 2, 5), "MKT", 103.0, 4_500_000),
+        PricePoint(date(2026, 2, 6), "MKT", 104.0, 4_400_000),
+        PricePoint(date(2026, 2, 7), "MKT", 105.0, 4_800_000),
+    ]
+
+    notes = metrics.build_risk_notes(
+        summarize_price_history(asset_prices),
+        benchmark=summarize_price_history(benchmark_prices),
+    )
+
+    assert (
+        "- Drawdown looks asset-specific: NOVA fell 12.00 percentage points more "
+        "than MKT from peak to trough."
+    ) in notes
+
+
+def test_build_risk_notes_identifies_market_wide_drawdown_against_benchmark() -> None:
+    asset_prices = [
+        PricePoint(date(2026, 3, 2), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 3, 3), "NOVA", 98.0, 1_250_000),
+        PricePoint(date(2026, 3, 4), "NOVA", 92.0, 1_300_000),
+        PricePoint(date(2026, 3, 5), "NOVA", 88.0, 1_350_000),
+        PricePoint(date(2026, 3, 6), "NOVA", 90.0, 1_400_000),
+    ]
+    benchmark_prices = [
+        PricePoint(date(2026, 3, 2), "MKT", 100.0, 4_200_000),
+        PricePoint(date(2026, 3, 3), "MKT", 96.0, 4_300_000),
+        PricePoint(date(2026, 3, 4), "MKT", 90.0, 4_100_000),
+        PricePoint(date(2026, 3, 5), "MKT", 85.0, 4_500_000),
+        PricePoint(date(2026, 3, 6), "MKT", 88.0, 4_400_000),
+    ]
+
+    notes = metrics.build_risk_notes(
+        summarize_price_history(asset_prices),
+        benchmark=summarize_price_history(benchmark_prices),
+    )
+
+    assert (
+        "- Drawdown looks market-wide: MKT fell 15.00% versus NOVA's 12.00% "
+        "from peak to trough."
+    ) in notes
+
+
 def test_package_exports_fundamentals_api() -> None:
     from financial_research import (
         FundamentalSnapshot,

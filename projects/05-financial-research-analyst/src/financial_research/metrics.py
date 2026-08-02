@@ -367,6 +367,20 @@ def build_risk_notes(
                 f"{abs(cumulative_delta):.2f} percentage points over the sample window."
             )
 
+        if summary.max_drawdown_pct < benchmark.max_drawdown_pct:
+            drawdown_gap = benchmark.max_drawdown_pct - summary.max_drawdown_pct
+            notes.append(
+                f"- Drawdown looks asset-specific: {summary.ticker} fell "
+                f"{drawdown_gap:.2f} percentage points more than {benchmark.ticker} "
+                "from peak to trough."
+            )
+        elif benchmark.max_drawdown_pct < 0:
+            notes.append(
+                f"- Drawdown looks market-wide: {benchmark.ticker} fell "
+                f"{abs(benchmark.max_drawdown_pct):.2f}% versus {summary.ticker}'s "
+                f"{abs(summary.max_drawdown_pct):.2f}% from peak to trough."
+            )
+
     if trend is not None:
         if trend.trend_label == "uptrend":
             notes.append(

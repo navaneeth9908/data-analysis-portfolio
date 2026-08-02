@@ -7,7 +7,7 @@ A deterministic, offline financial analytics project for turning simple price-hi
 Financial research workflows need transparent calculations before adding live data feeds or narrative layers. This project demonstrates an analytics-engineering foundation for investment-style reporting:
 
 - ingest a tidy price-history file with dates, tickers, closes, and volume
-- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes
+- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes with benchmark-aware drawdown context
 - compare an asset against a benchmark using deterministic sample data
 - generate a Markdown brief that is easy to review, version, and share
 
@@ -103,6 +103,7 @@ Signal: **uptrend**
 ## Risk notes
 - Annualized volatility is elevated at 54.36%; review position sizing and scenario-test wider return swings.
 - Cumulative return led MKT by 5.00 percentage points over the sample window.
+- Drawdown looks asset-specific: NOVA fell 0.91 percentage points more than MKT from peak to trough.
 - Moving-average signal is uptrend; latest close is 5.16% above the 5-day moving average.
 - Educational portfolio demo, not investment advice.
 ```
@@ -141,13 +142,12 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 - Loads deterministic local price-history CSV files.
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
-- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes.
+- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes that label drawdowns as asset-specific or market-wide when benchmark data is available.
 - Renders an asset-vs-benchmark Markdown brief with optional fundamentals snapshot/trend tables, reproducible technical signals, and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 
 ## Planned next milestones
 
-- Add scenario comparison notes that separate market-wide drawdowns from asset-specific weakness.
 - Make the annualization period configurable in the CLI for non-daily price histories.
 - Package a final notebook or HTML report view after the metric layer is stable.
 

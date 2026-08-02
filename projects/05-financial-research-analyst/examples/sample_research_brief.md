@@ -48,5 +48,6 @@ Signal: **uptrend**
 ## Risk notes
 - Annualized volatility is elevated at 54.36%; review position sizing and scenario-test wider return swings.
 - Cumulative return led MKT by 5.00 percentage points over the sample window.
+- Drawdown looks asset-specific: NOVA fell 0.91 percentage points more than MKT from peak to trough.
 - Moving-average signal is uptrend; latest close is 5.16% above the 5-day moving average.
 - Educational portfolio demo, not investment advice.

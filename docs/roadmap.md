@@ -100,6 +100,7 @@ Progress:
 - Added rule-backed risk notes that flag elevated volatility, deep drawdowns, benchmark underperformance, and weak moving-average trends in the generated Markdown brief.
 - Added deterministic trailing-twelve-month fundamentals inputs with price-to-sales, net margin, and return-on-equity calculations plus an optional CLI report section.
 - Added chronological fundamentals loading and a two-snapshot valuation/profitability trend table in the CLI-generated Markdown brief.
+- Added benchmark-aware drawdown notes that distinguish asset-specific weakness from market-wide declines in the risk section.
 
 ### 6. Research Briefing Generator
 
