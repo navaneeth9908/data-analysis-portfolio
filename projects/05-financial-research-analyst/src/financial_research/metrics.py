@@ -37,6 +37,17 @@ class PerformanceSummary:
 
 
 @dataclass(frozen=True)
+class BenchmarkSensitivity:
+    """How an asset's aligned periodic returns move relative to a benchmark."""
+
+    asset_ticker: str
+    benchmark_ticker: str
+    observation_count: int
+    correlation: float
+    beta: float
+
+
+@dataclass(frozen=True)
 class FundamentalSnapshot:
     """One point-in-time fundamentals input used for an equity research brief."""
 
@@ -149,6 +160,51 @@ def summarize_price_history(
         average_return_pct=average_return_pct,
         annualized_volatility_pct=annualized_volatility_pct,
         max_drawdown_pct=max_drawdown * 100,
+    )
+
+
+def summarize_benchmark_sensitivity(
+    asset_prices: list[PricePoint] | tuple[PricePoint, ...],
+    benchmark_prices: list[PricePoint] | tuple[PricePoint, ...],
+) -> BenchmarkSensitivity:
+    """Calculate correlation and beta from dates shared by an asset and benchmark."""
+    asset_summary = summarize_price_history(asset_prices)
+    benchmark_summary = summarize_price_history(benchmark_prices)
+
+    asset_by_date = {point.date: point.close for point in asset_prices}
+    benchmark_by_date = {point.date: point.close for point in benchmark_prices}
+    shared_dates = sorted(asset_by_date.keys() & benchmark_by_date.keys())
+    if len(shared_dates) < 3:
+        raise ValueError("at least three shared price dates are required")
+
+    asset_closes = [asset_by_date[point_date] for point_date in shared_dates]
+    benchmark_closes = [benchmark_by_date[point_date] for point_date in shared_dates]
+    asset_returns = [
+        current / previous - 1
+        for previous, current in zip(asset_closes, asset_closes[1:])
+    ]
+    benchmark_returns = [
+        current / previous - 1
+        for previous, current in zip(benchmark_closes, benchmark_closes[1:])
+    ]
+
+    asset_average = mean(asset_returns)
+    benchmark_average = mean(benchmark_returns)
+    covariance = mean(
+        (asset_return - asset_average) * (benchmark_return - benchmark_average)
+        for asset_return, benchmark_return in zip(asset_returns, benchmark_returns)
+    )
+    asset_variance = mean((item - asset_average) ** 2 for item in asset_returns)
+    benchmark_variance = mean((item - benchmark_average) ** 2 for item in benchmark_returns)
+    if asset_variance == 0 or benchmark_variance == 0:
+        raise ValueError("aligned periodic returns must vary for correlation and beta")
+
+    return BenchmarkSensitivity(
+        asset_ticker=asset_summary.ticker,
+        benchmark_ticker=benchmark_summary.ticker,
+        observation_count=len(shared_dates),
+        correlation=covariance / sqrt(asset_variance * benchmark_variance),
+        beta=covariance / benchmark_variance,
     )
 
 
@@ -405,6 +461,7 @@ def render_research_brief(
     summary: PerformanceSummary,
     *,
     benchmark: PerformanceSummary | None = None,
+    benchmark_sensitivity: BenchmarkSensitivity | None = None,
     trend: MovingAverageTrend | None = None,
     fundamentals: FundamentalsSummary | None = None,
     fundamentals_trend: FundamentalsTrend | None = None,
@@ -465,6 +522,22 @@ def render_research_brief(
                 f"| Average daily return | {pct(summary.average_return_pct)} |",
                 f"| Annualized volatility | {pct(summary.annualized_volatility_pct)} |",
                 f"| Maximum drawdown | {pct(summary.max_drawdown_pct)} |",
+            ]
+        )
+
+    if benchmark_sensitivity is not None:
+        lines.extend(
+            [
+                "",
+                "## Benchmark sensitivity",
+                "",
+                f"Aligned observations: {benchmark_sensitivity.observation_count}.",
+                "",
+                "| Metric | Value |",
+                "| --- | ---: |",
+                f"| Return correlation | {benchmark_sensitivity.correlation:.2f} |",
+                f"| Beta vs {benchmark_sensitivity.benchmark_ticker} | "
+                f"{benchmark_sensitivity.beta:.2f} |",
             ]
         )
 

@@ -7,7 +7,7 @@ A deterministic, offline financial analytics project for turning simple price-hi
 Financial research workflows need transparent calculations before adding live data feeds or narrative layers. This project demonstrates an analytics-engineering foundation for investment-style reporting:
 
 - ingest a tidy price-history file with dates, tickers, closes, and volume
-- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes with benchmark-aware drawdown context
+- calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, aligned benchmark correlation/beta, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes with benchmark-aware drawdown context
 - compare an asset against a benchmark using deterministic sample data
 - generate a Markdown brief that is easy to review, version, and share
 
@@ -68,6 +68,15 @@ Benchmark: MKT
 | Annualized volatility | 54.36% | 19.06% | +35.29 pts |
 | Maximum drawdown | -1.89% | -0.98% | -0.91 pts |
 
+## Benchmark sensitivity
+
+Aligned observations: 6.
+
+| Metric | Value |
+| --- | ---: |
+| Return correlation | -0.37 |
+| Beta vs MKT | -1.05 |
+
 ## Fundamentals snapshot
 
 As of: 2026-01-07 (TTM inputs)
@@ -127,6 +136,10 @@ date,ticker,close,volume
 
 Price histories are annualized with 252 periods by default, which fits daily trading data. Use `--periods-per-year` to match the sampling cadence; for example, pass `--periods-per-year 12` for a monthly series. The same setting is applied to both the selected asset and its optional benchmark.
 
+### Benchmark sensitivity
+
+When `--benchmark` is supplied, the report also aligns the asset and benchmark on shared dates and calculates periodic-return correlation and beta. The calculation requires at least three shared observations (two aligned return periods), and both aligned return series must vary; this makes the comparison explicit rather than inferring market exposure from separate price windows.
+
 ### Optional fundamentals format
 
 Pass `--fundamentals-file` to add a point-in-time valuation/profitability snapshot for the selected ticker. The loader selects that ticker's newest `as_of_date` row for the snapshot. When two or more dated rows are present, it also adds a start-to-latest trend table for price-to-sales, net margin, and return on equity.
@@ -146,7 +159,7 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 - Loads deterministic local price-history CSV files.
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
-- Calculates cumulative return, average return, annualized volatility, maximum drawdown, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes that label drawdowns as asset-specific or market-wide when benchmark data is available.
+- Calculates cumulative return, average return, annualized volatility, maximum drawdown, aligned benchmark-return correlation/beta, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes that label drawdowns as asset-specific or market-wide when benchmark data is available.
 - Renders an asset-vs-benchmark Markdown brief with optional fundamentals snapshot/trend tables, reproducible technical signals, and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 

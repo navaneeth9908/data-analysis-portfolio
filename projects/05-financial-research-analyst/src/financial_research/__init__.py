@@ -1,6 +1,7 @@
 """Offline financial research analyst demo package."""
 
 from financial_research.metrics import (
+    BenchmarkSensitivity,
     FundamentalSnapshot,
     FundamentalsSummary,
     FundamentalsTrend,
@@ -15,10 +16,12 @@ from financial_research.metrics import (
     summarize_fundamentals,
     summarize_fundamentals_trend,
     summarize_moving_average_trend,
+    summarize_benchmark_sensitivity,
     summarize_price_history,
 )
 
 __all__ = [
+    "BenchmarkSensitivity",
     "FundamentalSnapshot",
     "FundamentalsSummary",
     "FundamentalsTrend",
@@ -33,5 +36,6 @@ __all__ = [
     "summarize_fundamentals",
     "summarize_fundamentals_trend",
     "summarize_moving_average_trend",
+    "summarize_benchmark_sensitivity",
     "summarize_price_history",
 ]

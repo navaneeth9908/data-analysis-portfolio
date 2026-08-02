@@ -12,6 +12,7 @@ from financial_research.metrics import (
     summarize_fundamentals,
     summarize_fundamentals_trend,
     summarize_moving_average_trend,
+    summarize_benchmark_sensitivity,
     summarize_price_history,
 )
 
@@ -65,11 +66,16 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     benchmark_summary = None
+    benchmark_sensitivity = None
     if args.benchmark:
         benchmark_prices = load_price_history(args.price_file, ticker=args.benchmark)
         benchmark_summary = summarize_price_history(
             benchmark_prices,
             periods_per_year=args.periods_per_year,
+        )
+        benchmark_sensitivity = summarize_benchmark_sensitivity(
+            asset_prices,
+            benchmark_prices,
         )
 
     fundamentals_summary = None
@@ -86,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     markdown = render_research_brief(
         asset_summary,
         benchmark=benchmark_summary,
+        benchmark_sensitivity=benchmark_sensitivity,
         trend=trend,
         fundamentals=fundamentals_summary,
         fundamentals_trend=fundamentals_trend,

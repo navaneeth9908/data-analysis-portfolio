@@ -13,6 +13,15 @@ Benchmark: MKT
 | Annualized volatility | 54.36% | 19.06% | +35.29 pts |
 | Maximum drawdown | -1.89% | -0.98% | -0.91 pts |
 
+## Benchmark sensitivity
+
+Aligned observations: 6.
+
+| Metric | Value |
+| --- | ---: |
+| Return correlation | -0.37 |
+| Beta vs MKT | -1.05 |
+
 ## Fundamentals snapshot
 
 As of: 2026-01-07 (TTM inputs)

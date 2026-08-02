@@ -115,6 +115,27 @@ def test_summarize_fundamentals_rejects_non_positive_ratio_denominators() -> Non
         metrics.summarize_fundamentals(snapshot)
 
 
+def test_summarize_benchmark_sensitivity_calculates_correlation_and_beta() -> None:
+    asset_prices = [
+        PricePoint(date(2026, 4, 1), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 4, 2), "NOVA", 120.0, 1_300_000),
+        PricePoint(date(2026, 4, 3), "NOVA", 96.0, 1_400_000),
+    ]
+    benchmark_prices = [
+        PricePoint(date(2026, 4, 1), "MKT", 100.0, 4_200_000),
+        PricePoint(date(2026, 4, 2), "MKT", 110.0, 4_300_000),
+        PricePoint(date(2026, 4, 3), "MKT", 99.0, 4_400_000),
+    ]
+
+    sensitivity = metrics.summarize_benchmark_sensitivity(asset_prices, benchmark_prices)
+
+    assert sensitivity.asset_ticker == "NOVA"
+    assert sensitivity.benchmark_ticker == "MKT"
+    assert sensitivity.observation_count == 3
+    assert sensitivity.correlation == pytest.approx(1.0)
+    assert sensitivity.beta == pytest.approx(2.0)
+
+
 def test_summarize_moving_average_trend_flags_current_uptrend() -> None:
     prices = [
         PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
@@ -288,6 +309,13 @@ def test_package_exports_fundamentals_trend_api() -> None:
     assert summarize_fundamentals_trend is metrics.summarize_fundamentals_trend
 
 
+def test_package_exports_benchmark_sensitivity_api() -> None:
+    from financial_research import BenchmarkSensitivity, summarize_benchmark_sensitivity
+
+    assert BenchmarkSensitivity is metrics.BenchmarkSensitivity
+    assert summarize_benchmark_sensitivity is metrics.summarize_benchmark_sensitivity
+
+
 def test_package_exports_moving_average_trend_and_risk_note_api() -> None:
     from financial_research import (
         MovingAverageTrend,
@@ -420,6 +448,33 @@ def test_render_research_brief_includes_fundamentals_trend_comparison() -> None:
     assert "| Price-to-sales | 4.44x | 5.00x | +0.56x |" in markdown
     assert "| Net margin | 13.33% | 15.00% | +1.67 pts |" in markdown
     assert "| Return on equity | 17.14% | 20.00% | +2.86 pts |" in markdown
+
+
+def test_render_research_brief_includes_benchmark_sensitivity() -> None:
+    asset_prices = [
+        PricePoint(date(2026, 4, 1), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 4, 2), "NOVA", 120.0, 1_300_000),
+        PricePoint(date(2026, 4, 3), "NOVA", 96.0, 1_400_000),
+    ]
+    benchmark_prices = [
+        PricePoint(date(2026, 4, 1), "MKT", 100.0, 4_200_000),
+        PricePoint(date(2026, 4, 2), "MKT", 110.0, 4_300_000),
+        PricePoint(date(2026, 4, 3), "MKT", 99.0, 4_400_000),
+    ]
+
+    markdown = render_research_brief(
+        summarize_price_history(asset_prices),
+        benchmark=summarize_price_history(benchmark_prices),
+        benchmark_sensitivity=metrics.summarize_benchmark_sensitivity(
+            asset_prices,
+            benchmark_prices,
+        ),
+    )
+
+    assert "## Benchmark sensitivity" in markdown
+    assert "Aligned observations: 3." in markdown
+    assert "| Return correlation | 1.00 |" in markdown
+    assert "| Beta vs MKT | 2.00 |" in markdown
 
 
 def test_render_research_brief_compares_asset_to_benchmark() -> None:
