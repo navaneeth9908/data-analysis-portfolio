@@ -39,6 +39,16 @@ def test_summarize_price_history_calculates_key_return_and_risk_metrics() -> Non
     assert summary.max_drawdown_pct == pytest.approx(-1.886792, abs=0.000001)
 
 
+def test_summarize_price_history_rejects_non_positive_annualization_periods() -> None:
+    prices = [
+        PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 1, 3), "NOVA", 102.0, 1_300_000),
+    ]
+
+    with pytest.raises(ValueError, match="periods_per_year must be positive"):
+        summarize_price_history(prices, periods_per_year=0)
+
+
 def test_summarize_fundamentals_calculates_valuation_and_profitability_ratios() -> None:
     snapshot = metrics.FundamentalSnapshot(
         ticker="NOVA",

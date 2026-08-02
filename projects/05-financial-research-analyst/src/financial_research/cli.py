@@ -24,6 +24,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--ticker", required=True, help="Ticker to analyze")
     parser.add_argument("--benchmark", help="Optional benchmark ticker from the same CSV")
     parser.add_argument(
+        "--periods-per-year",
+        type=int,
+        default=252,
+        help="Annualization periods for the price history (default: 252 trading days)",
+    )
+    parser.add_argument(
         "--fundamentals-file",
         type=Path,
         help="Optional CSV with as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity",
@@ -48,7 +54,10 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     asset_prices = load_price_history(args.price_file, ticker=args.ticker)
-    asset_summary = summarize_price_history(asset_prices)
+    asset_summary = summarize_price_history(
+        asset_prices,
+        periods_per_year=args.periods_per_year,
+    )
     trend = summarize_moving_average_trend(
         asset_prices,
         short_window=args.trend_short_window,
@@ -58,7 +67,10 @@ def main(argv: list[str] | None = None) -> int:
     benchmark_summary = None
     if args.benchmark:
         benchmark_prices = load_price_history(args.price_file, ticker=args.benchmark)
-        benchmark_summary = summarize_price_history(benchmark_prices)
+        benchmark_summary = summarize_price_history(
+            benchmark_prices,
+            periods_per_year=args.periods_per_year,
+        )
 
     fundamentals_summary = None
     fundamentals_trend = None

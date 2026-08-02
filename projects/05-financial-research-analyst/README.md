@@ -123,6 +123,10 @@ date,ticker,close,volume
 - `close` must be positive.
 - `volume` cannot be negative.
 
+### Annualization period
+
+Price histories are annualized with 252 periods by default, which fits daily trading data. Use `--periods-per-year` to match the sampling cadence; for example, pass `--periods-per-year 12` for a monthly series. The same setting is applied to both the selected asset and its optional benchmark.
+
 ### Optional fundamentals format
 
 Pass `--fundamentals-file` to add a point-in-time valuation/profitability snapshot for the selected ticker. The loader selects that ticker's newest `as_of_date` row for the snapshot. When two or more dated rows are present, it also adds a start-to-latest trend table for price-to-sales, net margin, and return on equity.
@@ -148,7 +152,6 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 
 ## Planned next milestones
 
-- Make the annualization period configurable in the CLI for non-daily price histories.
 - Package a final notebook or HTML report view after the metric layer is stable.
 
 > Educational portfolio demo, not investment advice.

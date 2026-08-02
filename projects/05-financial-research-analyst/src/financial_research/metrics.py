@@ -107,6 +107,8 @@ def summarize_price_history(
     """Summarize a ticker's price history with common return/risk metrics."""
     if not prices:
         raise ValueError("at least one price point is required")
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
 
     ordered = sorted(prices, key=lambda point: point.date)
     ticker = ordered[0].ticker.strip().upper()
