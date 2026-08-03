@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean
@@ -19,6 +20,9 @@ class ColumnProfile:
     mean: float | None
     minimum: float | None
     maximum: float | None
+    unique_count: int | None = None
+    top_value: str | None = None
+    top_value_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -46,6 +50,12 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         non_null_values = [value for value in values if value]
         numeric_values = _as_numeric_values(non_null_values)
         is_numeric = bool(non_null_values) and numeric_values is not None
+        value_counts = Counter(non_null_values) if not is_numeric else Counter()
+        top_value = (
+            min(value_counts, key=lambda value: (-value_counts[value], value))
+            if value_counts
+            else None
+        )
         columns.append(
             ColumnProfile(
                 name=name,
@@ -55,6 +65,9 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 mean=mean(numeric_values) if numeric_values is not None else None,
                 minimum=min(numeric_values) if numeric_values is not None else None,
                 maximum=max(numeric_values) if numeric_values is not None else None,
+                unique_count=len(value_counts) if not is_numeric else None,
+                top_value=top_value,
+                top_value_count=value_counts[top_value] if top_value is not None else None,
             )
         )
 
@@ -100,4 +113,28 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
             f"| {column.name} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
+    categorical_columns = [
+        column for column in dataset.columns if column.unique_count is not None
+    ]
+    if categorical_columns:
+        lines.extend(
+            [
+                "",
+                "## Categorical summary",
+                "",
+                "| Column | Unique values | Top value | Top value count |",
+                "| --- | ---: | --- | ---: |",
+            ]
+        )
+        for column in categorical_columns:
+            top_value = column.top_value or "—"
+            top_value_count = (
+                str(column.top_value_count)
+                if column.top_value_count is not None
+                else "—"
+            )
+            lines.append(
+                f"| {column.name} | {column.unique_count} | {top_value} | "
+                f"{top_value_count} |"
+            )
     return "\n".join(lines) + "\n"

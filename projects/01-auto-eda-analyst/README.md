@@ -44,6 +44,13 @@ Rows: 3
 | customer | text | 0 | 3 | — | — | — |
 | spend | numeric | 1 | 2 | 15.00 | 10.50 | 19.50 |
 | segment | text | 0 | 3 | — | — | — |
+
+## Categorical summary
+
+| Column | Unique values | Top value | Top value count |
+| --- | ---: | --- | ---: |
+| customer | 3 | Aster | 1 |
+| segment | 2 | enterprise | 2 |
 ```
 
 ## Input contract
@@ -52,6 +59,7 @@ Rows: 3
 - Blank cells count as missing values.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric results are formatted to two decimals for deterministic report diffs.
+- Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
 
 ## Project layout
 
@@ -67,9 +75,9 @@ projects/01-auto-eda-analyst/
 
 - Local CSV profiling with row counts and per-column missingness.
 - Conservative numeric-type inference and summary statistics.
+- Categorical cardinality and top-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
 
 ## Planned next milestones
 
-- Add categorical cardinality and top-value summaries.
 - Add a data-quality section for duplicate rows and schema warnings.

@@ -46,5 +46,10 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
         "| --- | --- | ---: | ---: | ---: | ---: | ---: |\n"
         "| customer | text | 0 | 3 | — | — | — |\n"
         "| spend | numeric | 1 | 2 | 15.00 | 10.50 | 19.50 |\n"
-        "| segment | text | 0 | 3 | — | — | — |\n"
+        "| segment | text | 0 | 3 | — | — | — |\n\n"
+        "## Categorical summary\n\n"
+        "| Column | Unique values | Top value | Top value count |\n"
+        "| --- | ---: | --- | ---: |\n"
+        "| customer | 3 | Aster | 1 |\n"
+        "| segment | 2 | enterprise | 2 |\n"
     )
