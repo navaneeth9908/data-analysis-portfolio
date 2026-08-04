@@ -31,6 +31,7 @@ class DatasetProfile:
 
     source_name: str
     row_count: int
+    duplicate_row_count: int
     columns: tuple[ColumnProfile, ...]
 
 
@@ -43,6 +44,13 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         if not fieldnames:
             raise ValueError("CSV input must include a header row")
         rows = list(reader)
+    duplicate_row_count = sum(
+        count - 1
+        for count in Counter(
+            tuple(str(row.get(name) or "").strip() for name in fieldnames)
+            for row in rows
+        ).values()
+    )
 
     columns: list[ColumnProfile] = []
     for name in fieldnames:
@@ -74,6 +82,7 @@ def profile_csv(path: str | Path) -> DatasetProfile:
     return DatasetProfile(
         source_name=source_path.name,
         row_count=len(rows),
+        duplicate_row_count=duplicate_row_count,
         columns=tuple(columns),
     )
 
@@ -97,6 +106,10 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
         f"Source: {dataset.source_name}",
         "",
         f"Rows: {dataset.row_count}",
+        "",
+        "## Data quality",
+        "",
+        f"Duplicate rows: {dataset.duplicate_row_count}",
         "",
         "## Column profile",
         "",

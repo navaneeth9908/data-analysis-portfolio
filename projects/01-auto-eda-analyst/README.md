@@ -8,6 +8,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 
 - loads a headered CSV file from disk
 - counts rows and missing values by column
+- flags redundant duplicate data rows
 - infers whether every populated value in a column is numeric
 - calculates mean, minimum, and maximum for numeric columns
 - writes a deterministic Markdown report that can be reviewed and versioned
@@ -20,6 +21,10 @@ From this project directory:
 python -m pytest tests/ -q
 PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
   --output /tmp/auto_eda_report.md
+
+# Inspect the duplicate-row quality signal with a second bundled example.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
+  --output /tmp/auto_eda_duplicates.md
 ```
 
 Expected CLI message:
@@ -37,6 +42,10 @@ Source: sample_customers.csv
 
 Rows: 3
 
+## Data quality
+
+Duplicate rows: 0
+
 ## Column profile
 
 | Column | Inferred type | Missing | Non-null | Mean | Minimum | Maximum |
@@ -53,10 +62,13 @@ Rows: 3
 | segment | 2 | enterprise | 2 |
 ```
 
+The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
+
 ## Input contract
 
 - Inputs must be UTF-8 CSV files with a header row.
 - Blank cells count as missing values.
+- Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
@@ -66,18 +78,21 @@ Rows: 3
 ```text
 projects/01-auto-eda-analyst/
   examples/sample_customers.csv
+  examples/sample_duplicate_rows.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
   tests/test_cli.py
+  tests/test_profile.py
 ```
 
 ## Current capabilities
 
 - Local CSV profiling with row counts and per-column missingness.
+- Duplicate-row data-quality signal in the generated report.
 - Conservative numeric-type inference and summary statistics.
 - Categorical cardinality and top-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
 
 ## Planned next milestones
 
-- Add a data-quality section for duplicate rows and schema warnings.
+- Add schema warnings for empty header names and inconsistent row widths.

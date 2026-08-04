@@ -41,6 +41,8 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
         "# Automated EDA Report\n\n"
         "Source: customers.csv\n\n"
         "Rows: 3\n\n"
+        "## Data quality\n\n"
+        "Duplicate rows: 0\n\n"
         "## Column profile\n\n"
         "| Column | Inferred type | Missing | Non-null | Mean | Minimum | Maximum |\n"
         "| --- | --- | ---: | ---: | ---: | ---: | ---: |\n"
