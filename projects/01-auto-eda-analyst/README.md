@@ -25,6 +25,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
 # Inspect the duplicate-row quality signal with a second bundled example.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
   --output /tmp/auto_eda_duplicates.md
+
+# Inspect schema warnings for an empty header and uneven data rows.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
+  --output /tmp/auto_eda_schema_warnings.md
 ```
 
 Expected CLI message:
@@ -69,6 +73,7 @@ The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 - Inputs must be UTF-8 CSV files with a header row.
 - Blank cells count as missing values.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
+- Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
@@ -79,6 +84,7 @@ The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 projects/01-auto-eda-analyst/
   examples/sample_customers.csv
   examples/sample_duplicate_rows.csv
+  examples/sample_schema_warnings.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
   tests/test_cli.py
@@ -89,10 +95,11 @@ projects/01-auto-eda-analyst/
 
 - Local CSV profiling with row counts and per-column missingness.
 - Duplicate-row data-quality signal in the generated report.
+- Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference and summary statistics.
 - Categorical cardinality and top-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
 
 ## Planned next milestones
 
-- Add schema warnings for empty header names and inconsistent row widths.
+- Add deterministic numeric quantile summaries to make distributions easier to review.

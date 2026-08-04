@@ -32,6 +32,7 @@ class DatasetProfile:
     source_name: str
     row_count: int
     duplicate_row_count: int
+    schema_warnings: tuple[str, ...]
     columns: tuple[ColumnProfile, ...]
 
 
@@ -39,11 +40,29 @@ def profile_csv(path: str | Path) -> DatasetProfile:
     """Profile missingness and numeric ranges for a headered CSV file."""
     source_path = Path(path)
     with source_path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        fieldnames = reader.fieldnames
+        reader = csv.reader(handle)
+        fieldnames = next(reader, None)
         if not fieldnames:
             raise ValueError("CSV input must include a header row")
-        rows = list(reader)
+        schema_warnings = [
+            f"Empty header name at column {index}."
+            for index, name in enumerate(fieldnames, start=1)
+            if not name.strip()
+        ]
+        rows = []
+        for row_number, values in enumerate(reader, start=2):
+            if len(values) != len(fieldnames):
+                noun = "value" if len(values) == 1 else "values"
+                schema_warnings.append(
+                    f"Row {row_number} has {len(values)} {noun}; expected {len(fieldnames)}."
+                )
+            rows.append(
+                {
+                    name: values[index] if index < len(values) else None
+                    for index, name in enumerate(fieldnames)
+                }
+            )
+    schema_warnings = tuple(schema_warnings)
     duplicate_row_count = sum(
         count - 1
         for count in Counter(
@@ -83,6 +102,7 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         source_name=source_path.name,
         row_count=len(rows),
         duplicate_row_count=duplicate_row_count,
+        schema_warnings=schema_warnings,
         columns=tuple(columns),
     )
 
@@ -111,11 +131,23 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
         "",
         f"Duplicate rows: {dataset.duplicate_row_count}",
         "",
-        "## Column profile",
-        "",
-        "| Column | Inferred type | Missing | Non-null | Mean | Minimum | Maximum |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
+    if dataset.schema_warnings:
+        lines.extend(
+            [
+                "Schema warnings:",
+                *[f"- {warning}" for warning in dataset.schema_warnings],
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Column profile",
+            "",
+            "| Column | Inferred type | Missing | Non-null | Mean | Minimum | Maximum |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
     for column in dataset.columns:
         numeric_values = (
             f"{column.mean:.2f} | {column.minimum:.2f} | {column.maximum:.2f}"

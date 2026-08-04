@@ -26,6 +26,10 @@ Planned milestones:
 - add CLI entry point and tests
 - polish README with example output
 
+Progress:
+
+- Added deterministic CSV schema warnings for blank header names and data rows whose field count differs from the header, including a CLI example fixture and focused tests.
+
 ### 2. NL2SQL Analytics Agent
 
 Build a safe natural-language-to-SQL workflow over DuckDB or SQLite, focused on realistic warehouse-style analytics questions.
