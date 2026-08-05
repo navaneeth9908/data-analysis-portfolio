@@ -49,3 +49,19 @@ def test_rendered_report_warns_about_inconsistent_row_widths(tmp_path: Path) -> 
 
     assert "- Row 3 has 1 value; expected 2.\n" in report
     assert "- Row 4 has 3 values; expected 2.\n" in report
+
+
+def test_rendered_report_includes_numeric_quartiles(tmp_path: Path) -> None:
+    source_file = tmp_path / "quarterly_sales.csv"
+    source_file.write_text(
+        "sales\n"
+        "10\n"
+        "20\n"
+        "30\n"
+        "40\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| sales | 17.50 | 25.00 | 32.50 |" in report

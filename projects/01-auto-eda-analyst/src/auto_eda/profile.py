@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from statistics import mean
+from statistics import mean, median
 import csv
 
 
@@ -20,6 +20,9 @@ class ColumnProfile:
     mean: float | None
     minimum: float | None
     maximum: float | None
+    first_quartile: float | None = None
+    median: float | None = None
+    third_quartile: float | None = None
     unique_count: int | None = None
     top_value: str | None = None
     top_value_count: int | None = None
@@ -76,6 +79,7 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         values = [str(row.get(name) or "").strip() for row in rows]
         non_null_values = [value for value in values if value]
         numeric_values = _as_numeric_values(non_null_values)
+        sorted_numeric_values = sorted(numeric_values) if numeric_values is not None else None
         is_numeric = bool(non_null_values) and numeric_values is not None
         value_counts = Counter(non_null_values) if not is_numeric else Counter()
         top_value = (
@@ -92,6 +96,17 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 mean=mean(numeric_values) if numeric_values is not None else None,
                 minimum=min(numeric_values) if numeric_values is not None else None,
                 maximum=max(numeric_values) if numeric_values is not None else None,
+                first_quartile=(
+                    _linear_percentile(sorted_numeric_values, 0.25)
+                    if sorted_numeric_values
+                    else None
+                ),
+                median=median(sorted_numeric_values) if sorted_numeric_values else None,
+                third_quartile=(
+                    _linear_percentile(sorted_numeric_values, 0.75)
+                    if sorted_numeric_values
+                    else None
+                ),
                 unique_count=len(value_counts) if not is_numeric else None,
                 top_value=top_value,
                 top_value_count=value_counts[top_value] if top_value is not None else None,
@@ -116,6 +131,17 @@ def _as_numeric_values(values: list[str]) -> list[float] | None:
     except ValueError:
         return None
     return parsed
+
+
+def _linear_percentile(sorted_values: list[float], percentile: float) -> float:
+    """Calculate a percentile with deterministic linear interpolation."""
+    position = (len(sorted_values) - 1) * percentile
+    lower_index = int(position)
+    upper_index = min(lower_index + 1, len(sorted_values) - 1)
+    fraction = position - lower_index
+    return sorted_values[lower_index] + fraction * (
+        sorted_values[upper_index] - sorted_values[lower_index]
+    )
 
 
 def render_markdown_report(dataset: DatasetProfile) -> str:
@@ -158,6 +184,24 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
             f"| {column.name} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
+    numeric_columns = [
+        column for column in dataset.columns if column.first_quartile is not None
+    ]
+    if numeric_columns:
+        lines.extend(
+            [
+                "",
+                "## Numeric distribution",
+                "",
+                "| Column | 25th percentile | Median | 75th percentile |",
+                "| --- | ---: | ---: | ---: |",
+            ]
+        )
+        for column in numeric_columns:
+            lines.append(
+                f"| {column.name} | {column.first_quartile:.2f} | "
+                f"{column.median:.2f} | {column.third_quartile:.2f} |"
+            )
     categorical_columns = [
         column for column in dataset.columns if column.unique_count is not None
     ]

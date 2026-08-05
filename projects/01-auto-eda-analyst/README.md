@@ -10,7 +10,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - counts rows and missing values by column
 - flags redundant duplicate data rows
 - infers whether every populated value in a column is numeric
-- calculates mean, minimum, and maximum for numeric columns
+- calculates mean, minimum, maximum, quartiles, and median for numeric columns
 - writes a deterministic Markdown report that can be reviewed and versioned
 
 ## Quick start
@@ -58,6 +58,12 @@ Duplicate rows: 0
 | spend | numeric | 1 | 2 | 15.00 | 10.50 | 19.50 |
 | segment | text | 0 | 3 | — | — | — |
 
+## Numeric distribution
+
+| Column | 25th percentile | Median | 75th percentile |
+| --- | ---: | ---: | ---: |
+| spend | 12.75 | 15.00 | 17.25 |
+
 ## Categorical summary
 
 | Column | Unique values | Top value | Top value count |
@@ -75,6 +81,7 @@ The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
+- Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
 
@@ -96,10 +103,10 @@ projects/01-auto-eda-analyst/
 - Local CSV profiling with row counts and per-column missingness.
 - Duplicate-row data-quality signal in the generated report.
 - Schema warnings for empty column headers and data rows that do not match header width.
-- Conservative numeric-type inference and summary statistics.
+- Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - Categorical cardinality and top-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
 
 ## Planned next milestones
 
-- Add deterministic numeric quantile summaries to make distributions easier to review.
+- Add deterministic outlier flags based on the reported interquartile range.
