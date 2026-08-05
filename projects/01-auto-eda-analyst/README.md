@@ -11,6 +11,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags redundant duplicate data rows
 - infers whether every populated value in a column is numeric
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
+- flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
 
 ## Quick start
@@ -29,6 +30,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
 # Inspect schema warnings for an empty header and uneven data rows.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
   --output /tmp/auto_eda_schema_warnings.md
+
+# Inspect values outside Tukey's 1.5-IQR fences.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
+  --output /tmp/auto_eda_outliers.md
 ```
 
 Expected CLI message:
@@ -74,6 +79,16 @@ Duplicate rows: 0
 
 The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 
+The `sample_iqr_outliers.csv` example adds this section:
+
+```markdown
+## IQR outliers
+
+| Column | Outlier count | Values outside 1.5-IQR fences |
+| --- | ---: | --- |
+| sales | 1 | 100.00 |
+```
+
 ## Input contract
 
 - Inputs must be UTF-8 CSV files with a header row.
@@ -82,6 +97,7 @@ The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
+- A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
 
@@ -91,6 +107,7 @@ The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 projects/01-auto-eda-analyst/
   examples/sample_customers.csv
   examples/sample_duplicate_rows.csv
+  examples/sample_iqr_outliers.csv
   examples/sample_schema_warnings.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
@@ -104,9 +121,10 @@ projects/01-auto-eda-analyst/
 - Duplicate-row data-quality signal in the generated report.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
+- Deterministic IQR outlier reporting for numeric columns.
 - Categorical cardinality and top-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
 
 ## Planned next milestones
 
-- Add deterministic outlier flags based on the reported interquartile range.
+- Add a configurable limit for the number of categorical values displayed in the report.

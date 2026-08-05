@@ -65,3 +65,20 @@ def test_rendered_report_includes_numeric_quartiles(tmp_path: Path) -> None:
     report = render_markdown_report(profile_csv(source_file))
 
     assert "| sales | 17.50 | 25.00 | 32.50 |" in report
+
+
+def test_rendered_report_flags_values_outside_iqr_outlier_fences(tmp_path: Path) -> None:
+    source_file = tmp_path / "outlier_sales.csv"
+    source_file.write_text(
+        "sales\n"
+        "10\n"
+        "11\n"
+        "12\n"
+        "13\n"
+        "100\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| sales | 1 | 100.00 |" in report

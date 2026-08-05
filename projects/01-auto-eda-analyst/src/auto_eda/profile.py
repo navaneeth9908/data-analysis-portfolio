@@ -23,6 +23,7 @@ class ColumnProfile:
     first_quartile: float | None = None
     median: float | None = None
     third_quartile: float | None = None
+    outlier_values: tuple[float, ...] = ()
     unique_count: int | None = None
     top_value: str | None = None
     top_value_count: int | None = None
@@ -81,6 +82,23 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         numeric_values = _as_numeric_values(non_null_values)
         sorted_numeric_values = sorted(numeric_values) if numeric_values is not None else None
         is_numeric = bool(non_null_values) and numeric_values is not None
+        first_quartile = (
+            _linear_percentile(sorted_numeric_values, 0.25)
+            if sorted_numeric_values
+            else None
+        )
+        third_quartile = (
+            _linear_percentile(sorted_numeric_values, 0.75)
+            if sorted_numeric_values
+            else None
+        )
+        outlier_values = (
+            _iqr_outliers(sorted_numeric_values, first_quartile, third_quartile)
+            if sorted_numeric_values
+            and first_quartile is not None
+            and third_quartile is not None
+            else ()
+        )
         value_counts = Counter(non_null_values) if not is_numeric else Counter()
         top_value = (
             min(value_counts, key=lambda value: (-value_counts[value], value))
@@ -96,17 +114,10 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 mean=mean(numeric_values) if numeric_values is not None else None,
                 minimum=min(numeric_values) if numeric_values is not None else None,
                 maximum=max(numeric_values) if numeric_values is not None else None,
-                first_quartile=(
-                    _linear_percentile(sorted_numeric_values, 0.25)
-                    if sorted_numeric_values
-                    else None
-                ),
+                first_quartile=first_quartile,
                 median=median(sorted_numeric_values) if sorted_numeric_values else None,
-                third_quartile=(
-                    _linear_percentile(sorted_numeric_values, 0.75)
-                    if sorted_numeric_values
-                    else None
-                ),
+                third_quartile=third_quartile,
+                outlier_values=outlier_values,
                 unique_count=len(value_counts) if not is_numeric else None,
                 top_value=top_value,
                 top_value_count=value_counts[top_value] if top_value is not None else None,
@@ -141,6 +152,18 @@ def _linear_percentile(sorted_values: list[float], percentile: float) -> float:
     fraction = position - lower_index
     return sorted_values[lower_index] + fraction * (
         sorted_values[upper_index] - sorted_values[lower_index]
+    )
+
+
+def _iqr_outliers(
+    sorted_values: list[float], first_quartile: float, third_quartile: float
+) -> tuple[float, ...]:
+    """Return values outside Tukey's 1.5-IQR fences in sorted order."""
+    interquartile_range = third_quartile - first_quartile
+    lower_fence = first_quartile - 1.5 * interquartile_range
+    upper_fence = third_quartile + 1.5 * interquartile_range
+    return tuple(
+        value for value in sorted_values if value < lower_fence or value > upper_fence
     )
 
 
@@ -202,6 +225,20 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
                 f"| {column.name} | {column.first_quartile:.2f} | "
                 f"{column.median:.2f} | {column.third_quartile:.2f} |"
             )
+    outlier_columns = [column for column in numeric_columns if column.outlier_values]
+    if outlier_columns:
+        lines.extend(
+            [
+                "",
+                "## IQR outliers",
+                "",
+                "| Column | Outlier count | Values outside 1.5-IQR fences |",
+                "| --- | ---: | --- |",
+            ]
+        )
+        for column in outlier_columns:
+            values = ", ".join(f"{value:.2f}" for value in column.outlier_values)
+            lines.append(f"| {column.name} | {len(column.outlier_values)} | {values} |")
     categorical_columns = [
         column for column in dataset.columns if column.unique_count is not None
     ]
