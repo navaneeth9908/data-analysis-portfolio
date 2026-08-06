@@ -27,6 +27,7 @@ class ColumnProfile:
     unique_count: int | None = None
     top_value: str | None = None
     top_value_count: int | None = None
+    categorical_values: tuple[tuple[str, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,9 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 unique_count=len(value_counts) if not is_numeric else None,
                 top_value=top_value,
                 top_value_count=value_counts[top_value] if top_value is not None else None,
+                categorical_values=tuple(
+                    sorted(value_counts.items(), key=lambda item: (-item[1], item[0]))
+                ),
             )
         )
 
@@ -167,7 +171,7 @@ def _iqr_outliers(
     )
 
 
-def render_markdown_report(dataset: DatasetProfile) -> str:
+def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
     lines = [
         "# Automated EDA Report",
@@ -263,4 +267,22 @@ def render_markdown_report(dataset: DatasetProfile) -> str:
                 f"| {column.name} | {column.unique_count} | {top_value} | "
                 f"{top_value_count} |"
             )
+        displayed_categorical_columns = [
+            column for column in categorical_columns if column.categorical_values
+        ]
+        if displayed_categorical_columns and categorical_limit:
+            lines.extend(
+                [
+                    "",
+                    f"## Categorical values (top {categorical_limit} per column)",
+                    "",
+                    "| Column | Rank | Value | Count |",
+                    "| --- | ---: | --- | ---: |",
+                ]
+            )
+            for column in displayed_categorical_columns:
+                for rank, (value, count) in enumerate(
+                    column.categorical_values[:categorical_limit], start=1
+                ):
+                    lines.append(f"| {column.name} | {rank} | {value} | {count} |")
     return "\n".join(lines) + "\n"

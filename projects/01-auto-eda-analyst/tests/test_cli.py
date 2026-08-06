@@ -57,5 +57,80 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
         "| Column | Unique values | Top value | Top value count |\n"
         "| --- | ---: | --- | ---: |\n"
         "| customer | 3 | Aster | 1 |\n"
-        "| segment | 2 | enterprise | 2 |\n"
+        "| segment | 2 | enterprise | 2 |\n\n"
+        "## Categorical values (top 5 per column)\n\n"
+        "| Column | Rank | Value | Count |\n"
+        "| --- | ---: | --- | ---: |\n"
+        "| customer | 1 | Aster | 1 |\n"
+        "| customer | 2 | Birch | 1 |\n"
+        "| customer | 3 | Cedar | 1 |\n"
+        "| segment | 1 | enterprise | 2 |\n"
+        "| segment | 2 | midmarket | 1 |\n"
     )
+
+
+def test_cli_limits_displayed_categorical_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "customer_segments.csv"
+    source_file.write_text(
+        "segment\n"
+        "enterprise\n"
+        "enterprise\n"
+        "enterprise\n"
+        "midmarket\n"
+        "midmarket\n"
+        "startup\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "eda_report.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+            "--categorical-limit",
+            "2",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "## Categorical values (top 2 per column)" in report
+    assert "| segment | 1 | enterprise | 3 |" in report
+    assert "| segment | 2 | midmarket | 2 |" in report
+    assert "| segment | 3 | startup | 1 |" not in report
+
+
+def test_cli_rejects_a_non_positive_categorical_limit(tmp_path: Path) -> None:
+    source_file = tmp_path / "customers.csv"
+    source_file.write_text("segment\nenterprise\n", encoding="utf-8")
+    output_file = tmp_path / "eda_report.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+            "--categorical-limit",
+            "0",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 2
+    assert "--categorical-limit must be at least 1" in result.stderr

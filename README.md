@@ -59,7 +59,7 @@ Each project should include:
 
 ## Current status
 
-The Auto EDA Analyst now profiles local CSV files into deterministic Markdown with missingness, duplicate-row, categorical, numeric-summary, and schema-warning signals, plus bundled CLI examples and tests.
+The Auto EDA Analyst now profiles local CSV files into deterministic Markdown with missingness, duplicate-row, categorical summaries, configurable ranked categorical values, numeric summaries, and schema-warning signals, plus bundled CLI examples and tests.
 
 The NL2SQL Analytics Agent is currently the most developed project. It includes a deterministic local sales mart, safe SQL generation patterns, executable sample questions, result insights, and focused tests.
 

@@ -34,6 +34,11 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
 # Inspect values outside Tukey's 1.5-IQR fences.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
   --output /tmp/auto_eda_outliers.md
+
+# Show only the two most frequent values for each text column.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
+  --output /tmp/auto_eda_categories.md \
+  --categorical-limit 2
 ```
 
 Expected CLI message:
@@ -75,6 +80,16 @@ Duplicate rows: 0
 | --- | ---: | --- | ---: |
 | customer | 3 | Aster | 1 |
 | segment | 2 | enterprise | 2 |
+
+## Categorical values (top 5 per column)
+
+| Column | Rank | Value | Count |
+| --- | ---: | --- | ---: |
+| customer | 1 | Aster | 1 |
+| customer | 2 | Birch | 1 |
+| customer | 3 | Cedar | 1 |
+| segment | 1 | enterprise | 2 |
+| segment | 2 | midmarket | 1 |
 ```
 
 The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
@@ -99,7 +114,7 @@ The `sample_iqr_outliers.csv` example adds this section:
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
 - Numeric results are formatted to two decimals for deterministic report diffs.
-- Text columns include their count of distinct non-blank values plus the most frequent value and its frequency.
+- Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
 ## Project layout
 
@@ -122,9 +137,5 @@ projects/01-auto-eda-analyst/
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - Deterministic IQR outlier reporting for numeric columns.
-- Categorical cardinality and top-value summaries for text columns.
+- Categorical cardinality, top-value, and configurable ranked-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.
-
-## Planned next milestones
-
-- Add a configurable limit for the number of categorical values displayed in the report.
