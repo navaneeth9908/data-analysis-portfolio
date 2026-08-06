@@ -35,6 +35,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
 PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
   --output /tmp/auto_eda_outliers.md
 
+# Inspect Pearson correlations using rows populated in both numeric columns.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
+  --output /tmp/auto_eda_correlations.md
+
 # Show only the two most frequent values for each text column.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
   --output /tmp/auto_eda_categories.md \
@@ -104,6 +108,16 @@ The `sample_iqr_outliers.csv` example adds this section:
 | sales | 1 | 100.00 |
 ```
 
+The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation.
+
+```markdown
+## Numeric correlations
+
+| First column | Second column | Pairwise rows | Pearson r |
+| --- | --- | ---: | ---: |
+| sales | refunds | 3 | -1.00 |
+```
+
 ## Input contract
 
 - Inputs must be UTF-8 CSV files with a header row.
@@ -113,6 +127,7 @@ The `sample_iqr_outliers.csv` example adds this section:
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
+- Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -123,6 +138,7 @@ projects/01-auto-eda-analyst/
   examples/sample_customers.csv
   examples/sample_duplicate_rows.csv
   examples/sample_iqr_outliers.csv
+  examples/sample_numeric_correlations.csv
   examples/sample_schema_warnings.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
@@ -136,6 +152,7 @@ projects/01-auto-eda-analyst/
 - Duplicate-row data-quality signal in the generated report.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
+- Pairwise-complete Pearson correlations for variable numeric-column pairs.
 - Deterministic IQR outlier reporting for numeric columns.
 - Categorical cardinality, top-value, and configurable ranked-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.

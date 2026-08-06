@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import csv
 from collections import Counter
 from dataclasses import dataclass
+from math import sqrt
 from pathlib import Path
 from statistics import mean, median
-import csv
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,16 @@ class ColumnProfile:
 
 
 @dataclass(frozen=True)
+class NumericCorrelation:
+    """A Pearson correlation calculated from pairwise populated numeric rows."""
+
+    first_column: str
+    second_column: str
+    paired_row_count: int
+    pearson_r: float
+
+
+@dataclass(frozen=True)
 class DatasetProfile:
     """A deterministic profile for a delimited input dataset."""
 
@@ -39,6 +50,7 @@ class DatasetProfile:
     duplicate_row_count: int
     schema_warnings: tuple[str, ...]
     columns: tuple[ColumnProfile, ...]
+    numeric_correlations: tuple[NumericCorrelation, ...] = ()
 
 
 def profile_csv(path: str | Path) -> DatasetProfile:
@@ -128,12 +140,16 @@ def profile_csv(path: str | Path) -> DatasetProfile:
             )
         )
 
+    numeric_column_names = [
+        column.name for column in columns if column.inferred_type == "numeric"
+    ]
     return DatasetProfile(
         source_name=source_path.name,
         row_count=len(rows),
         duplicate_row_count=duplicate_row_count,
         schema_warnings=schema_warnings,
         columns=tuple(columns),
+        numeric_correlations=_numeric_correlations(rows, numeric_column_names),
     )
 
 
@@ -169,6 +185,47 @@ def _iqr_outliers(
     return tuple(
         value for value in sorted_values if value < lower_fence or value > upper_fence
     )
+
+
+def _numeric_correlations(
+    rows: list[dict[str, str | None]], numeric_column_names: list[str]
+) -> tuple[NumericCorrelation, ...]:
+    """Calculate Pearson r for variable numeric-column pairs with usable data."""
+    correlations: list[NumericCorrelation] = []
+    for first_index, first_column in enumerate(numeric_column_names):
+        for second_column in numeric_column_names[first_index + 1 :]:
+            paired_values = [
+                (float(first_value), float(second_value))
+                for row in rows
+                if (first_value := str(row.get(first_column) or "").strip())
+                and (second_value := str(row.get(second_column) or "").strip())
+            ]
+            if len(paired_values) < 2:
+                continue
+            first_values, second_values = zip(*paired_values)
+            first_mean = mean(first_values)
+            second_mean = mean(second_values)
+            first_sum_squares = sum(
+                (value - first_mean) ** 2 for value in first_values
+            )
+            second_sum_squares = sum(
+                (value - second_mean) ** 2 for value in second_values
+            )
+            if first_sum_squares == 0 or second_sum_squares == 0:
+                continue
+            covariance = sum(
+                (first_value - first_mean) * (second_value - second_mean)
+                for first_value, second_value in paired_values
+            )
+            correlations.append(
+                NumericCorrelation(
+                    first_column=first_column,
+                    second_column=second_column,
+                    paired_row_count=len(paired_values),
+                    pearson_r=covariance / sqrt(first_sum_squares * second_sum_squares),
+                )
+            )
+    return tuple(correlations)
 
 
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
@@ -228,6 +285,21 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             lines.append(
                 f"| {column.name} | {column.first_quartile:.2f} | "
                 f"{column.median:.2f} | {column.third_quartile:.2f} |"
+            )
+    if dataset.numeric_correlations:
+        lines.extend(
+            [
+                "",
+                "## Numeric correlations",
+                "",
+                "| First column | Second column | Pairwise rows | Pearson r |",
+                "| --- | --- | ---: | ---: |",
+            ]
+        )
+        for correlation in dataset.numeric_correlations:
+            lines.append(
+                f"| {correlation.first_column} | {correlation.second_column} | "
+                f"{correlation.paired_row_count} | {correlation.pearson_r:.2f} |"
             )
     outlier_columns = [column for column in numeric_columns if column.outlier_values]
     if outlier_columns:

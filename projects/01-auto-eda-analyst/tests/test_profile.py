@@ -82,3 +82,20 @@ def test_rendered_report_flags_values_outside_iqr_outlier_fences(tmp_path: Path)
     report = render_markdown_report(profile_csv(source_file))
 
     assert "| sales | 1 | 100.00 |" in report
+
+
+def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) -> None:
+    source_file = tmp_path / "monthly_sales.csv"
+    source_file.write_text(
+        "month,sales,refunds\n"
+        "January,10,6\n"
+        "February,20,4\n"
+        "March,30,2\n"
+        "April,,0\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Numeric correlations" in report
+    assert "| sales | refunds | 3 | -1.00 |" in report
