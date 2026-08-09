@@ -13,6 +13,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
+- distills profiling results into an analyst-ready summary of data quality, numeric ranges, and detected outliers
 
 ## Quick start
 
@@ -72,6 +73,12 @@ Expected report:
 Source: sample_customers.csv
 
 Rows: 3
+
+## Analyst summary
+
+- 3 rows across 3 columns: 1 numeric and 2 text.
+- Data quality: 1 missing value across 1 column; 0 duplicate rows.
+- Numeric range: spend spans 10.50 to 19.50.
 
 ## Data quality
 
@@ -142,6 +149,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
+- Every report starts with an analyst summary of dataset shape and data quality. It includes numeric ranges when numeric columns are present and an outlier watchlist only when the IQR check finds values to review.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -163,6 +171,7 @@ projects/01-auto-eda-analyst/
 ## Current capabilities
 
 - Local CSV profiling with row counts and per-column missingness.
+- Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
 - Duplicate-row data-quality signal in the generated report.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.

@@ -288,12 +288,57 @@ def render_missingness_chart(dataset: DatasetProfile) -> str:
 
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
+    numeric_columns = [
+        column for column in dataset.columns if column.first_quartile is not None
+    ]
+    text_column_count = len(dataset.columns) - len(numeric_columns)
+    missing_value_count = sum(column.missing_count for column in dataset.columns)
+    missing_column_count = sum(
+        column.missing_count > 0 for column in dataset.columns
+    )
+    outlier_columns = [column for column in numeric_columns if column.outlier_values]
+    analyst_summary = [
+        "## Analyst summary",
+        "",
+        (
+            f"- {dataset.row_count} {'row' if dataset.row_count == 1 else 'rows'} "
+            f"across {len(dataset.columns)} "
+            f"{'column' if len(dataset.columns) == 1 else 'columns'}: "
+            f"{len(numeric_columns)} numeric and {text_column_count} text."
+        ),
+        (
+            f"- Data quality: {missing_value_count} "
+            f"{'missing value' if missing_value_count == 1 else 'missing values'} "
+            f"across {missing_column_count} "
+            f"{'column' if missing_column_count == 1 else 'columns'}; "
+            f"{dataset.duplicate_row_count} "
+            f"{'duplicate row' if dataset.duplicate_row_count == 1 else 'duplicate rows'}."
+        ),
+    ]
+    if numeric_columns:
+        numeric_ranges = "; ".join(
+            f"{column.name} spans {column.minimum:.2f} to {column.maximum:.2f}"
+            for column in numeric_columns
+        )
+        analyst_summary.append(
+            f"- Numeric {'range' if len(numeric_columns) == 1 else 'ranges'}: "
+            f"{numeric_ranges}."
+        )
+    if outlier_columns:
+        outlier_watchlist = "; ".join(
+            f"{column.name} ({len(column.outlier_values)} "
+            f"{'value' if len(column.outlier_values) == 1 else 'values'})"
+            for column in outlier_columns
+        )
+        analyst_summary.append(f"- Outlier watchlist: {outlier_watchlist}.")
     lines = [
         "# Automated EDA Report",
         "",
         f"Source: {dataset.source_name}",
         "",
         f"Rows: {dataset.row_count}",
+        "",
+        *analyst_summary,
         "",
         "## Data quality",
         "",
@@ -326,9 +371,6 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"| {column.name} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
-    numeric_columns = [
-        column for column in dataset.columns if column.first_quartile is not None
-    ]
     if numeric_columns:
         lines.extend(
             [
@@ -359,7 +401,6 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 f"| {correlation.first_column} | {correlation.second_column} | "
                 f"{correlation.paired_row_count} | {correlation.pearson_r:.2f} |"
             )
-    outlier_columns = [column for column in numeric_columns if column.outlier_values]
     if outlier_columns:
         lines.extend(
             [
