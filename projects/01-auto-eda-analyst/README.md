@@ -23,6 +23,11 @@ python -m pytest tests/ -q
 PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
   --output /tmp/auto_eda_report.md
 
+# Write a standalone SVG showing missing values by column.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
+  --output /tmp/auto_eda_report.md \
+  --chart-output /tmp/auto_eda_charts
+
 # Inspect the duplicate-row quality signal with a second bundled example.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
   --output /tmp/auto_eda_duplicates.md
@@ -50,6 +55,14 @@ Expected CLI message:
 ```text
 EDA report written to /tmp/auto_eda_report.md
 ```
+
+With `--chart-output /tmp/auto_eda_charts`, the CLI also writes an accessible, standalone SVG artifact and reports its location:
+
+```text
+Missingness chart written to /tmp/auto_eda_charts/missingness.svg
+```
+
+The chart uses one bar per column, shows both the number and percentage of blank values, and can be opened directly in a browser or embedded in a portfolio page.
 
 Expected report:
 
@@ -120,7 +133,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 
 ## Input contract
 
-- Inputs must be UTF-8 CSV files with a header row.
+- Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing.
 - Blank cells count as missing values.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
@@ -128,6 +141,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
+- Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -153,6 +167,7 @@ projects/01-auto-eda-analyst/
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.
+- Optional standalone SVG missingness chart artifacts via `--chart-output`.
 - Deterministic IQR outlier reporting for numeric columns.
 - Categorical cardinality, top-value, and configurable ranked-value summaries for text columns.
 - A standalone CLI that generates a Markdown EDA report.

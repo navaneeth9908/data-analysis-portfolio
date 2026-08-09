@@ -5,7 +5,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from auto_eda.profile import profile_csv, render_markdown_report
+from auto_eda.profile import (
+    profile_csv,
+    render_markdown_report,
+    render_missingness_chart,
+)
 
 
 def _positive_integer(value: str) -> int:
@@ -29,18 +33,27 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="Maximum categorical values to display per text column (default: 5)",
     )
+    parser.add_argument(
+        "--chart-output",
+        type=Path,
+        help="Directory for generated SVG chart artifacts",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     """Profile the requested CSV and write its Markdown report."""
     args = build_parser().parse_args(argv)
-    report = render_markdown_report(
-        profile_csv(args.source_file), categorical_limit=args.categorical_limit
-    )
+    dataset = profile_csv(args.source_file)
+    report = render_markdown_report(dataset, categorical_limit=args.categorical_limit)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
     print(f"EDA report written to {args.output}")
+    if args.chart_output:
+        args.chart_output.mkdir(parents=True, exist_ok=True)
+        chart_path = args.chart_output / "missingness.svg"
+        chart_path.write_text(render_missingness_chart(dataset), encoding="utf-8")
+        print(f"Missingness chart written to {chart_path}")
     return 0
 
 

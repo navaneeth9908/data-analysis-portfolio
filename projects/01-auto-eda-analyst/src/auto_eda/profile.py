@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 from collections import Counter
+from html import escape
 from dataclasses import dataclass
 from math import sqrt
 from pathlib import Path
@@ -124,9 +125,9 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 inferred_type="numeric" if is_numeric else "text",
                 missing_count=len(values) - len(non_null_values),
                 non_null_count=len(non_null_values),
-                mean=mean(numeric_values) if numeric_values is not None else None,
-                minimum=min(numeric_values) if numeric_values is not None else None,
-                maximum=max(numeric_values) if numeric_values is not None else None,
+                mean=mean(numeric_values) if numeric_values else None,
+                minimum=min(numeric_values) if numeric_values else None,
+                maximum=max(numeric_values) if numeric_values else None,
                 first_quartile=first_quartile,
                 median=median(sorted_numeric_values) if sorted_numeric_values else None,
                 third_quartile=third_quartile,
@@ -226,6 +227,63 @@ def _numeric_correlations(
                 )
             )
     return tuple(correlations)
+
+
+def render_missingness_chart(dataset: DatasetProfile) -> str:
+    """Render a deterministic, standalone SVG chart of missing values by column."""
+    width = 720
+    left_margin = 190
+    bar_width = 340
+    row_height = 44
+    height = max(140, 88 + row_height * len(dataset.columns))
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
+            f'height="{height}" viewBox="0 0 {width} {height}" role="img">'
+        ),
+        "<title>Missing values by column</title>",
+        "<desc>Each bar shows the percentage of missing values in a CSV column.</desc>",
+        f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
+        (
+            '<text x="24" y="34" fill="#111827" font-family="Arial, sans-serif" '
+            'font-size="20" font-weight="700">Missing values by column</text>'
+        ),
+        (
+            '<text x="24" y="58" fill="#4b5563" font-family="Arial, sans-serif" '
+            'font-size="12">Percent of dataset rows with blank values</text>'
+        ),
+    ]
+    for index, column in enumerate(dataset.columns):
+        y_position = 94 + index * row_height
+        percentage = column.missing_count / dataset.row_count if dataset.row_count else 0.0
+        label = escape(column.name)
+        summary = f"{column.missing_count} missing ({percentage:.1%})"
+        lines.extend(
+            [
+                (
+                    f'<text x="24" y="{y_position}" fill="#111827" '
+                    'font-family="Arial, sans-serif" font-size="14">'
+                    f"{label}</text>"
+                ),
+                (
+                    f'<rect x="{left_margin}" y="{y_position - 15}" '
+                    f'width="{bar_width}" height="20" rx="3" fill="#e5e7eb"/>'
+                ),
+                (
+                    f'<rect x="{left_margin}" y="{y_position - 15}" '
+                    f'width="{bar_width * percentage:.2f}" height="20" rx="3" '
+                    f'fill="{"#dc2626" if column.missing_count else "#16a34a"}"/>'
+                ),
+                (
+                    f'<text x="{left_margin + bar_width + 16}" y="{y_position}" '
+                    'fill="#374151" font-family="Arial, sans-serif" font-size="13">'
+                    f"{summary}</text>"
+                ),
+            ]
+        )
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"
 
 
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:

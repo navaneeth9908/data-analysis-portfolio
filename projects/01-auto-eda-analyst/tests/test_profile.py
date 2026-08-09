@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from auto_eda.profile import profile_csv, render_markdown_report
+from auto_eda.profile import (
+    profile_csv,
+    render_markdown_report,
+    render_missingness_chart,
+)
 
 
 def test_rendered_report_counts_exact_duplicate_data_rows(tmp_path: Path) -> None:
@@ -99,3 +103,26 @@ def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) 
 
     assert "## Numeric correlations" in report
     assert "| sales | refunds | 3 | -1.00 |" in report
+
+
+def test_missingness_svg_escapes_a_column_name_for_safe_rendering(tmp_path: Path) -> None:
+    source_file = tmp_path / "unsafe_header.csv"
+    source_file.write_text("<cost & margin>\nvalue\n", encoding="utf-8")
+
+    chart = render_missingness_chart(profile_csv(source_file))
+
+    assert "&lt;cost &amp; margin&gt;" in chart
+    assert "<cost & margin>" not in chart
+
+
+def test_profile_accepts_a_header_without_data_rows(tmp_path: Path) -> None:
+    source_file = tmp_path / "header_only.csv"
+    source_file.write_text("customer,spend\n", encoding="utf-8")
+
+    dataset = profile_csv(source_file)
+
+    assert dataset.row_count == 0
+    assert [(column.name, column.inferred_type) for column in dataset.columns] == [
+        ("customer", "text"),
+        ("spend", "text"),
+    ]

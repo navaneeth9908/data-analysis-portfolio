@@ -69,6 +69,49 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
     )
 
 
+def test_cli_writes_an_svg_missingness_chart_when_requested(tmp_path: Path) -> None:
+    source_file = tmp_path / "customers.csv"
+    source_file.write_text(
+        "customer,spend\n"
+        "Aster,10.5\n"
+        "Birch,\n"
+        "Cedar,19.5\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "eda_report.md"
+    chart_directory = tmp_path / "charts"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+            "--chart-output",
+            str(chart_directory),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    chart_file = chart_directory / "missingness.svg"
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        f"EDA report written to {output_file}\n"
+        f"Missingness chart written to {chart_file}\n"
+    )
+    chart = chart_file.read_text(encoding="utf-8")
+    assert '<svg xmlns="http://www.w3.org/2000/svg"' in chart
+    assert "<title>Missing values by column</title>" in chart
+    assert "spend" in chart
+    assert "1 missing (33.3%)" in chart
+
+
 def test_cli_limits_displayed_categorical_values(tmp_path: Path) -> None:
     source_file = tmp_path / "customer_segments.csv"
     source_file.write_text(
