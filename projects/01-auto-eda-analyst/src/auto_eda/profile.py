@@ -286,6 +286,17 @@ def render_missingness_chart(dataset: DatasetProfile) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _constant_column_value(column: ColumnProfile) -> str | None:
+    """Return a display value when a populated column has one distinct value."""
+    if column.inferred_type == "numeric":
+        if column.minimum is not None and column.minimum == column.maximum:
+            return f"{column.minimum:.2f}"
+        return None
+    if len(column.categorical_values) == 1:
+        return column.categorical_values[0][0]
+    return None
+
+
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
     numeric_columns = [
@@ -297,6 +308,11 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         column.missing_count > 0 for column in dataset.columns
     )
     outlier_columns = [column for column in numeric_columns if column.outlier_values]
+    constant_columns = [
+        (column, value)
+        for column in dataset.columns
+        if (value := _constant_column_value(column)) is not None
+    ]
     analyst_summary = [
         "## Analyst summary",
         "",
@@ -345,6 +361,21 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         f"Duplicate rows: {dataset.duplicate_row_count}",
         "",
     ]
+    if constant_columns:
+        lines.extend(
+            [
+                "## Constant columns",
+                "",
+                "| Column | Inferred type | Constant value | Non-null rows |",
+                "| --- | --- | --- | ---: |",
+                *[
+                    f"| {column.name} | {column.inferred_type} | {value} | "
+                    f"{column.non_null_count} |"
+                    for column, value in constant_columns
+                ],
+                "",
+            ]
+        )
     if dataset.schema_warnings:
         lines.extend(
             [

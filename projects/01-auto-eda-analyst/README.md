@@ -41,6 +41,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
 PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
   --output /tmp/auto_eda_outliers.md
 
+# Surface populated columns that repeat one distinct value.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_constant_columns.csv \
+  --output /tmp/auto_eda_constant_columns.md
+
 # Inspect Pearson correlations using rows populated in both numeric columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
   --output /tmp/auto_eda_correlations.md
@@ -128,6 +132,17 @@ The `sample_iqr_outliers.csv` example adds this section:
 | sales | 1 | 100.00 |
 ```
 
+The `sample_constant_columns.csv` example adds this section, so fields that do not vary can be reviewed before downstream analysis:
+
+```markdown
+## Constant columns
+
+| Column | Inferred type | Constant value | Non-null rows |
+| --- | --- | --- | ---: |
+| unit_price | numeric | 9.99 | 3 |
+| status | text | active | 3 |
+```
+
 The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation.
 
 ```markdown
@@ -147,6 +162,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
+- A populated numeric or text column with exactly one distinct value appears in a `Constant columns` table; all-missing columns do not appear.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
 - Every report starts with an analyst summary of dataset shape and data quality. It includes numeric ranges when numeric columns are present and an outlier watchlist only when the IQR check finds values to review.
@@ -158,6 +174,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 ```text
 projects/01-auto-eda-analyst/
   examples/sample_customers.csv
+  examples/sample_constant_columns.csv
   examples/sample_duplicate_rows.csv
   examples/sample_iqr_outliers.csv
   examples/sample_numeric_correlations.csv
@@ -173,6 +190,7 @@ projects/01-auto-eda-analyst/
 - Local CSV profiling with row counts and per-column missingness.
 - Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
 - Duplicate-row data-quality signal in the generated report.
+- Constant-column signal for populated fields with one distinct value.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.

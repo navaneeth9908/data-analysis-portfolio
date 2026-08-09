@@ -26,6 +26,27 @@ def test_rendered_report_counts_exact_duplicate_data_rows(tmp_path: Path) -> Non
     assert "## Data quality\n\nDuplicate rows: 1\n" in report
 
 
+def test_rendered_report_flags_constant_numeric_and_text_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "constant_columns.csv"
+    source_file.write_text(
+        "region,unit_price,status\n"
+        "north,9.99,active\n"
+        "south,9.99,active\n"
+        "west,9.99,active\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Constant columns\n\n" in report
+    assert "| unit_price | numeric | 9.99 | 3 |" in report
+    assert "| status | text | active | 3 |" in report
+    constant_section = report.split("## Constant columns", 1)[1].split(
+        "## Column profile", 1
+    )[0]
+    assert "| region | text |" not in constant_section
+
+
 def test_rendered_report_includes_an_actionable_analyst_summary(tmp_path: Path) -> None:
     source_file = tmp_path / "sales.csv"
     source_file.write_text(
