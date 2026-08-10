@@ -1,0 +1,25 @@
+{
+  "briefing_title": "AI policy weekly briefing",
+  "sources": [
+    {
+      "title": "Regulator publishes implementation timetable",
+      "publisher": "National AI Office",
+      "published_on": "2026-08-08",
+      "url": "https://example.com/timetable",
+      "key_point": "The first reporting deadline is scheduled for October.",
+      "follow_up_question": "Which internal teams own the October reporting deadline?",
+      "relevance": 5,
+      "source_quality": 4
+    },
+    {
+      "title": "Industry group maps compliance costs",
+      "publisher": "Policy Forum",
+      "published_on": "2026-07-20",
+      "url": "https://example.com/costs",
+      "key_point": "Smaller vendors expect the largest documentation burden.",
+      "follow_up_question": "Which vendor contracts need updated documentation clauses?",
+      "relevance": 4,
+      "source_quality": 5
+    }
+  ]
+}

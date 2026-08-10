@@ -120,3 +120,7 @@ Planned milestones:
 - Markdown/HTML digest output
 - recurring-run friendly structure
 - final portfolio polish
+
+Progress:
+
+- Added a deterministic local JSON source-note schema, transparent relevance/source-quality/freshness scoring, a ranked Markdown digest CLI, bundled AI-policy notes, and an end-to-end test. The reporting date is an explicit CLI input, so recurring runs are reproducible and source priority is auditable.
