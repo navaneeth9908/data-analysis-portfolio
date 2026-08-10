@@ -76,3 +76,60 @@ def test_cli_writes_a_ranked_source_backed_briefing(tmp_path: Path) -> None:
     assert "## Follow-up questions" in report
     assert "- Which internal teams own the October reporting deadline?" in report
     assert "[Read source](https://example.com/timetable)" in report
+
+
+def test_cli_writes_an_html_briefing_with_ranked_source_evidence(tmp_path: Path) -> None:
+    source_file = tmp_path / "source_notes.json"
+    source_file.write_text(
+        json.dumps(
+            {
+                "briefing_title": "AI policy weekly briefing",
+                "sources": [
+                    {
+                        "title": "Regulator publishes implementation timetable",
+                        "publisher": "National AI Office",
+                        "published_on": "2026-08-08",
+                        "url": "https://example.com/timetable",
+                        "key_point": "The first reporting deadline is scheduled for October.",
+                        "follow_up_question": "Which internal teams own the October reporting deadline?",
+                        "relevance": 5,
+                        "source_quality": 4,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "briefing.html"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "research_briefing.cli",
+            str(source_file),
+            "--as-of",
+            "2026-08-10",
+            "--format",
+            "html",
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"Briefing written to {output_file}\n"
+    report = output_file.read_text(encoding="utf-8")
+    assert "<!doctype html>" in report
+    assert "<title>AI policy weekly briefing</title>" in report
+    assert "<h1>AI policy weekly briefing</h1>" in report
+    assert "Sources reviewed: 1" in report
+    assert "Regulator publishes implementation timetable" in report
+    assert "17/18" in report
+    assert 'href="https://example.com/timetable"' in report
+    assert "Which internal teams own the October reporting deadline?" in report

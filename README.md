@@ -69,4 +69,4 @@ The Competitive Intelligence Pipeline now has an initial offline source-note sch
 
 The Financial Research Analyst has deterministic local price-history data, return/risk metric calculations, aligned benchmark correlation/beta sensitivity, benchmark comparison, short-vs-long moving-average trend signals, optional trailing-twelve-month valuation/profitability snapshots, cross-period valuation and profitability comparisons, rule-backed risk notes, Markdown brief rendering, and tests for the CLI smoke path.
 
-The Research Briefing Generator now provides a deterministic local JSON source-note contract, transparent source ranking with an explicit reporting date, Markdown digest output with linked evidence and follow-up questions, a bundled sample, and an end-to-end CLI test.
+The Research Briefing Generator now provides a deterministic local JSON source-note contract, transparent source ranking with an explicit reporting date, Markdown and self-contained HTML digest output with linked evidence and follow-up questions, a bundled sample, and end-to-end CLI tests.

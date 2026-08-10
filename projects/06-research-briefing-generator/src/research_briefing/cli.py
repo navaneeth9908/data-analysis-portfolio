@@ -6,7 +6,11 @@ import argparse
 from datetime import date
 from pathlib import Path
 
-from research_briefing.briefing import build_briefing, render_markdown_briefing
+from research_briefing.briefing import (
+    build_briefing,
+    render_html_briefing,
+    render_markdown_briefing,
+)
 
 
 def _reporting_date(value: str) -> date:
@@ -29,16 +33,23 @@ def build_parser() -> argparse.ArgumentParser:
         type=_reporting_date,
         help="Reporting date used to calculate freshness (YYYY-MM-DD)",
     )
-    parser.add_argument("--output", required=True, type=Path, help="Markdown output path")
+    parser.add_argument(
+        "--format",
+        choices=("markdown", "html"),
+        default="markdown",
+        help="Briefing output format (default: markdown)",
+    )
+    parser.add_argument("--output", required=True, type=Path, help="Briefing output path")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Rank sources and write a reviewable Markdown briefing."""
+    """Rank sources and write a reviewable briefing document."""
     args = build_parser().parse_args(argv)
     briefing = build_briefing(args.source_file, args.as_of)
+    renderer = render_html_briefing if args.format == "html" else render_markdown_briefing
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(render_markdown_briefing(briefing), encoding="utf-8")
+    args.output.write_text(renderer(briefing), encoding="utf-8")
     print(f"Briefing written to {args.output}")
     return 0
 

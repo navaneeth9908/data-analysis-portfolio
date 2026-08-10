@@ -124,3 +124,4 @@ Planned milestones:
 Progress:
 
 - Added a deterministic local JSON source-note schema, transparent relevance/source-quality/freshness scoring, a ranked Markdown digest CLI, bundled AI-policy notes, and an end-to-end test. The reporting date is an explicit CLI input, so recurring runs are reproducible and source priority is auditable.
+- Added an optional self-contained HTML digest that retains ranked evidence, transparent scoring inputs, and follow-up questions for browser-based sharing.

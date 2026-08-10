@@ -24,6 +24,13 @@ PYTHONPATH=src python -m research_briefing.cli \
   examples/ai_policy_sources.json \
   --as-of 2026-08-10 \
   --output /tmp/ai_policy_briefing.md
+
+# Write a self-contained HTML digest for sharing in a browser.
+PYTHONPATH=src python -m research_briefing.cli \
+  examples/ai_policy_sources.json \
+  --as-of 2026-08-10 \
+  --format html \
+  --output /tmp/ai_policy_briefing.html
 ```
 
 Expected CLI message:
@@ -104,6 +111,6 @@ projects/06-research-briefing-generator/
 ## Current capabilities
 
 - Local JSON source-note ingestion and validation.
-- Deterministic source scoring and ranked Markdown digests.
+- Deterministic source scoring and ranked Markdown or self-contained HTML digests.
 - Key-point, source-link, and follow-up-question rendering.
 - A fixed-date CLI path and end-to-end test using the bundled sample.

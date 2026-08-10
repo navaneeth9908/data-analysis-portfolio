@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from html import escape
 import json
 from pathlib import Path
 
@@ -91,6 +92,50 @@ def render_markdown_briefing(briefing: Briefing) -> str:
         )
     lines.extend(["## Follow-up questions", ""])
     lines.extend(f"- {source.follow_up_question}" for source in briefing.sources)
+    return "\n".join(lines) + "\n"
+
+
+def render_html_briefing(briefing: Briefing) -> str:
+    """Render a self-contained HTML briefing with ranked source evidence."""
+    title = escape(briefing.title)
+    lines = [
+        "<!doctype html>",
+        '<html lang="en">',
+        "<head>",
+        '  <meta charset="utf-8">',
+        f"  <title>{title}</title>",
+        "  <style>",
+        "    body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; }",
+        "    table { border-collapse: collapse; width: 100%; }",
+        "    th, td { border: 1px solid #cbd5e1; padding: 0.65rem; text-align: left; vertical-align: top; }",
+        "    th { background: #eff6ff; }",
+        "  </style>",
+        "</head>",
+        "<body>",
+        f"  <h1>{title}</h1>",
+        f"  <p>As of: {briefing.as_of.isoformat()}</p>",
+        f"  <p>Sources reviewed: {len(briefing.sources)}</p>",
+        "  <h2>Ranked digest</h2>",
+        "  <table>",
+        "    <thead><tr><th>Rank</th><th>Source</th><th>Priority</th><th>Key point</th><th>Evidence</th></tr></thead>",
+        "    <tbody>",
+    ]
+    for rank, source in enumerate(briefing.sources, start=1):
+        source_url = escape(source.url, quote=True)
+        lines.extend(
+            [
+                "      <tr>",
+                f"        <td>{rank}</td>",
+                f"        <td><strong>{escape(source.title)}</strong><br>{escape(source.publisher)} ({source.published_on.isoformat()})</td>",
+                f"        <td>{source.score}/18<br>Relevance {source.relevance}/5 · Quality {source.source_quality}/5 · Freshness {source.freshness}/3</td>",
+                f"        <td>{escape(source.key_point)}</td>",
+                f'        <td><a href="{source_url}">Read source</a></td>',
+                "      </tr>",
+            ]
+        )
+    lines.extend(["    </tbody>", "  </table>", "  <h2>Follow-up questions</h2>", "  <ul>"])
+    lines.extend(f"    <li>{escape(source.follow_up_question)}</li>" for source in briefing.sources)
+    lines.extend(["  </ul>", "</body>", "</html>"])
     return "\n".join(lines) + "\n"
 
 
