@@ -58,22 +58,17 @@ Each project should include:
 
 Each project has an independent `pyproject.toml` and test suite. Follow a
 project's README for any package-specific setup, then run this from the
-repository root in Git Bash or another POSIX shell to execute all six suites:
+repository root to validate the documented layout and execute all six suites:
 
 ```bash
-for project in \
-  projects/01-auto-eda-analyst \
-  projects/nl2sql-agent \
-  projects/03-report-qa-agent \
-  projects/04-competitive-intelligence-pipeline \
-  projects/05-financial-research-analyst \
-  projects/06-research-briefing-generator; do
-  (cd "$project" && python -m pytest tests/ -q) || exit 1
-done
+python scripts/verify_portfolio.py
 ```
 
 The command keeps project-level imports and fixtures isolated while providing
-one repeatable regression check for the full portfolio.
+one repeatable regression check for the full portfolio. Use
+`python scripts/verify_portfolio.py --check-only` when you only need to
+confirm each documented project has its README, package metadata, source, and
+tests directories.
 
 ## Current status
 
