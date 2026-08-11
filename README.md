@@ -17,28 +17,25 @@ My background is in analytics and data engineering, so this repo focuses on proj
 
 | Project | Focus | Outcome |
 | --- | --- | --- |
-| Auto EDA Analyst | pandas profiling, data quality checks, charts, business summary | CLI/app that turns CSV or Excel files into an analysis report |
-| NL2SQL Analytics Agent | DuckDB/SQLite, schema inspection, safe SQL generation, result explanation | Ask business questions over a local analytics database |
-| Report Q&A Agent | PDF/text ingestion, chunking, embeddings, retrieval, cited answers | Query long reports and return answers with source snippets |
-| Competitive Intelligence Pipeline | research collection, entity comparison, scoring, summary tables | Structured competitor landscape report from public inputs |
-| Financial Research Analyst | market data ingestion, ratios, time-series analysis, risk notes | Investment-style research notebook and reusable pipeline |
-| Research Briefing Generator | topic monitoring, summarization, source ranking, digest output | Briefing output in Markdown/HTML |
+| [Auto EDA Analyst](projects/01-auto-eda-analyst/) | CSV profiling, data-quality checks, SVG charts, business summary | CLI that turns a local CSV into a deterministic analysis report |
+| [NL2SQL Analytics Agent](projects/nl2sql-agent/) | DuckDB/SQLite, schema inspection, safe SQL generation, result explanation | Ask business questions over a local analytics database |
+| [Report Q&A Agent](projects/03-report-qa-agent/) | PDF/text ingestion, retrieval, cited answers | Query long reports and return answers with source snippets |
+| [Competitive Intelligence Pipeline](projects/04-competitive-intelligence-pipeline/) | research collection, entity comparison, scoring, summary tables | Structured competitor landscape report from public inputs |
+| [Financial Research Analyst](projects/05-financial-research-analyst/) | market data ingestion, ratios, time-series analysis, risk notes | Investment-style Markdown research brief and reusable pipeline |
+| [Research Briefing Generator](projects/06-research-briefing-generator/) | source-note ranking, transparent scoring, digest output | Auditable briefing output in Markdown or self-contained HTML |
 
 ## Repository layout
 
 ```text
 projects/
   01-auto-eda-analyst/
-  02-nl2sql-analytics-agent/
+  nl2sql-agent/
   03-report-qa-agent/
   04-competitive-intelligence-pipeline/
   05-financial-research-analyst/
   06-research-briefing-generator/
-shared/
-  data_utils/
-  report_utils/
-tests/
 docs/
+  roadmap.md
 ```
 
 Each project should include:
@@ -56,6 +53,27 @@ Each project should include:
 - Keep secrets out of the repo. Use `.env.example` files when credentials are optional.
 - Make every project runnable from a clean checkout.
 - Keep commits small and focused.
+
+## Verify the portfolio
+
+Each project has an independent `pyproject.toml` and test suite. Follow a
+project's README for any package-specific setup, then run this from the
+repository root in Git Bash or another POSIX shell to execute all six suites:
+
+```bash
+for project in \
+  projects/01-auto-eda-analyst \
+  projects/nl2sql-agent \
+  projects/03-report-qa-agent \
+  projects/04-competitive-intelligence-pipeline \
+  projects/05-financial-research-analyst \
+  projects/06-research-briefing-generator; do
+  (cd "$project" && python -m pytest tests/ -q) || exit 1
+done
+```
+
+The command keeps project-level imports and fixtures isolated while providing
+one repeatable regression check for the full portfolio.
 
 ## Current status
 
