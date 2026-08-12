@@ -18,6 +18,11 @@ PROJECTS = (
 
 
 def _create_complete_project_layout(root: Path, *, include_passing_tests: bool = False) -> None:
+    navigation = "\n".join(
+        f"- [Project](projects/{project}/)" for project in PROJECTS
+    )
+    (root / "README.md").write_text(f"# Portfolio\n\n{navigation}\n", encoding="utf-8")
+
     for project in PROJECTS:
         project_directory = root / "projects" / project
         (project_directory / "src").mkdir(parents=True)
@@ -51,7 +56,60 @@ def test_check_only_confirms_a_complete_six_project_layout(tmp_path: Path) -> No
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "Portfolio layout verified: 6 projects.\n"
+    assert result.stdout == "Portfolio layout and navigation verified: 6 projects.\n"
+
+
+def test_check_only_reports_project_missing_from_root_navigation(tmp_path: Path) -> None:
+    _create_complete_project_layout(tmp_path)
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            "- [Project](projects/06-research-briefing-generator/)\n", ""
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/verify_portfolio.py",
+            "--root",
+            str(tmp_path),
+            "--check-only",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == (
+        "Portfolio navigation is incomplete:\n"
+        "- Missing: README.md -> projects/06-research-briefing-generator/\n"
+    )
+
+
+def test_check_only_reports_a_missing_root_readme(tmp_path: Path) -> None:
+    _create_complete_project_layout(tmp_path)
+    (tmp_path / "README.md").unlink()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/verify_portfolio.py",
+            "--root",
+            str(tmp_path),
+            "--check-only",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == (
+        "Portfolio navigation is incomplete:\n- Missing: README.md\n"
+    )
 
 
 def test_check_only_reports_a_missing_required_project_file(tmp_path: Path) -> None:

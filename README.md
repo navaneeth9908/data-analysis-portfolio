@@ -58,7 +58,7 @@ Each project should include:
 
 Each project has an independent `pyproject.toml` and test suite. Follow a
 project's README for any package-specific setup, then run this from the
-repository root to validate the documented layout and execute all six suites:
+repository root to validate the documented root navigation and project layout before executing all six suites:
 
 ```bash
 python scripts/verify_portfolio.py

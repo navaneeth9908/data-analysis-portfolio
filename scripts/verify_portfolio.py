@@ -30,6 +30,20 @@ def find_layout_issues(root: Path) -> list[str]:
     return issues
 
 
+def find_navigation_issues(root: Path) -> list[str]:
+    """Return documented projects that are not linked from the root README."""
+    root_readme = root / "README.md"
+    if not root_readme.exists():
+        return ["README.md"]
+
+    navigation = root_readme.read_text(encoding="utf-8")
+    return [
+        f"README.md -> projects/{project}/"
+        for project in PROJECTS
+        if f"](projects/{project}/)" not in navigation
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Check portfolio project structure and run each project test suite."
@@ -54,7 +68,14 @@ def main() -> int:
             print(f"- Missing: {issue}")
         return 1
 
-    print(f"Portfolio layout verified: {len(PROJECTS)} projects.")
+    navigation_issues = find_navigation_issues(arguments.root)
+    if navigation_issues:
+        print("Portfolio navigation is incomplete:")
+        for issue in navigation_issues:
+            print(f"- Missing: {issue}")
+        return 1
+
+    print(f"Portfolio layout and navigation verified: {len(PROJECTS)} projects.")
     if arguments.check_only:
         return 0
 
