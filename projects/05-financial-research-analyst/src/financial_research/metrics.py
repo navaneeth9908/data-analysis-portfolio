@@ -321,6 +321,7 @@ def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[
     """
     selected_ticker = ticker.strip().upper() if ticker else None
     price_points: list[PricePoint] = []
+    observed_dates: set[tuple[str, date]] = set()
 
     with Path(path).open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
@@ -333,9 +334,16 @@ def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[
             row_ticker = row["ticker"].strip().upper()
             if selected_ticker and row_ticker != selected_ticker:
                 continue
+            row_date = date.fromisoformat(row["date"].strip())
+            date_key = (row_ticker, row_date)
+            if date_key in observed_dates:
+                raise ValueError(
+                    f"duplicate price date for {row_ticker}: {row_date.isoformat()}"
+                )
+            observed_dates.add(date_key)
             price_points.append(
                 PricePoint(
-                    date=date.fromisoformat(row["date"].strip()),
+                    date=row_date,
                     ticker=row_ticker,
                     close=float(row["close"]),
                     volume=int(row["volume"]),

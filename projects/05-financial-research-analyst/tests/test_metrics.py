@@ -356,6 +356,19 @@ def test_load_price_history_filters_ticker_and_sorts_rows(tmp_path) -> None:
     assert all(point.ticker == "NOVA" for point in prices)
 
 
+def test_load_price_history_rejects_duplicate_dates_for_a_ticker(tmp_path) -> None:
+    price_file = tmp_path / "prices.csv"
+    price_file.write_text(
+        "date,ticker,close,volume\n"
+        "2026-01-02,NOVA,100,1200000\n"
+        "2026-01-02,NOVA,101,1300000\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="duplicate price date for NOVA: 2026-01-02"):
+        load_price_history(price_file, ticker="NOVA")
+
+
 def test_load_fundamental_snapshot_filters_ticker_and_normalizes_input(tmp_path) -> None:
     fundamentals_file = tmp_path / "fundamentals.csv"
     fundamentals_file.write_text(

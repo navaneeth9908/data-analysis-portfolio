@@ -146,6 +146,7 @@ date,ticker,close,volume
 - `ticker` is normalized to uppercase.
 - `close` must be positive.
 - `volume` cannot be negative.
+- Each ticker can have only one row per date; duplicate ticker/date pairs are rejected so a report cannot silently use an arbitrary closing value.
 
 ### Annualization period
 
