@@ -265,3 +265,38 @@ def test_cli_applies_periods_per_year_to_the_benchmark_comparison(tmp_path) -> N
         f"{expected_asset.annualized_volatility_pct - expected_benchmark.annualized_volatility_pct:+.2f} pts |"
         in markdown
     )
+
+
+def test_cli_writes_a_self_contained_html_research_brief(tmp_path) -> None:
+    price_file = tmp_path / "prices.csv"
+    price_file.write_text(
+        "date,ticker,close,volume\n"
+        "2026-01-02,NOVA,100,1200000\n"
+        "2026-01-03,NOVA,102,1300000\n"
+        "2026-01-04,NOVA,101,1100000\n"
+        "2026-01-05,NOVA,106,1500000\n"
+        "2026-01-06,NOVA,104,1400000\n"
+        "2026-01-07,NOVA,110,1800000\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "brief.html"
+
+    from financial_research.cli import main
+
+    exit_code = main(
+        [
+            str(price_file),
+            "--ticker",
+            "NOVA",
+            "--format",
+            "html",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    document = output_file.read_text(encoding="utf-8")
+    assert document.startswith("<!doctype html>")
+    assert "<title>NOVA Financial Research Brief</title>" in document
+    assert "<h2>Moving-average trend</h2>" in document

@@ -21,7 +21,7 @@ My background is in analytics and data engineering, so this repo focuses on proj
 | [NL2SQL Analytics Agent](projects/nl2sql-agent/) | DuckDB/SQLite, schema inspection, safe SQL generation, result explanation | Ask business questions over a local analytics database |
 | [Report Q&A Agent](projects/03-report-qa-agent/) | PDF/text ingestion, retrieval, cited answers | Query long reports and return answers with source snippets |
 | [Competitive Intelligence Pipeline](projects/04-competitive-intelligence-pipeline/) | research collection, entity comparison, scoring, summary tables | Structured competitor landscape report from public inputs |
-| [Financial Research Analyst](projects/05-financial-research-analyst/) | market data ingestion, ratios, time-series analysis, risk notes | Investment-style Markdown research brief and reusable pipeline |
+| [Financial Research Analyst](projects/05-financial-research-analyst/) | market data ingestion, ratios, time-series analysis, risk notes | Investment-style Markdown or self-contained HTML research brief and reusable pipeline |
 | [Research Briefing Generator](projects/06-research-briefing-generator/) | source-note ranking, transparent scoring, digest output | Auditable briefing output in Markdown or self-contained HTML |
 
 ## Repository layout
@@ -80,6 +80,6 @@ The Report Q&A Agent has started with deterministic Markdown/plain-text/PDF inge
 
 The Competitive Intelligence Pipeline now has an initial offline source-note schema, normalization/scoring code, sample competitor notes, a Markdown landscape output, buyer-specific priority scoring, source-backed evidence highlights, source coverage watchlist checks, executive summary bullets, recommended follow-up research tasks, reusable profile snapshots, trend-delta reporting, analyst-handoff CSV table exports, and tests for the CLI smoke path.
 
-The Financial Research Analyst has deterministic local price-history data, return/risk metric calculations, aligned benchmark correlation/beta sensitivity, benchmark comparison, short-vs-long moving-average trend signals, optional trailing-twelve-month valuation/profitability snapshots, cross-period valuation and profitability comparisons, rule-backed risk notes, Markdown brief rendering, and tests for the CLI smoke path.
+The Financial Research Analyst has deterministic local price-history data, return/risk metric calculations, aligned benchmark correlation/beta sensitivity, benchmark comparison, short-vs-long moving-average trend signals, optional trailing-twelve-month valuation/profitability snapshots, cross-period valuation and profitability comparisons, rule-backed risk notes, Markdown or self-contained HTML brief rendering, and tests for the CLI smoke path.
 
 The Research Briefing Generator now provides a deterministic local JSON source-note contract, transparent source ranking with an explicit reporting date, Markdown and self-contained HTML digest output with linked evidence and follow-up questions, a bundled sample, and end-to-end CLI tests.

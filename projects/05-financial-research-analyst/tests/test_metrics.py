@@ -328,6 +328,12 @@ def test_package_exports_moving_average_trend_and_risk_note_api() -> None:
     assert build_risk_notes is metrics.build_risk_notes
 
 
+def test_package_exports_the_html_renderer() -> None:
+    from financial_research import render_research_brief_html
+
+    assert render_research_brief_html is metrics.render_research_brief_html
+
+
 def test_load_price_history_filters_ticker_and_sorts_rows(tmp_path) -> None:
     price_file = tmp_path / "prices.csv"
     price_file.write_text(
@@ -535,3 +541,21 @@ def test_render_research_brief_compares_asset_to_benchmark() -> None:
     ) in markdown
     assert "- Annualized volatility is estimated from the supplied periodic return series." not in markdown
     assert "Educational portfolio demo, not investment advice." in markdown
+
+
+def test_render_research_brief_html_creates_a_shareable_document() -> None:
+    summary = summarize_price_history(
+        [
+            PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+            PricePoint(date(2026, 1, 3), "NOVA", 102.0, 1_300_000),
+        ]
+    )
+
+    document = metrics.render_research_brief_html(summary)
+
+    assert document.startswith("<!doctype html>")
+    assert "<title>NOVA Financial Research Brief</title>" in document
+    assert "<h1>NOVA Financial Research Brief</h1>" in document
+    assert "<h2>Performance summary</h2>" in document
+    assert "<table>" in document
+    assert "Educational portfolio demo, not investment advice." in document

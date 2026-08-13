@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from html import escape
 from math import sqrt
 from pathlib import Path
+import re
 from statistics import mean, stdev
 import csv
 
@@ -614,3 +616,113 @@ def render_research_brief(
     risk_notes = build_risk_notes(summary, benchmark=benchmark, trend=trend)
     lines.extend(["", "## Risk notes", *risk_notes, ""])
     return "\n".join(lines)
+
+
+def render_research_brief_html(
+    summary: PerformanceSummary,
+    *,
+    benchmark: PerformanceSummary | None = None,
+    benchmark_sensitivity: BenchmarkSensitivity | None = None,
+    trend: MovingAverageTrend | None = None,
+    fundamentals: FundamentalsSummary | None = None,
+    fundamentals_trend: FundamentalsTrend | None = None,
+) -> str:
+    """Render the Markdown research brief as a standalone, shareable HTML document."""
+    markdown = render_research_brief(
+        summary,
+        benchmark=benchmark,
+        benchmark_sensitivity=benchmark_sensitivity,
+        trend=trend,
+        fundamentals=fundamentals,
+        fundamentals_trend=fundamentals_trend,
+    )
+    body = _render_markdown_as_html(markdown)
+    title = f"{summary.ticker} Financial Research Brief"
+    return "\n".join(
+        [
+            "<!doctype html>",
+            '<html lang="en">',
+            "<head>",
+            '  <meta charset="utf-8">',
+            '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"  <title>{escape(title)}</title>",
+            "  <style>",
+            "    body { color: #172033; font-family: Arial, sans-serif; line-height: 1.5; margin: 0 auto; max-width: 900px; padding: 32px 20px; }",
+            "    h1, h2 { color: #102a43; }",
+            "    h2 { border-bottom: 1px solid #d9e2ec; margin-top: 32px; padding-bottom: 6px; }",
+            "    table { border-collapse: collapse; margin: 16px 0; width: 100%; }",
+            "    th, td { border: 1px solid #bcccdc; padding: 8px; text-align: left; }",
+            "    th { background: #f0f4f8; }",
+            "    td:not(:first-child), th:not(:first-child) { text-align: right; }",
+            "    .disclaimer { color: #52606d; font-size: 0.9rem; }",
+            "  </style>",
+            "</head>",
+            "<body>",
+            body,
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _render_markdown_as_html(markdown: str) -> str:
+    """Convert this module's deterministic Markdown report structure to safe HTML."""
+    html_lines: list[str] = []
+    lines = markdown.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not line:
+            index += 1
+            continue
+        if line.startswith("# "):
+            html_lines.append(f"<h1>{_format_html_text(line[2:])}</h1>")
+        elif line.startswith("## "):
+            html_lines.append(f"<h2>{_format_html_text(line[3:])}</h2>")
+        elif line.startswith("| "):
+            table_lines: list[str] = []
+            while index < len(lines) and lines[index].startswith("|"):
+                table_lines.append(lines[index])
+                index += 1
+            html_lines.extend(_render_markdown_table(table_lines))
+            continue
+        elif line.startswith("- "):
+            list_items: list[str] = []
+            while index < len(lines) and lines[index].startswith("- "):
+                list_items.append(lines[index][2:])
+                index += 1
+            list_class = ' class="disclaimer"' if list_items == ["Educational portfolio demo, not investment advice."] else ""
+            html_lines.append(f"<ul{list_class}>")
+            html_lines.extend(f"  <li>{_format_html_text(item)}</li>" for item in list_items)
+            html_lines.append("</ul>")
+            continue
+        else:
+            html_lines.append(f"<p>{_format_html_text(line)}</p>")
+        index += 1
+    return "\n".join(html_lines)
+
+
+def _render_markdown_table(lines: list[str]) -> list[str]:
+    """Render one Markdown pipe table while omitting its delimiter row."""
+    rows = [
+        [cell.strip() for cell in line.strip().strip("|").split("|")]
+        for line in lines
+    ]
+    header, *remaining_rows = rows
+    data_rows = remaining_rows[1:]
+    rendered = ["<table>", "  <thead>", "    <tr>"]
+    rendered.extend(f"      <th>{_format_html_text(cell)}</th>" for cell in header)
+    rendered.extend(["    </tr>", "  </thead>", "  <tbody>"])
+    for row in data_rows:
+        rendered.append("    <tr>")
+        rendered.extend(f"      <td>{_format_html_text(cell)}</td>" for cell in row)
+        rendered.append("    </tr>")
+    rendered.extend(["  </tbody>", "</table>"])
+    return rendered
+
+
+def _format_html_text(value: str) -> str:
+    """Escape report text and preserve the renderer's bold emphasis."""
+    escaped = escape(value)
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)

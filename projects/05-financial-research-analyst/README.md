@@ -1,6 +1,6 @@
 # Financial Research Analyst
 
-A deterministic, offline financial analytics project for turning simple price-history CSV data into risk/return metrics and a concise Markdown research brief. This project starts with a reproducible sample asset (`NOVA`) and benchmark (`MKT`) so the full path can be tested without API keys or market-data credentials.
+A deterministic, offline financial analytics project for turning simple price-history CSV data into risk/return metrics and a concise Markdown or self-contained HTML research brief. This project starts with a reproducible sample asset (`NOVA`) and benchmark (`MKT`) so the full path can be tested without API keys or market-data credentials.
 
 ## Why this project matters
 
@@ -9,7 +9,7 @@ Financial research workflows need transparent calculations before adding live da
 - ingest a tidy price-history file with dates, tickers, closes, and volume
 - calculate cumulative return, average periodic return, annualized volatility, maximum drawdown, moving-average trend signals, aligned benchmark correlation/beta, TTM valuation/profitability ratios, cross-period fundamentals trends, and rule-backed risk notes with benchmark-aware drawdown context
 - compare an asset against a benchmark using deterministic sample data
-- generate a Markdown brief that is easy to review, version, and share
+- generate a Markdown brief or self-contained HTML report that is easy to review, version, and share
 
 ## Project layout
 
@@ -18,8 +18,9 @@ projects/05-financial-research-analyst/
   examples/sample_prices.csv          # deterministic asset + benchmark prices
   examples/sample_fundamentals.csv    # deterministic TTM valuation/profitability inputs
   examples/sample_research_brief.md   # generated Markdown report
+  examples/sample_research_brief.html # generated standalone HTML report
   src/financial_research/
-    metrics.py                        # CSV loading, calculations, Markdown renderer
+    metrics.py                        # CSV loading, calculations, report renderers
     cli.py                            # report generation CLI
   tests/
     test_metrics.py
@@ -42,6 +43,16 @@ PYTHONPATH=src python -m financial_research.cli examples/sample_prices.csv \
   --trend-short-window 3 \
   --trend-long-window 5 \
   --output examples/sample_research_brief.md
+
+# Render the same brief as a self-contained HTML page for browser sharing.
+PYTHONPATH=src python -m financial_research.cli examples/sample_prices.csv \
+  --ticker NOVA \
+  --benchmark MKT \
+  --fundamentals-file examples/sample_fundamentals.csv \
+  --trend-short-window 3 \
+  --trend-long-window 5 \
+  --format html \
+  --output examples/sample_research_brief.html
 ```
 
 Expected CLI message:
@@ -49,6 +60,10 @@ Expected CLI message:
 ```text
 Research brief written to examples\sample_research_brief.md
 ```
+
+### Output formats
+
+`--format markdown` is the default and writes the concise analyst-review brief shown below. Pass `--format html` to create a self-contained document with the same performance, benchmark-sensitivity, fundamentals, trend, and risk-note content in semantic headings and tables; it has no external assets and can be opened directly in a browser.
 
 Expected report excerpt:
 
@@ -160,11 +175,11 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 - Filters and sorts observations for one ticker at a time.
 - Validates same-ticker inputs, positive closes, and non-negative volume.
 - Calculates cumulative return, average return, annualized volatility, maximum drawdown, aligned benchmark-return correlation/beta, short-vs-long moving-average trend signals, trailing-twelve-month price-to-sales, net margin, return on equity, cross-period fundamentals trends, and rule-backed risk notes that label drawdowns as asset-specific or market-wide when benchmark data is available.
-- Renders an asset-vs-benchmark Markdown brief with optional fundamentals snapshot/trend tables, reproducible technical signals, and risk sections suitable for a portfolio demo.
+- Renders an asset-vs-benchmark Markdown brief or a self-contained HTML report with optional fundamentals snapshot/trend tables, reproducible technical signals, and risk sections suitable for a portfolio demo.
 - Provides focused tests and a CLI smoke path.
 
-## Planned next milestones
+## Milestone status
 
-- Package a final notebook or HTML report view after the metric layer is stable.
+The report-output milestone is complete: the CLI produces the original Markdown brief by default and an equivalent standalone HTML document with `--format html`.
 
 > Educational portfolio demo, not investment advice.

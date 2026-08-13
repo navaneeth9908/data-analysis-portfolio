@@ -9,6 +9,7 @@ from financial_research.metrics import (
     load_fundamental_history,
     load_price_history,
     render_research_brief,
+    render_research_brief_html,
     summarize_fundamentals,
     summarize_fundamentals_trend,
     summarize_moving_average_trend,
@@ -35,7 +36,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Optional CSV with as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity",
     )
-    parser.add_argument("--output", type=Path, required=True, help="Markdown output path")
+    parser.add_argument("--output", type=Path, required=True, help="Report output path")
+    parser.add_argument(
+        "--format",
+        choices=("markdown", "html"),
+        default="markdown",
+        help="Output format: markdown or self-contained html (default: markdown)",
+    )
     parser.add_argument(
         "--trend-short-window",
         type=int,
@@ -89,16 +96,20 @@ def main(argv: list[str] | None = None) -> int:
         if len(fundamentals_history) >= 2:
             fundamentals_trend = summarize_fundamentals_trend(fundamentals_history)
 
-    markdown = render_research_brief(
-        asset_summary,
-        benchmark=benchmark_summary,
-        benchmark_sensitivity=benchmark_sensitivity,
-        trend=trend,
-        fundamentals=fundamentals_summary,
-        fundamentals_trend=fundamentals_trend,
+    render_kwargs = {
+        "benchmark": benchmark_summary,
+        "benchmark_sensitivity": benchmark_sensitivity,
+        "trend": trend,
+        "fundamentals": fundamentals_summary,
+        "fundamentals_trend": fundamentals_trend,
+    }
+    report = (
+        render_research_brief_html(asset_summary, **render_kwargs)
+        if args.format == "html"
+        else render_research_brief(asset_summary, **render_kwargs)
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(markdown, encoding="utf-8")
+    args.output.write_text(report, encoding="utf-8")
     print(f"Research brief written to {args.output}")
     return 0
 
