@@ -168,6 +168,7 @@ as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity
 
 - `market_cap`, `revenue_ttm`, and `total_equity` must be positive because they are ratio denominators.
 - `net_income_ttm` can be negative; the generated net margin and return-on-equity values retain its sign.
+- Each selected ticker can have only one row per `as_of_date`; duplicate dates are rejected so snapshot and trend calculations cannot silently choose arbitrary inputs.
 - The report adds price-to-sales, net margin, and return on equity from the supplied trailing-twelve-month inputs.
 
 ## Current capabilities

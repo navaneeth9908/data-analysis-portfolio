@@ -109,6 +109,7 @@ Progress:
 - Added benchmark-aware drawdown notes that distinguish asset-specific weakness from market-wide declines in the risk section.
 - Added aligned-return benchmark sensitivity reporting with correlation and beta so the brief separates absolute performance from market exposure.
 - Added a dependency-free self-contained HTML report format with semantic tables and the same deterministic calculations, alongside the Markdown analyst brief.
+- Added duplicate-date validation for selected-ticker fundamentals histories so valuation snapshots and trend comparisons remain deterministic.
 
 ### 6. Research Briefing Generator
 

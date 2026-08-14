@@ -401,6 +401,19 @@ def test_load_fundamental_snapshot_uses_the_most_recent_ticker_row(tmp_path) -> 
     assert snapshot.market_cap == 500_000_000.0
 
 
+def test_load_fundamental_history_rejects_duplicate_dates_for_a_ticker(tmp_path) -> None:
+    fundamentals_file = tmp_path / "fundamentals.csv"
+    fundamentals_file.write_text(
+        "as_of_date,ticker,market_cap,revenue_ttm,net_income_ttm,total_equity\n"
+        "2026-01-07,NOVA,500000000,100000000,15000000,75000000\n"
+        "2026-01-07,NOVA,510000000,101000000,15100000,76000000\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="duplicate fundamentals date for NOVA: 2026-01-07"):
+        metrics.load_fundamental_history(fundamentals_file, ticker="NOVA")
+
+
 def test_render_research_brief_includes_fundamentals_snapshot() -> None:
     asset = summarize_price_history(
         [

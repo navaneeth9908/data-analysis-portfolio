@@ -368,6 +368,7 @@ def load_fundamental_history(path: str | Path, *, ticker: str) -> tuple[Fundamen
         "total_equity",
     }
     snapshots: list[FundamentalSnapshot] = []
+    observed_dates: set[date] = set()
     with Path(path).open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         if not required_columns.issubset(reader.fieldnames or []):
@@ -377,10 +378,17 @@ def load_fundamental_history(path: str | Path, *, ticker: str) -> tuple[Fundamen
         for row in reader:
             if row["ticker"].strip().upper() != selected_ticker:
                 continue
+            snapshot_date = date.fromisoformat(row["as_of_date"].strip())
+            if snapshot_date in observed_dates:
+                raise ValueError(
+                    "duplicate fundamentals date for "
+                    f"{selected_ticker}: {snapshot_date.isoformat()}"
+                )
+            observed_dates.add(snapshot_date)
             snapshots.append(
                 FundamentalSnapshot(
                     ticker=selected_ticker,
-                    as_of_date=date.fromisoformat(row["as_of_date"].strip()),
+                    as_of_date=snapshot_date,
                     market_cap=float(row["market_cap"]),
                     revenue_ttm=float(row["revenue_ttm"]),
                     net_income_ttm=float(row["net_income_ttm"]),
