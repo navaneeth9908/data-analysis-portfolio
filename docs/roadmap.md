@@ -33,6 +33,7 @@ Progress:
 - Added a concise analyst-summary section that turns row/column shape, missingness, duplicate rows, numeric ranges, and IQR outliers into immediately reviewable findings.
 - Added a ranked missingness-details table so reports prioritize incomplete columns by blank-value count and percentage before deeper profiling.
 - Added ISO date-column inference and a date-range report section so timeline fields show their populated coverage without being treated as categorical dimensions.
+- Added complete-row coverage to the analyst summary and data-quality section so reports show how many records are immediately analysis-ready across every column.
 
 ### 2. NL2SQL Analytics Agent
 

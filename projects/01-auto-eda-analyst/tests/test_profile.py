@@ -26,6 +26,22 @@ def test_rendered_report_counts_exact_duplicate_data_rows(tmp_path: Path) -> Non
     assert "## Data quality\n\nDuplicate rows: 1\n" in report
 
 
+def test_rendered_report_includes_complete_row_coverage(tmp_path: Path) -> None:
+    source_file = tmp_path / "row_coverage.csv"
+    source_file.write_text(
+        "customer,spend,segment\n"
+        "Aster,10.5,enterprise\n"
+        "Birch,,midmarket\n"
+        "Cedar,19.5,\n"
+        "Dune,20.0,enterprise\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "Complete rows: 2 (50.0%)\n" in report
+
+
 def test_rendered_report_flags_constant_numeric_and_text_columns(tmp_path: Path) -> None:
     source_file = tmp_path / "constant_columns.csv"
     source_file.write_text(
@@ -63,7 +79,11 @@ def test_rendered_report_includes_an_actionable_analyst_summary(tmp_path: Path) 
 
     assert "## Analyst summary\n\n" in report
     assert "- 5 rows across 2 columns: 1 numeric and 1 text.\n" in report
-    assert "- Data quality: 1 missing value across 1 column; 0 duplicate rows.\n" in report
+    assert (
+        "- Data quality: 1 missing value across 1 column; 0 duplicate rows; "
+        "4 complete rows (80.0%).\n"
+        in report
+    )
     assert "- Numeric range: sales spans 10.00 to 100.00.\n" in report
     assert "- Outlier watchlist: sales (1 value).\n" in report
 

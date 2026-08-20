@@ -52,6 +52,7 @@ class DatasetProfile:
     source_name: str
     row_count: int
     duplicate_row_count: int
+    complete_row_count: int
     schema_warnings: tuple[str, ...]
     columns: tuple[ColumnProfile, ...]
     numeric_correlations: tuple[NumericCorrelation, ...] = ()
@@ -90,6 +91,10 @@ def profile_csv(path: str | Path) -> DatasetProfile:
             tuple(str(row.get(name) or "").strip() for name in fieldnames)
             for row in rows
         ).values()
+    )
+    complete_row_count = sum(
+        all(str(row.get(name) or "").strip() for name in fieldnames)
+        for row in rows
     )
 
     columns: list[ColumnProfile] = []
@@ -157,6 +162,7 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         source_name=source_path.name,
         row_count=len(rows),
         duplicate_row_count=duplicate_row_count,
+        complete_row_count=complete_row_count,
         schema_warnings=schema_warnings,
         columns=tuple(columns),
         numeric_correlations=_numeric_correlations(rows, numeric_column_names),
@@ -340,6 +346,9 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         (column for column in dataset.columns if column.missing_count > 0),
         key=lambda column: (-column.missing_count, column.name),
     )
+    complete_row_rate = (
+        dataset.complete_row_count / dataset.row_count if dataset.row_count else 0.0
+    )
     outlier_columns = [column for column in numeric_columns if column.outlier_values]
     constant_columns = [
         (column, value)
@@ -361,7 +370,10 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"across {missing_column_count} "
             f"{'column' if missing_column_count == 1 else 'columns'}; "
             f"{dataset.duplicate_row_count} "
-            f"{'duplicate row' if dataset.duplicate_row_count == 1 else 'duplicate rows'}."
+            f"{'duplicate row' if dataset.duplicate_row_count == 1 else 'duplicate rows'}; "
+            f"{dataset.complete_row_count} complete "
+            f"{'row' if dataset.complete_row_count == 1 else 'rows'} "
+            f"({complete_row_rate:.1%})."
         ),
     ]
     if numeric_columns:
@@ -392,6 +404,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         "## Data quality",
         "",
         f"Duplicate rows: {dataset.duplicate_row_count}",
+        f"Complete rows: {dataset.complete_row_count} ({complete_row_rate:.1%})",
         "",
     ]
     if missing_columns:

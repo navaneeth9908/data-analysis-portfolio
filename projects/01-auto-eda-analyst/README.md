@@ -8,13 +8,14 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 
 - loads a headered CSV file from disk
 - counts rows and missing values by column
+- reports complete-row coverage for downstream analysis readiness
 - flags redundant duplicate data rows
 - infers whether every populated value in a column is numeric
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
-- distills profiling results into an analyst-ready summary of data quality, missingness priority, numeric ranges, and detected outliers
+- distills profiling results into an analyst-ready summary of data quality, complete-row coverage, missingness priority, numeric ranges, and detected outliers
 
 ## Quick start
 
@@ -86,12 +87,13 @@ Rows: 3
 ## Analyst summary
 
 - 3 rows across 3 columns: 1 numeric and 2 text.
-- Data quality: 1 missing value across 1 column; 0 duplicate rows.
+- Data quality: 1 missing value across 1 column; 0 duplicate rows; 2 complete rows (66.7%).
 - Numeric range: spend spans 10.50 to 19.50.
 
 ## Data quality
 
 Duplicate rows: 0
+Complete rows: 2 (66.7%)
 
 ## Missingness details
 
@@ -178,6 +180,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 
 - Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing.
 - Blank cells count as missing values, and columns with missing values are ranked by missing count and percentage in a dedicated report section.
+- Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
@@ -187,7 +190,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - A populated numeric or text column with exactly one distinct value appears in a `Constant columns` table; all-missing columns do not appear.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
-- Every report starts with an analyst summary of dataset shape and data quality. It includes numeric ranges when numeric columns are present and an outlier watchlist only when the IQR check finds values to review.
+- Every report starts with an analyst summary of dataset shape, data quality, and complete-row coverage. It includes numeric ranges when numeric columns are present and an outlier watchlist only when the IQR check finds values to review.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -210,7 +213,7 @@ projects/01-auto-eda-analyst/
 
 ## Current capabilities
 
-- Local CSV profiling with row counts and ranked per-column missingness.
+- Local CSV profiling with row counts, complete-row coverage, and ranked per-column missingness.
 - Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
 - Duplicate-row data-quality signal in the generated report.
 - Constant-column signal for populated fields with one distinct value.
