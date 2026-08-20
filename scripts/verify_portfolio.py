@@ -30,6 +30,16 @@ def find_layout_issues(root: Path) -> list[str]:
     return issues
 
 
+def find_nested_project_directories(root: Path) -> list[str]:
+    """Return accidental nested project roots hidden inside project folders."""
+    nested_directories: list[str] = []
+    for project in PROJECTS:
+        nested_projects = root / "projects" / project / "projects"
+        if nested_projects.is_dir():
+            nested_directories.append(f"{project}/projects/")
+    return nested_directories
+
+
 def find_navigation_issues(root: Path) -> list[str]:
     """Return documented projects that are not linked from the root README."""
     root_readme = root / "README.md"
@@ -71,6 +81,13 @@ def main() -> int:
         print("Portfolio layout is incomplete:")
         for issue in issues:
             print(f"- Missing: {issue}")
+        return 1
+
+    nested_directories = find_nested_project_directories(arguments.root)
+    if nested_directories:
+        print("Portfolio layout contains nested project directories:")
+        for nested_directory in nested_directories:
+            print(f"- Unexpected: {nested_directory}")
         return 1
 
     navigation_issues = find_navigation_issues(arguments.root)

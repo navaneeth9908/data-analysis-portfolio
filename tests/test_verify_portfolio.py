@@ -136,6 +136,32 @@ def test_check_only_reports_a_missing_required_project_file(tmp_path: Path) -> N
     )
 
 
+def test_check_only_reports_nested_project_directories(tmp_path: Path) -> None:
+    _create_complete_project_layout(tmp_path)
+    nested_projects = tmp_path / "projects" / "03-report-qa-agent" / "projects"
+    nested_projects.mkdir()
+    (nested_projects / "03-report-qa-agent").mkdir()
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/verify_portfolio.py",
+            "--root",
+            str(tmp_path),
+            "--check-only",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == (
+        "Portfolio layout contains nested project directories:\n"
+        "- Unexpected: 03-report-qa-agent/projects/\n"
+    )
+
+
 def test_default_run_executes_every_project_test_suite(tmp_path: Path) -> None:
     _create_complete_project_layout(tmp_path, include_passing_tests=True)
 
