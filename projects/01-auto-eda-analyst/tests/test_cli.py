@@ -77,6 +77,39 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
     )
 
 
+def test_cli_renders_iso_date_ranges(tmp_path: Path) -> None:
+    source_file = tmp_path / "renewals.csv"
+    source_file.write_text(
+        "customer,renewal_date\n"
+        "Aster,2026-01-15\n"
+        "Birch,\n"
+        "Cedar,2026-03-30\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "eda_report.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "| renewal_date | date | 1 | 2 | — | — | — |" in report
+    assert "| renewal_date | 2026-01-15 | 2026-03-30 | 2 |" in report
+
+
 def test_cli_writes_an_svg_missingness_chart_when_requested(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text(

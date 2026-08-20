@@ -136,6 +136,44 @@ def test_rendered_report_includes_numeric_quartiles(tmp_path: Path) -> None:
     assert "| sales | 17.50 | 25.00 | 32.50 |" in report
 
 
+def test_rendered_report_includes_iso_date_ranges(tmp_path: Path) -> None:
+    source_file = tmp_path / "renewals.csv"
+    source_file.write_text(
+        "customer,renewal_date,spend\n"
+        "Aster,2026-01-15,10\n"
+        "Birch,,20\n"
+        "Cedar,2026-03-30,30\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| renewal_date | date | 1 | 2 | — | — | — |" in report
+    assert "## Date ranges\n\n" in report
+    assert "| renewal_date | 2026-01-15 | 2026-03-30 | 2 |" in report
+    date_section = report.split("## Date ranges", 1)[1].split(
+        "## Numeric distribution", 1
+    )[0]
+    assert "| customer |" not in date_section
+    assert "| spend |" not in date_section
+
+
+def test_iso_week_date_strings_stay_categorical_text(tmp_path: Path) -> None:
+    source_file = tmp_path / "week_dates.csv"
+    source_file.write_text(
+        "period\n"
+        "2026-W03-4\n"
+        "2026-W04-5\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| period | text | 0 | 2 | — | — | — |" in report
+    assert "## Date ranges" not in report
+    assert "| period | 1 | 2026-W03-4 | 1 |" in report
+
+
 def test_rendered_report_flags_values_outside_iqr_outlier_fences(tmp_path: Path) -> None:
     source_file = tmp_path / "outlier_sales.csv"
     source_file.write_text(

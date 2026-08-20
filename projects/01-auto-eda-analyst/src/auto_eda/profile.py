@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import csv
 from collections import Counter
-from html import escape
 from dataclasses import dataclass
+from datetime import date
+from html import escape
 from math import sqrt
 from pathlib import Path
 from statistics import mean, median
@@ -26,6 +27,8 @@ class ColumnProfile:
     median: float | None = None
     third_quartile: float | None = None
     outlier_values: tuple[float, ...] = ()
+    earliest_date: date | None = None
+    latest_date: date | None = None
     unique_count: int | None = None
     top_value: str | None = None
     top_value_count: int | None = None
@@ -96,6 +99,8 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         numeric_values = _as_numeric_values(non_null_values)
         sorted_numeric_values = sorted(numeric_values) if numeric_values is not None else None
         is_numeric = bool(non_null_values) and numeric_values is not None
+        date_values = _as_iso_dates(non_null_values) if not is_numeric else None
+        is_date = bool(non_null_values) and date_values is not None
         first_quartile = (
             _linear_percentile(sorted_numeric_values, 0.25)
             if sorted_numeric_values
@@ -113,7 +118,7 @@ def profile_csv(path: str | Path) -> DatasetProfile:
             and third_quartile is not None
             else ()
         )
-        value_counts = Counter(non_null_values) if not is_numeric else Counter()
+        value_counts = Counter(non_null_values) if not is_numeric and not is_date else Counter()
         top_value = (
             min(value_counts, key=lambda value: (-value_counts[value], value))
             if value_counts
@@ -122,7 +127,9 @@ def profile_csv(path: str | Path) -> DatasetProfile:
         columns.append(
             ColumnProfile(
                 name=name,
-                inferred_type="numeric" if is_numeric else "text",
+                inferred_type=(
+                    "numeric" if is_numeric else "date" if is_date else "text"
+                ),
                 missing_count=len(values) - len(non_null_values),
                 non_null_count=len(non_null_values),
                 mean=mean(numeric_values) if numeric_values else None,
@@ -132,7 +139,9 @@ def profile_csv(path: str | Path) -> DatasetProfile:
                 median=median(sorted_numeric_values) if sorted_numeric_values else None,
                 third_quartile=third_quartile,
                 outlier_values=outlier_values,
-                unique_count=len(value_counts) if not is_numeric else None,
+                earliest_date=min(date_values) if date_values else None,
+                latest_date=max(date_values) if date_values else None,
+                unique_count=len(value_counts) if not is_numeric and not is_date else None,
                 top_value=top_value,
                 top_value_count=value_counts[top_value] if top_value is not None else None,
                 categorical_values=tuple(
@@ -160,6 +169,26 @@ def _as_numeric_values(values: list[str]) -> list[float] | None:
     try:
         for value in values:
             parsed.append(float(value))
+    except ValueError:
+        return None
+    return parsed
+
+
+def _as_iso_dates(values: list[str]) -> list[date] | None:
+    """Return parsed dates only when every value uses extended YYYY-MM-DD form."""
+    parsed: list[date] = []
+    try:
+        for value in values:
+            if (
+                len(value) != 10
+                or value[4] != "-"
+                or value[7] != "-"
+                or not value[:4].isdigit()
+                or not value[5:7].isdigit()
+                or not value[8:].isdigit()
+            ):
+                return None
+            parsed.append(date.fromisoformat(value))
     except ValueError:
         return None
     return parsed
@@ -421,6 +450,24 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"| {column.name} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
+    date_columns = [
+        column for column in dataset.columns if column.earliest_date is not None
+    ]
+    if date_columns:
+        lines.extend(
+            [
+                "",
+                "## Date ranges",
+                "",
+                "| Column | Earliest date | Latest date | Non-null rows |",
+                "| --- | --- | --- | ---: |",
+            ]
+        )
+        for column in date_columns:
+            lines.append(
+                f"| {column.name} | {column.earliest_date} | "
+                f"{column.latest_date} | {column.non_null_count} |"
+            )
     if numeric_columns:
         lines.extend(
             [

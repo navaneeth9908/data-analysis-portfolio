@@ -32,6 +32,7 @@ Progress:
 - Added an optional standalone SVG missingness chart artifact via the CLI so CSV quality issues are shareable beyond the Markdown report.
 - Added a concise analyst-summary section that turns row/column shape, missingness, duplicate rows, numeric ranges, and IQR outliers into immediately reviewable findings.
 - Added a ranked missingness-details table so reports prioritize incomplete columns by blank-value count and percentage before deeper profiling.
+- Added ISO date-column inference and a date-range report section so timeline fields show their populated coverage without being treated as categorical dimensions.
 
 ### 2. NL2SQL Analytics Agent
 

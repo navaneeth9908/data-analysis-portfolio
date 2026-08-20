@@ -11,6 +11,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags redundant duplicate data rows
 - infers whether every populated value in a column is numeric
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
+- identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
 - distills profiling results into an analyst-ready summary of data quality, missingness priority, numeric ranges, and detected outliers
@@ -48,6 +49,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_constant_columns.csv \
 # Inspect Pearson correlations using rows populated in both numeric columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
   --output /tmp/auto_eda_correlations.md
+
+# Inspect ISO date ranges for timeline-style fields.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_renewals.csv \
+  --output /tmp/auto_eda_renewals.md
 
 # Show only the two most frequent values for each text column.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
@@ -159,6 +164,16 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 | sales | refunds | 3 | -1.00 |
 ```
 
+The `sample_renewals.csv` example adds a date-range section for populated ISO date columns:
+
+```markdown
+## Date ranges
+
+| Column | Earliest date | Latest date | Non-null rows |
+| --- | --- | --- | ---: |
+| renewal_date | 2026-01-15 | 2026-03-30 | 2 |
+```
+
 ## Input contract
 
 - Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing.
@@ -166,6 +181,7 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
+- A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
 - A populated numeric or text column with exactly one distinct value appears in a `Constant columns` table; all-missing columns do not appear.
@@ -184,6 +200,7 @@ projects/01-auto-eda-analyst/
   examples/sample_duplicate_rows.csv
   examples/sample_iqr_outliers.csv
   examples/sample_numeric_correlations.csv
+  examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
@@ -199,6 +216,7 @@ projects/01-auto-eda-analyst/
 - Constant-column signal for populated fields with one distinct value.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
+- ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.
 - Optional standalone SVG missingness chart artifacts via `--chart-output`.
 - Deterministic IQR outlier reporting for numeric columns.
