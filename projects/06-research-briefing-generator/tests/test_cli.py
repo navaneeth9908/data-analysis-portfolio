@@ -67,6 +67,10 @@ def test_cli_writes_a_ranked_source_backed_briefing(tmp_path: Path) -> None:
     assert "# AI policy weekly briefing" in report
     assert "As of: 2026-08-10" in report
     assert "Sources reviewed: 2" in report
+    assert "Publishers covered: 2" in report
+    assert "## Source mix" in report
+    assert "| National AI Office | 1 |" in report
+    assert "| Policy Forum | 1 |" in report
     assert "## Ranked digest" in report
     assert "1. **Regulator publishes implementation timetable** — National AI Office (2026-08-08)" in report
     assert "Score: 17/18 | Relevance 5/5 | Source quality 4/5 | Freshness 3/3" in report
@@ -129,6 +133,9 @@ def test_cli_writes_an_html_briefing_with_ranked_source_evidence(tmp_path: Path)
     assert "<title>AI policy weekly briefing</title>" in report
     assert "<h1>AI policy weekly briefing</h1>" in report
     assert "Sources reviewed: 1" in report
+    assert "Publishers covered: 1" in report
+    assert "<h2>Source mix</h2>" in report
+    assert "<td>National AI Office</td>" in report
     assert "Regulator publishes implementation timetable" in report
     assert "17/18" in report
     assert 'href="https://example.com/timetable"' in report

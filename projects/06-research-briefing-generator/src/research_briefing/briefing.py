@@ -64,16 +64,26 @@ def build_briefing(path: str | Path, as_of: date) -> Briefing:
 
 def render_markdown_briefing(briefing: Briefing) -> str:
     """Render a stable Markdown briefing with sources, scores, and next questions."""
+    source_mix = _source_mix(briefing.sources)
     lines = [
         f"# {briefing.title}",
         "",
         f"As of: {briefing.as_of.isoformat()}",
         "",
         f"Sources reviewed: {len(briefing.sources)}",
+        f"Publishers covered: {len(source_mix)}",
+        "",
+        "## Source mix",
+        "",
+        "| Publisher | Sources |",
+        "| --- | ---: |",
+    ]
+    lines.extend(f"| {publisher} | {count} |" for publisher, count in source_mix)
+    lines.extend([
         "",
         "## Ranked digest",
         "",
-    ]
+    ])
     for rank, source in enumerate(briefing.sources, start=1):
         lines.extend(
             [
@@ -98,6 +108,7 @@ def render_markdown_briefing(briefing: Briefing) -> str:
 def render_html_briefing(briefing: Briefing) -> str:
     """Render a self-contained HTML briefing with ranked source evidence."""
     title = escape(briefing.title)
+    source_mix = _source_mix(briefing.sources)
     lines = [
         "<!doctype html>",
         '<html lang="en">',
@@ -115,11 +126,29 @@ def render_html_briefing(briefing: Briefing) -> str:
         f"  <h1>{title}</h1>",
         f"  <p>As of: {briefing.as_of.isoformat()}</p>",
         f"  <p>Sources reviewed: {len(briefing.sources)}</p>",
+        f"  <p>Publishers covered: {len(source_mix)}</p>",
+        "  <h2>Source mix</h2>",
+        "  <table>",
+        "    <thead><tr><th>Publisher</th><th>Sources</th></tr></thead>",
+        "    <tbody>",
+    ]
+    for publisher, count in source_mix:
+        lines.extend(
+            [
+                "      <tr>",
+                f"        <td>{escape(publisher)}</td>",
+                f"        <td>{count}</td>",
+                "      </tr>",
+            ]
+        )
+    lines.extend([
+        "    </tbody>",
+        "  </table>",
         "  <h2>Ranked digest</h2>",
         "  <table>",
         "    <thead><tr><th>Rank</th><th>Source</th><th>Priority</th><th>Key point</th><th>Evidence</th></tr></thead>",
         "    <tbody>",
-    ]
+    ])
     for rank, source in enumerate(briefing.sources, start=1):
         source_url = escape(source.url, quote=True)
         lines.extend(
@@ -137,6 +166,14 @@ def render_html_briefing(briefing: Briefing) -> str:
     lines.extend(f"    <li>{escape(source.follow_up_question)}</li>" for source in briefing.sources)
     lines.extend(["  </ul>", "</body>", "</html>"])
     return "\n".join(lines) + "\n"
+
+
+def _source_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], ...]:
+    """Count sources per publisher with deterministic report ordering."""
+    counts: dict[str, int] = {}
+    for source in sources:
+        counts[source.publisher] = counts.get(source.publisher, 0) + 1
+    return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0].lower())))
 
 
 def _rank_source(raw_source: object, as_of: date) -> RankedSource:
