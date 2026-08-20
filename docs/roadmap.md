@@ -35,6 +35,7 @@ Progress:
 - Added ISO date-column inference and a date-range report section so timeline fields show their populated coverage without being treated as categorical dimensions.
 - Added complete-row coverage to the analyst summary and data-quality section so reports show how many records are immediately analysis-ready across every column.
 - Added configurable single-character CSV delimiters plus a semicolon-export example so analyst reports can ingest common regional/business-system exports without preprocessing.
+- Added an empty-column report section and bundled example so fields with no populated values are separated from partially missing columns before analysis.
 
 ### 2. NL2SQL Analytics Agent
 

@@ -346,6 +346,14 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         (column for column in dataset.columns if column.missing_count > 0),
         key=lambda column: (-column.missing_count, column.name),
     )
+    empty_columns = sorted(
+        (
+            column
+            for column in dataset.columns
+            if dataset.row_count and column.non_null_count == 0
+        ),
+        key=lambda column: column.name,
+    )
     complete_row_rate = (
         dataset.complete_row_count / dataset.row_count if dataset.row_count else 0.0
     )
@@ -418,6 +426,21 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                     f"| {column.name} | {column.missing_count} | "
                     f"{(column.missing_count / dataset.row_count):.1%} |"
                     for column in missing_columns
+                ],
+                "",
+            ]
+        )
+    if empty_columns:
+        lines.extend(
+            [
+                "## Empty columns",
+                "",
+                "| Column | Missing values | Missing rate |",
+                "| --- | ---: | ---: |",
+                *[
+                    f"| {column.name} | {column.missing_count} | "
+                    f"{(column.missing_count / dataset.row_count):.1%} |"
+                    for column in empty_columns
                 ],
                 "",
             ]

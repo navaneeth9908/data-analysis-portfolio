@@ -10,6 +10,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - counts rows and missing values by column
 - reports complete-row coverage for downstream analysis readiness
 - flags redundant duplicate data rows
+- flags columns that have no populated values before analysts build downstream assumptions
 - infers whether every populated value in a column is numeric
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
@@ -38,6 +39,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
 # Inspect schema warnings for an empty header and uneven data rows.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
   --output /tmp/auto_eda_schema_warnings.md
+
+# Inspect columns that contain no populated values.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_empty_columns.csv \
+  --output /tmp/auto_eda_empty_columns.md
 
 # Inspect values outside Tukey's 1.5-IQR fences.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
@@ -140,6 +145,17 @@ Complete rows: 2 (66.7%)
 
 The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 
+The `sample_empty_columns.csv` example adds this section so fields that are
+present in the extract but unusable for analysis are easy to spot:
+
+```markdown
+## Empty columns
+
+| Column | Missing values | Missing rate |
+| --- | ---: | ---: |
+| legacy_id | 4 | 100.0% |
+```
+
 The `sample_iqr_outliers.csv` example adds this section:
 
 ```markdown
@@ -187,6 +203,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Blank cells count as missing values, and columns with missing values are ranked by missing count and percentage in a dedicated report section.
 - Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
+- Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
@@ -206,6 +223,7 @@ projects/01-auto-eda-analyst/
   examples/sample_customers.csv
   examples/sample_constant_columns.csv
   examples/sample_duplicate_rows.csv
+  examples/sample_empty_columns.csv
   examples/sample_iqr_outliers.csv
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
@@ -222,6 +240,7 @@ projects/01-auto-eda-analyst/
 - Local CSV profiling with row counts, complete-row coverage, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
 - Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
 - Duplicate-row data-quality signal in the generated report.
+- Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.

@@ -128,6 +128,28 @@ def test_rendered_report_prioritizes_columns_with_missing_values(tmp_path: Path)
     assert "| customer |" not in missingness_section
 
 
+def test_rendered_report_flags_columns_with_no_populated_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "empty_columns.csv"
+    source_file.write_text(
+        "customer,legacy_id,notes\n"
+        "Aster,,\n"
+        "Birch,,\n"
+        "Cedar,,Needs outreach\n"
+        "Dune,,Done\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Empty columns\n\n" in report
+    assert "| Column | Missing values | Missing rate |" in report
+    assert "| legacy_id | 4 | 100.0% |" in report
+    empty_columns_section = report.split("## Empty columns", 1)[1].split(
+        "## Column profile", 1
+    )[0]
+    assert "| notes |" not in empty_columns_section
+
+
 def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> None:
     source_file = tmp_path / "empty_header.csv"
     source_file.write_text(
