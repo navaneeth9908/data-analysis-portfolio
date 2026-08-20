@@ -31,6 +31,7 @@ Progress:
 - Added deterministic CSV schema warnings for blank header names and data rows whose field count differs from the header, including a CLI example fixture and focused tests.
 - Added an optional standalone SVG missingness chart artifact via the CLI so CSV quality issues are shareable beyond the Markdown report.
 - Added a concise analyst-summary section that turns row/column shape, missingness, duplicate rows, numeric ranges, and IQR outliers into immediately reviewable findings.
+- Added a ranked missingness-details table so reports prioritize incomplete columns by blank-value count and percentage before deeper profiling.
 
 ### 2. NL2SQL Analytics Agent
 

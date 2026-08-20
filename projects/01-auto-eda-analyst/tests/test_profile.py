@@ -68,6 +68,29 @@ def test_rendered_report_includes_an_actionable_analyst_summary(tmp_path: Path) 
     assert "- Outlier watchlist: sales (1 value).\n" in report
 
 
+def test_rendered_report_prioritizes_columns_with_missing_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "missingness.csv"
+    source_file.write_text(
+        "customer,spend,region\n"
+        "Aster,10.5,north\n"
+        "Birch,,\n"
+        "Cedar,,west\n"
+        "Dune,14.0,\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Missingness details\n\n" in report
+    assert "| Column | Missing values | Missing rate |" in report
+    assert "| spend | 2 | 50.0% |" in report
+    assert "| region | 2 | 50.0% |" in report
+    missingness_section = report.split("## Missingness details", 1)[1].split(
+        "## Column profile", 1
+    )[0]
+    assert "| customer |" not in missingness_section
+
+
 def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> None:
     source_file = tmp_path / "empty_header.csv"
     source_file.write_text(
