@@ -65,6 +65,7 @@ def build_briefing(path: str | Path, as_of: date) -> Briefing:
 def render_markdown_briefing(briefing: Briefing) -> str:
     """Render a stable Markdown briefing with sources, scores, and next questions."""
     source_mix = _source_mix(briefing.sources)
+    freshness_mix = _freshness_mix(briefing.sources)
     lines = [
         f"# {briefing.title}",
         "",
@@ -79,6 +80,14 @@ def render_markdown_briefing(briefing: Briefing) -> str:
         "| --- | ---: |",
     ]
     lines.extend(f"| {publisher} | {count} |" for publisher, count in source_mix)
+    lines.extend([
+        "",
+        "## Freshness mix",
+        "",
+        "| Age band | Sources |",
+        "| --- | ---: |",
+    ])
+    lines.extend(f"| {label} | {count} |" for label, count in freshness_mix)
     lines.extend([
         "",
         "## Ranked digest",
@@ -109,6 +118,7 @@ def render_html_briefing(briefing: Briefing) -> str:
     """Render a self-contained HTML briefing with ranked source evidence."""
     title = escape(briefing.title)
     source_mix = _source_mix(briefing.sources)
+    freshness_mix = _freshness_mix(briefing.sources)
     lines = [
         "<!doctype html>",
         '<html lang="en">',
@@ -137,6 +147,23 @@ def render_html_briefing(briefing: Briefing) -> str:
             [
                 "      <tr>",
                 f"        <td>{escape(publisher)}</td>",
+                f"        <td>{count}</td>",
+                "      </tr>",
+            ]
+        )
+    lines.extend([
+        "    </tbody>",
+        "  </table>",
+        "  <h2>Freshness mix</h2>",
+        "  <table>",
+        "    <thead><tr><th>Age band</th><th>Sources</th></tr></thead>",
+        "    <tbody>",
+    ])
+    for label, count in freshness_mix:
+        lines.extend(
+            [
+                "      <tr>",
+                f"        <td>{escape(label)}</td>",
                 f"        <td>{count}</td>",
                 "      </tr>",
             ]
@@ -174,6 +201,23 @@ def _source_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], ...
     for source in sources:
         counts[source.publisher] = counts.get(source.publisher, 0) + 1
     return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0].lower())))
+
+
+def _freshness_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], ...]:
+    """Count ranked sources by the same freshness bands used in scoring."""
+    labels = {
+        3: "Fresh (0-7 days)",
+        2: "Recent (8-30 days)",
+        1: "Older (31+ days)",
+    }
+    counts: dict[int, int] = {}
+    for source in sources:
+        counts[source.freshness] = counts.get(source.freshness, 0) + 1
+    return tuple(
+        (labels[freshness], counts[freshness])
+        for freshness in (3, 2, 1)
+        if freshness in counts
+    )
 
 
 def _rank_source(raw_source: object, as_of: date) -> RankedSource:

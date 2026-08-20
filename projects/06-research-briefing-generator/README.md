@@ -11,6 +11,7 @@ A useful research brief should make its evidence and prioritization visible. Thi
 - scores each source against a fixed reporting date
 - ranks the digest deterministically, including stable tie-breaking
 - summarizes publisher coverage before the ranked digest
+- summarizes source freshness bands before the ranked digest
 - writes source links, analyst-provided key points, and follow-up questions to Markdown
 
 The tool does **not** fetch websites or invent summaries. It makes a previously reviewed set of source notes repeatable and easy to audit.
@@ -56,6 +57,13 @@ Publishers covered: 2
 | --- | ---: |
 | National AI Office | 1 |
 | Policy Forum | 1 |
+
+## Freshness mix
+
+| Age band | Sources |
+| --- | ---: |
+| Fresh (0-7 days) | 1 |
+| Recent (8-30 days) | 1 |
 
 ## Ranked digest
 
@@ -121,6 +129,6 @@ projects/06-research-briefing-generator/
 
 - Local JSON source-note ingestion and validation.
 - Deterministic source scoring and ranked Markdown or self-contained HTML digests.
-- Publisher-coverage source mix summaries before the ranked evidence table.
+- Publisher-coverage and freshness-band summaries before the ranked evidence table.
 - Key-point, source-link, and follow-up-question rendering.
 - A fixed-date CLI path and end-to-end test using the bundled sample.
