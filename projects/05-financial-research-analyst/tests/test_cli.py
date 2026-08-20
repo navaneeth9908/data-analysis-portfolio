@@ -128,6 +128,39 @@ def test_cli_writes_research_brief_from_price_history(tmp_path) -> None:
     assert "Signal: **uptrend**" in markdown
 
 
+def test_cli_includes_liquidity_profile_by_default(tmp_path) -> None:
+    price_file = tmp_path / "prices.csv"
+    price_file.write_text(
+        "date,ticker,close,volume\n"
+        "2026-01-02,NOVA,100,1200000\n"
+        "2026-01-03,NOVA,102,1300000\n"
+        "2026-01-04,NOVA,101,1100000\n"
+        "2026-01-05,NOVA,106,1500000\n"
+        "2026-01-06,NOVA,104,1400000\n"
+        "2026-01-07,NOVA,110,1800000\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "brief.md"
+
+    from financial_research.cli import main
+
+    exit_code = main(
+        [
+            str(price_file),
+            "--ticker",
+            "NOVA",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    markdown = output_file.read_text(encoding="utf-8")
+    assert "## Liquidity profile" in markdown
+    assert "| Latest volume | 1,800,000 |" in markdown
+    assert "| Latest vs average volume | +30.12% |" in markdown
+
+
 def test_cli_includes_benchmark_sensitivity_when_benchmark_is_requested(tmp_path) -> None:
     price_file = tmp_path / "prices.csv"
     price_file.write_text(

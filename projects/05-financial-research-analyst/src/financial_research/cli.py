@@ -12,6 +12,7 @@ from financial_research.metrics import (
     render_research_brief_html,
     summarize_fundamentals,
     summarize_fundamentals_trend,
+    summarize_liquidity_profile,
     summarize_moving_average_trend,
     summarize_benchmark_sensitivity,
     summarize_price_history,
@@ -71,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         short_window=args.trend_short_window,
         long_window=args.trend_long_window,
     )
+    liquidity = summarize_liquidity_profile(asset_prices)
 
     benchmark_summary = None
     benchmark_sensitivity = None
@@ -99,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     render_kwargs = {
         "benchmark": benchmark_summary,
         "benchmark_sensitivity": benchmark_sensitivity,
+        "liquidity": liquidity,
         "trend": trend,
         "fundamentals": fundamentals_summary,
         "fundamentals_trend": fundamentals_trend,

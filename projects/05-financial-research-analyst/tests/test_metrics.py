@@ -159,6 +159,38 @@ def test_summarize_moving_average_trend_flags_current_uptrend() -> None:
     assert trend.trend_label == "uptrend"
 
 
+def test_summarize_liquidity_profile_compares_latest_volume_to_average() -> None:
+    prices = [
+        PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 1, 3), "NOVA", 102.0, 1_300_000),
+        PricePoint(date(2026, 1, 4), "NOVA", 101.0, 1_100_000),
+        PricePoint(date(2026, 1, 5), "NOVA", 106.0, 1_500_000),
+        PricePoint(date(2026, 1, 6), "NOVA", 104.0, 1_400_000),
+        PricePoint(date(2026, 1, 7), "NOVA", 110.0, 1_800_000),
+    ]
+
+    liquidity = metrics.summarize_liquidity_profile(prices)
+
+    assert liquidity.ticker == "NOVA"
+    assert liquidity.observation_count == 6
+    assert liquidity.average_volume == pytest.approx(1_383_333.333333, abs=0.000001)
+    assert liquidity.latest_volume == 1_800_000
+    assert liquidity.latest_vs_average_volume_pct == pytest.approx(30.120482, abs=0.000001)
+
+
+def test_summarize_liquidity_profile_handles_zero_volume_windows() -> None:
+    prices = [
+        PricePoint(date(2026, 1, 2), "NOVA", 100.0, 0),
+        PricePoint(date(2026, 1, 3), "NOVA", 102.0, 0),
+    ]
+
+    liquidity = metrics.summarize_liquidity_profile(prices)
+
+    assert liquidity.average_volume == 0.0
+    assert liquidity.latest_volume == 0
+    assert liquidity.latest_vs_average_volume_pct == 0.0
+
+
 def test_build_risk_notes_highlights_elevated_volatility_and_supportive_trend() -> None:
     asset_prices = [
         PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
@@ -326,6 +358,13 @@ def test_package_exports_moving_average_trend_and_risk_note_api() -> None:
     assert MovingAverageTrend is metrics.MovingAverageTrend
     assert summarize_moving_average_trend is metrics.summarize_moving_average_trend
     assert build_risk_notes is metrics.build_risk_notes
+
+
+def test_package_exports_liquidity_profile_api() -> None:
+    from financial_research import LiquidityProfile, summarize_liquidity_profile
+
+    assert LiquidityProfile is metrics.LiquidityProfile
+    assert summarize_liquidity_profile is metrics.summarize_liquidity_profile
 
 
 def test_package_exports_the_html_renderer() -> None:
@@ -507,6 +546,27 @@ def test_render_research_brief_includes_benchmark_sensitivity() -> None:
     assert "Aligned observations: 3." in markdown
     assert "| Return correlation | 1.00 |" in markdown
     assert "| Beta vs MKT | 2.00 |" in markdown
+
+
+def test_render_research_brief_includes_liquidity_profile() -> None:
+    prices = [
+        PricePoint(date(2026, 1, 2), "NOVA", 100.0, 1_200_000),
+        PricePoint(date(2026, 1, 3), "NOVA", 102.0, 1_300_000),
+        PricePoint(date(2026, 1, 4), "NOVA", 101.0, 1_100_000),
+        PricePoint(date(2026, 1, 5), "NOVA", 106.0, 1_500_000),
+        PricePoint(date(2026, 1, 6), "NOVA", 104.0, 1_400_000),
+        PricePoint(date(2026, 1, 7), "NOVA", 110.0, 1_800_000),
+    ]
+
+    markdown = render_research_brief(
+        summarize_price_history(prices),
+        liquidity=metrics.summarize_liquidity_profile(prices),
+    )
+
+    assert "## Liquidity profile" in markdown
+    assert "| Average volume | 1,383,333 |" in markdown
+    assert "| Latest volume | 1,800,000 |" in markdown
+    assert "| Latest vs average volume | +30.12% |" in markdown
 
 
 def test_render_research_brief_compares_asset_to_benchmark() -> None:

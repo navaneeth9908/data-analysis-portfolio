@@ -22,6 +22,16 @@ Aligned observations: 6.
 | Return correlation | -0.37 |
 | Beta vs MKT | -1.05 |
 
+## Liquidity profile
+
+Window observations: 6.
+
+| Metric | Value |
+| --- | ---: |
+| Average volume | 1,383,333 |
+| Latest volume | 1,800,000 |
+| Latest vs average volume | +30.12% |
+
 ## Fundamentals snapshot
 
 As of: 2026-01-07 (TTM inputs)

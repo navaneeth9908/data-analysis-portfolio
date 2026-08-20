@@ -112,6 +112,17 @@ class MovingAverageTrend:
     trend_label: str
 
 
+@dataclass(frozen=True)
+class LiquidityProfile:
+    """Simple volume profile for the analyzed price-history window."""
+
+    ticker: str
+    observation_count: int
+    average_volume: float
+    latest_volume: int
+    latest_vs_average_volume_pct: float
+
+
 def summarize_price_history(
     prices: list[PricePoint] | tuple[PricePoint, ...],
     *,
@@ -312,6 +323,27 @@ def summarize_moving_average_trend(
     )
 
 
+def summarize_liquidity_profile(
+    prices: list[PricePoint] | tuple[PricePoint, ...],
+) -> LiquidityProfile:
+    """Summarize average and latest volume for the selected ticker window."""
+    summary = summarize_price_history(prices)
+    ordered = sorted(prices, key=lambda point: point.date)
+    average_volume = mean(point.volume for point in ordered)
+    latest_volume = ordered[-1].volume
+    latest_vs_average_volume_pct = (
+        (latest_volume / average_volume - 1) * 100 if average_volume else 0.0
+    )
+
+    return LiquidityProfile(
+        ticker=summary.ticker,
+        observation_count=summary.observation_count,
+        average_volume=average_volume,
+        latest_volume=latest_volume,
+        latest_vs_average_volume_pct=latest_vs_average_volume_pct,
+    )
+
+
 def load_price_history(path: str | Path, *, ticker: str | None = None) -> tuple[PricePoint, ...]:
     """Load adjusted close observations from a CSV file.
 
@@ -480,6 +512,7 @@ def render_research_brief(
     *,
     benchmark: PerformanceSummary | None = None,
     benchmark_sensitivity: BenchmarkSensitivity | None = None,
+    liquidity: LiquidityProfile | None = None,
     trend: MovingAverageTrend | None = None,
     fundamentals: FundamentalsSummary | None = None,
     fundamentals_trend: FundamentalsTrend | None = None,
@@ -494,6 +527,9 @@ def render_research_brief(
 
     def signed_pct(value: float) -> str:
         return f"{value:+.2f}%"
+
+    def whole_number(value: float) -> str:
+        return f"{value:,.0f}"
 
     lines = [
         f"# {summary.ticker} Financial Research Brief",
@@ -556,6 +592,25 @@ def render_research_brief(
                 f"| Return correlation | {benchmark_sensitivity.correlation:.2f} |",
                 f"| Beta vs {benchmark_sensitivity.benchmark_ticker} | "
                 f"{benchmark_sensitivity.beta:.2f} |",
+            ]
+        )
+
+    if liquidity is not None:
+        if liquidity.ticker != summary.ticker:
+            raise ValueError("liquidity ticker must match the performance summary ticker")
+        lines.extend(
+            [
+                "",
+                "## Liquidity profile",
+                "",
+                f"Window observations: {liquidity.observation_count}.",
+                "",
+                "| Metric | Value |",
+                "| --- | ---: |",
+                f"| Average volume | {whole_number(liquidity.average_volume)} |",
+                f"| Latest volume | {whole_number(liquidity.latest_volume)} |",
+                "| Latest vs average volume | "
+                f"{signed_pct(liquidity.latest_vs_average_volume_pct)} |",
             ]
         )
 
@@ -639,6 +694,7 @@ def render_research_brief_html(
     *,
     benchmark: PerformanceSummary | None = None,
     benchmark_sensitivity: BenchmarkSensitivity | None = None,
+    liquidity: LiquidityProfile | None = None,
     trend: MovingAverageTrend | None = None,
     fundamentals: FundamentalsSummary | None = None,
     fundamentals_trend: FundamentalsTrend | None = None,
@@ -648,6 +704,7 @@ def render_research_brief_html(
         summary,
         benchmark=benchmark,
         benchmark_sensitivity=benchmark_sensitivity,
+        liquidity=liquidity,
         trend=trend,
         fundamentals=fundamentals,
         fundamentals_trend=fundamentals_trend,
