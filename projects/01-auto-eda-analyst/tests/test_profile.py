@@ -11,6 +11,23 @@ from auto_eda.profile import (
 )
 
 
+def test_profile_csv_accepts_a_semicolon_delimiter(tmp_path: Path) -> None:
+    source_file = tmp_path / "semicolon_customers.csv"
+    source_file.write_text(
+        "customer;spend;segment\n"
+        "Aster;10.5;enterprise\n"
+        "Birch;19.5;midmarket\n",
+        encoding="utf-8",
+    )
+
+    dataset = profile_csv(source_file, delimiter=";")
+    report = render_markdown_report(dataset)
+
+    assert [column.name for column in dataset.columns] == ["customer", "spend", "segment"]
+    assert "| spend | numeric | 0 | 2 | 15.00 | 10.50 | 19.50 |" in report
+    assert "| segment | 2 | enterprise | 1 |" in report
+
+
 def test_rendered_report_counts_exact_duplicate_data_rows(tmp_path: Path) -> None:
     source_file = tmp_path / "duplicate_customers.csv"
     source_file.write_text(

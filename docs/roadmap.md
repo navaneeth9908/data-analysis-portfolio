@@ -34,6 +34,7 @@ Progress:
 - Added a ranked missingness-details table so reports prioritize incomplete columns by blank-value count and percentage before deeper profiling.
 - Added ISO date-column inference and a date-range report section so timeline fields show their populated coverage without being treated as categorical dimensions.
 - Added complete-row coverage to the analyst summary and data-quality section so reports show how many records are immediately analysis-ready across every column.
+- Added configurable single-character CSV delimiters plus a semicolon-export example so analyst reports can ingest common regional/business-system exports without preprocessing.
 
 ### 2. NL2SQL Analytics Agent
 

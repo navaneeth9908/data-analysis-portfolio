@@ -8,6 +8,41 @@ import subprocess
 import sys
 
 
+def test_cli_accepts_a_semicolon_delimiter(tmp_path: Path) -> None:
+    source_file = tmp_path / "semicolon_customers.csv"
+    source_file.write_text(
+        "customer;spend;segment\n"
+        "Aster;10.5;enterprise\n"
+        "Birch;19.5;midmarket\n",
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "eda_report.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+            "--delimiter",
+            ";",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "| customer | text | 0 | 2 | — | — | — |" in report
+    assert "| spend | numeric | 0 | 2 | 15.00 | 10.50 | 19.50 |" in report
+    assert "| segment | 2 | enterprise | 1 |" in report
+
+
 def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text(

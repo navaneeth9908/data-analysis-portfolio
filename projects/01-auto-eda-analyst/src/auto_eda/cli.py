@@ -34,6 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum categorical values to display per text column (default: 5)",
     )
     parser.add_argument(
+        "--delimiter",
+        default=",",
+        help="Single-character CSV delimiter to use when reading the file (default: comma)",
+    )
+    parser.add_argument(
         "--chart-output",
         type=Path,
         help="Directory for generated SVG chart artifacts",
@@ -44,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """Profile the requested CSV and write its Markdown report."""
     args = build_parser().parse_args(argv)
-    dataset = profile_csv(args.source_file)
+    dataset = profile_csv(args.source_file, delimiter=args.delimiter)
     report = render_markdown_report(dataset, categorical_limit=args.categorical_limit)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")

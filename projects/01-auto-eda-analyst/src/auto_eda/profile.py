@@ -58,11 +58,11 @@ class DatasetProfile:
     numeric_correlations: tuple[NumericCorrelation, ...] = ()
 
 
-def profile_csv(path: str | Path) -> DatasetProfile:
+def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
     """Profile missingness and numeric ranges for a headered CSV file."""
     source_path = Path(path)
     with source_path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.reader(handle)
+        reader = csv.reader(handle, delimiter=delimiter)
         fieldnames = next(reader, None)
         if not fieldnames:
             raise ValueError("CSV input must include a header row")

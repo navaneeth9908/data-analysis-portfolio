@@ -51,6 +51,11 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_constant_columns.csv \
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
   --output /tmp/auto_eda_correlations.md
 
+# Inspect a semicolon-delimited export without rewriting it first.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_semicolon_customers.csv \
+  --output /tmp/auto_eda_semicolon.md \
+  --delimiter ";"
+
 # Inspect ISO date ranges for timeline-style fields.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_renewals.csv \
   --output /tmp/auto_eda_renewals.md
@@ -178,7 +183,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 
 ## Input contract
 
-- Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing.
+- Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing. Use `--delimiter` for single-character delimiters such as semicolons when exported data is not comma-separated.
 - Blank cells count as missing values, and columns with missing values are ranked by missing count and percentage in a dedicated report section.
 - Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
@@ -205,6 +210,7 @@ projects/01-auto-eda-analyst/
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
+  examples/sample_semicolon_customers.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
   tests/test_cli.py
@@ -213,7 +219,7 @@ projects/01-auto-eda-analyst/
 
 ## Current capabilities
 
-- Local CSV profiling with row counts, complete-row coverage, and ranked per-column missingness.
+- Local CSV profiling with row counts, complete-row coverage, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
 - Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
 - Duplicate-row data-quality signal in the generated report.
 - Constant-column signal for populated fields with one distinct value.
