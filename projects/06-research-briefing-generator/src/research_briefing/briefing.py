@@ -66,6 +66,7 @@ def render_markdown_briefing(briefing: Briefing) -> str:
     """Render a stable Markdown briefing with sources, scores, and next questions."""
     source_mix = _source_mix(briefing.sources)
     freshness_mix = _freshness_mix(briefing.sources)
+    coverage_notes = _coverage_notes(briefing.sources, source_mix)
     lines = [
         f"# {briefing.title}",
         "",
@@ -88,6 +89,12 @@ def render_markdown_briefing(briefing: Briefing) -> str:
         "| --- | ---: |",
     ])
     lines.extend(f"| {label} | {count} |" for label, count in freshness_mix)
+    lines.extend([
+        "",
+        "## Coverage notes",
+        "",
+    ])
+    lines.extend(f"- {note}" for note in coverage_notes)
     lines.extend([
         "",
         "## Ranked digest",
@@ -119,6 +126,7 @@ def render_html_briefing(briefing: Briefing) -> str:
     title = escape(briefing.title)
     source_mix = _source_mix(briefing.sources)
     freshness_mix = _freshness_mix(briefing.sources)
+    coverage_notes = _coverage_notes(briefing.sources, source_mix)
     lines = [
         "<!doctype html>",
         '<html lang="en">',
@@ -171,6 +179,12 @@ def render_html_briefing(briefing: Briefing) -> str:
     lines.extend([
         "    </tbody>",
         "  </table>",
+        "  <h2>Coverage notes</h2>",
+        "  <ul>",
+    ])
+    lines.extend(f"    <li>{escape(note)}</li>" for note in coverage_notes)
+    lines.extend([
+        "  </ul>",
         "  <h2>Ranked digest</h2>",
         "  <table>",
         "    <thead><tr><th>Rank</th><th>Source</th><th>Priority</th><th>Key point</th><th>Evidence</th></tr></thead>",
@@ -218,6 +232,49 @@ def _freshness_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], 
         for freshness in (3, 2, 1)
         if freshness in counts
     )
+
+
+def _coverage_notes(
+    sources: tuple[RankedSource, ...], source_mix: tuple[tuple[str, int], ...]
+) -> tuple[str, ...]:
+    """Return deterministic analyst notes about evidence coverage gaps."""
+    notes: list[str] = []
+    source_count = len(sources)
+    publisher_count = len(source_mix)
+    if source_count < 3:
+        remaining = 3 - source_count
+        notes.append(
+            "Only "
+            f"{source_count} {_plural(source_count, 'source')} reviewed; add at least "
+            f"{_count_phrase(remaining, 'more independent source')} before executive sign-off."
+        )
+    if publisher_count == 1:
+        notes.append(
+            "Single-publisher evidence; add at least one independent publisher before relying on this brief."
+        )
+    elif source_mix and source_mix[0][1] / source_count >= 0.67:
+        publisher, count = source_mix[0]
+        notes.append(
+            f"Publisher concentration is high: {publisher} contributes {count} of "
+            f"{source_count} {_plural(source_count, 'source')}."
+        )
+    if not notes:
+        notes.append(
+            f"Publisher coverage is balanced across {publisher_count} {_plural(publisher_count, 'publisher')}."
+        )
+    return tuple(notes)
+
+
+def _plural(count: int, singular: str) -> str:
+    """Return a simple pluralized label for report copy."""
+    return singular if count == 1 else f"{singular}s"
+
+
+def _count_phrase(count: int, phrase: str) -> str:
+    """Return a count phrase using words for one so prose stays natural."""
+    if count == 1:
+        return f"one {phrase}"
+    return f"{count} {phrase}s"
 
 
 def _rank_source(raw_source: object, as_of: date) -> RankedSource:

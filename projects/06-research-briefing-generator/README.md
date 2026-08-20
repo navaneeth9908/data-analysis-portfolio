@@ -12,6 +12,7 @@ A useful research brief should make its evidence and prioritization visible. Thi
 - ranks the digest deterministically, including stable tie-breaking
 - summarizes publisher coverage before the ranked digest
 - summarizes source freshness bands before the ranked digest
+- adds deterministic source-coverage notes when evidence is thin or concentrated
 - writes source links, analyst-provided key points, and follow-up questions to Markdown
 
 The tool does **not** fetch websites or invent summaries. It makes a previously reviewed set of source notes repeatable and easy to audit.
@@ -64,6 +65,10 @@ Publishers covered: 2
 | --- | ---: |
 | Fresh (0-7 days) | 1 |
 | Recent (8-30 days) | 1 |
+
+## Coverage notes
+
+- Only 2 sources reviewed; add at least one more independent source before executive sign-off.
 
 ## Ranked digest
 
@@ -130,5 +135,6 @@ projects/06-research-briefing-generator/
 - Local JSON source-note ingestion and validation.
 - Deterministic source scoring and ranked Markdown or self-contained HTML digests.
 - Publisher-coverage and freshness-band summaries before the ranked evidence table.
+- Source-coverage notes that flag thin or single-publisher evidence before a brief is reused.
 - Key-point, source-link, and follow-up-question rendering.
 - A fixed-date CLI path and end-to-end test using the bundled sample.
