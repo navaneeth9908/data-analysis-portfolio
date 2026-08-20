@@ -23,6 +23,7 @@ def test_cli_writes_a_ranked_source_backed_briefing(tmp_path: Path) -> None:
                         "url": "https://example.com/timetable",
                         "key_point": "The first reporting deadline is scheduled for October.",
                         "follow_up_question": "Which internal teams own the October reporting deadline?",
+                        "theme": "Compliance operations",
                         "relevance": 5,
                         "source_quality": 4,
                     },
@@ -33,8 +34,20 @@ def test_cli_writes_a_ranked_source_backed_briefing(tmp_path: Path) -> None:
                         "url": "https://example.com/costs",
                         "key_point": "Smaller vendors expect the largest documentation burden.",
                         "follow_up_question": "Which vendor contracts need updated documentation clauses?",
+                        "theme": "Vendor impact",
                         "relevance": 4,
                         "source_quality": 5,
+                    },
+                    {
+                        "title": "Analyst memo highlights reporting owners",
+                        "publisher": "Policy Forum",
+                        "published_on": "2026-08-01",
+                        "url": "https://example.com/reporting-owners",
+                        "key_point": "Policy and security teams are jointly assigned evidence gathering.",
+                        "follow_up_question": "Which controls map to the joint evidence-gathering owner?",
+                        "theme": "Compliance operations",
+                        "relevance": 3,
+                        "source_quality": 4,
                     },
                 ],
             }
@@ -66,19 +79,19 @@ def test_cli_writes_a_ranked_source_backed_briefing(tmp_path: Path) -> None:
     report = output_file.read_text(encoding="utf-8")
     assert "# AI policy weekly briefing" in report
     assert "As of: 2026-08-10" in report
-    assert "Sources reviewed: 2" in report
+    assert "Sources reviewed: 3" in report
     assert "Publishers covered: 2" in report
     assert "## Source mix" in report
+    assert "| Policy Forum | 2 |" in report
     assert "| National AI Office | 1 |" in report
-    assert "| Policy Forum | 1 |" in report
     assert "## Freshness mix" in report
     assert "| Fresh (0-7 days) | 1 |" in report
-    assert "| Recent (8-30 days) | 1 |" in report
+    assert "| Recent (8-30 days) | 2 |" in report
+    assert "## Theme mix" in report
+    assert "| Compliance operations | 2 |" in report
+    assert "| Vendor impact | 1 |" in report
     assert "## Coverage notes" in report
-    assert (
-        "- Only 2 sources reviewed; add at least one more independent source before executive sign-off."
-        in report
-    )
+    assert "- Publisher coverage is balanced across 2 publishers." in report
     assert "## Ranked digest" in report
     assert "1. **Regulator publishes implementation timetable** — National AI Office (2026-08-08)" in report
     assert "Score: 17/18 | Relevance 5/5 | Source quality 4/5 | Freshness 3/3" in report
@@ -104,6 +117,7 @@ def test_cli_writes_an_html_briefing_with_ranked_source_evidence(tmp_path: Path)
                         "url": "https://example.com/timetable",
                         "key_point": "The first reporting deadline is scheduled for October.",
                         "follow_up_question": "Which internal teams own the October reporting deadline?",
+                        "theme": "Compliance operations",
                         "relevance": 5,
                         "source_quality": 4,
                     }
@@ -146,6 +160,8 @@ def test_cli_writes_an_html_briefing_with_ranked_source_evidence(tmp_path: Path)
     assert "<td>National AI Office</td>" in report
     assert "<h2>Freshness mix</h2>" in report
     assert "<td>Fresh (0-7 days)</td>" in report
+    assert "<h2>Theme mix</h2>" in report
+    assert "<td>Compliance operations</td>" in report
     assert "<h2>Coverage notes</h2>" in report
     assert (
         "Only 1 source reviewed; add at least 2 more independent sources before executive sign-off."

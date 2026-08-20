@@ -134,6 +134,7 @@ Progress:
 - Added publisher-coverage source mix summaries to the Markdown and HTML digests so reviewers can quickly see how concentrated the evidence base is.
 - Added freshness-band source mix summaries to the Markdown and HTML digests so recurring briefings show whether the evidence is fresh, recent, or older.
 - Added deterministic source-coverage notes that flag thin or single-publisher evidence before the ranked digest is reused in stakeholder updates.
+- Added analyst-assigned theme mix summaries to the Markdown and HTML digests so recurring briefings show topical coverage before the ranked evidence.
 - Polished the root portfolio navigation with accurate links to all six project directories and documented a single repeatable regression command for their independent test suites.
 - Added a root portfolio verifier that confirms root-README navigation plus the required structure of all six projects before running their isolated test suites, with a `--check-only` mode for quick repository-health checks.
 - Added a focused `--project` option to the root portfolio verifier so one project suite can run behind the same layout and navigation guardrails during small milestone work.

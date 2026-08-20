@@ -8,6 +8,7 @@
       "url": "https://example.com/timetable",
       "key_point": "The first reporting deadline is scheduled for October.",
       "follow_up_question": "Which internal teams own the October reporting deadline?",
+      "theme": "Compliance operations",
       "relevance": 5,
       "source_quality": 4
     },
@@ -18,6 +19,7 @@
       "url": "https://example.com/costs",
       "key_point": "Smaller vendors expect the largest documentation burden.",
       "follow_up_question": "Which vendor contracts need updated documentation clauses?",
+      "theme": "Vendor impact",
       "relevance": 4,
       "source_quality": 5
     }

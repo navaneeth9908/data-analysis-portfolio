@@ -12,6 +12,7 @@ A useful research brief should make its evidence and prioritization visible. Thi
 - ranks the digest deterministically, including stable tie-breaking
 - summarizes publisher coverage before the ranked digest
 - summarizes source freshness bands before the ranked digest
+- summarizes analyst-assigned theme coverage before the ranked digest
 - adds deterministic source-coverage notes when evidence is thin or concentrated
 - writes source links, analyst-provided key points, and follow-up questions to Markdown
 
@@ -66,6 +67,13 @@ Publishers covered: 2
 | Fresh (0-7 days) | 1 |
 | Recent (8-30 days) | 1 |
 
+## Theme mix
+
+| Theme | Sources |
+| --- | ---: |
+| Compliance operations | 1 |
+| Vendor impact | 1 |
+
 ## Coverage notes
 
 - Only 2 sources reviewed; add at least one more independent source before executive sign-off.
@@ -93,6 +101,7 @@ The input must be a UTF-8 JSON object with a non-empty `briefing_title` and at l
       "url": "https://example.com/timetable",
       "key_point": "The first reporting deadline is scheduled for October.",
       "follow_up_question": "Which internal teams own the October reporting deadline?",
+      "theme": "Compliance operations",
       "relevance": 5,
       "source_quality": 4
     }
@@ -100,7 +109,7 @@ The input must be a UTF-8 JSON object with a non-empty `briefing_title` and at l
 }
 ```
 
-`published_on` must use `YYYY-MM-DD`. `relevance` and `source_quality` are integer ratings from 1 through 5.
+`published_on` must use `YYYY-MM-DD`. `relevance` and `source_quality` are integer ratings from 1 through 5. `theme` is optional; missing themes are grouped as `Unspecified` so older source-note files still render deterministically.
 
 ## Ranking contract
 
@@ -134,7 +143,7 @@ projects/06-research-briefing-generator/
 
 - Local JSON source-note ingestion and validation.
 - Deterministic source scoring and ranked Markdown or self-contained HTML digests.
-- Publisher-coverage and freshness-band summaries before the ranked evidence table.
+- Publisher-coverage, freshness-band, and theme-mix summaries before the ranked evidence table.
 - Source-coverage notes that flag thin or single-publisher evidence before a brief is reused.
 - Key-point, source-link, and follow-up-question rendering.
 - A fixed-date CLI path and end-to-end test using the bundled sample.

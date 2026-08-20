@@ -19,6 +19,7 @@ class RankedSource:
     url: str
     key_point: str
     follow_up_question: str
+    theme: str
     relevance: int
     source_quality: int
     freshness: int
@@ -66,6 +67,7 @@ def render_markdown_briefing(briefing: Briefing) -> str:
     """Render a stable Markdown briefing with sources, scores, and next questions."""
     source_mix = _source_mix(briefing.sources)
     freshness_mix = _freshness_mix(briefing.sources)
+    theme_mix = _theme_mix(briefing.sources)
     coverage_notes = _coverage_notes(briefing.sources, source_mix)
     lines = [
         f"# {briefing.title}",
@@ -89,6 +91,14 @@ def render_markdown_briefing(briefing: Briefing) -> str:
         "| --- | ---: |",
     ])
     lines.extend(f"| {label} | {count} |" for label, count in freshness_mix)
+    lines.extend([
+        "",
+        "## Theme mix",
+        "",
+        "| Theme | Sources |",
+        "| --- | ---: |",
+    ])
+    lines.extend(f"| {theme} | {count} |" for theme, count in theme_mix)
     lines.extend([
         "",
         "## Coverage notes",
@@ -126,6 +136,7 @@ def render_html_briefing(briefing: Briefing) -> str:
     title = escape(briefing.title)
     source_mix = _source_mix(briefing.sources)
     freshness_mix = _freshness_mix(briefing.sources)
+    theme_mix = _theme_mix(briefing.sources)
     coverage_notes = _coverage_notes(briefing.sources, source_mix)
     lines = [
         "<!doctype html>",
@@ -172,6 +183,23 @@ def render_html_briefing(briefing: Briefing) -> str:
             [
                 "      <tr>",
                 f"        <td>{escape(label)}</td>",
+                f"        <td>{count}</td>",
+                "      </tr>",
+            ]
+        )
+    lines.extend([
+        "    </tbody>",
+        "  </table>",
+        "  <h2>Theme mix</h2>",
+        "  <table>",
+        "    <thead><tr><th>Theme</th><th>Sources</th></tr></thead>",
+        "    <tbody>",
+    ])
+    for theme, count in theme_mix:
+        lines.extend(
+            [
+                "      <tr>",
+                f"        <td>{escape(theme)}</td>",
                 f"        <td>{count}</td>",
                 "      </tr>",
             ]
@@ -234,6 +262,14 @@ def _freshness_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], 
     )
 
 
+def _theme_mix(sources: tuple[RankedSource, ...]) -> tuple[tuple[str, int], ...]:
+    """Count sources by analyst-assigned theme with deterministic ordering."""
+    counts: dict[str, int] = {}
+    for source in sources:
+        counts[source.theme] = counts.get(source.theme, 0) + 1
+    return tuple(sorted(counts.items(), key=lambda item: (-item[1], item[0].lower())))
+
+
 def _coverage_notes(
     sources: tuple[RankedSource, ...], source_mix: tuple[tuple[str, int], ...]
 ) -> tuple[str, ...]:
@@ -294,6 +330,7 @@ def _rank_source(raw_source: object, as_of: date) -> RankedSource:
         url=_required_text(raw_source, "url"),
         key_point=_required_text(raw_source, "key_point"),
         follow_up_question=_required_text(raw_source, "follow_up_question"),
+        theme=_optional_text(raw_source, "theme", default="Unspecified"),
         relevance=relevance,
         source_quality=source_quality,
         freshness=_freshness_score(published_on, as_of),
@@ -305,6 +342,16 @@ def _required_text(payload: dict[str, object], field: str) -> str:
     value = payload.get(field)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-blank string")
+    return value.strip()
+
+
+def _optional_text(payload: dict[str, object], field: str, default: str) -> str:
+    """Read an optional non-blank string, or return a deterministic fallback."""
+    value = payload.get(field)
+    if value is None:
+        return default
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a non-blank string when provided")
     return value.strip()
 
 
