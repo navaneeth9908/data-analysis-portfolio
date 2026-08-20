@@ -150,3 +150,31 @@ def test_default_run_executes_every_project_test_suite(tmp_path: Path) -> None:
     for project in PROJECTS:
         assert f"[PASS] {project}" in result.stdout
     assert result.stdout.endswith("Portfolio test suites passed: 6 projects.\n")
+
+
+def test_project_filter_runs_only_the_selected_project_suite(tmp_path: Path) -> None:
+    _create_complete_project_layout(tmp_path, include_passing_tests=True)
+    failing_project = tmp_path / "projects" / "06-research-briefing-generator"
+    (failing_project / "tests" / "test_smoke.py").write_text(
+        "def test_smoke() -> None:\n    assert False\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/verify_portfolio.py",
+            "--root",
+            str(tmp_path),
+            "--project",
+            "01-auto-eda-analyst",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "[PASS] 01-auto-eda-analyst" in result.stdout
+    assert "06-research-briefing-generator" not in result.stdout
+    assert result.stdout.endswith("Portfolio test suites passed: 1 project.\n")

@@ -68,7 +68,10 @@ The command keeps project-level imports and fixtures isolated while providing
 one repeatable regression check for the full portfolio. Use
 `python scripts/verify_portfolio.py --check-only` when you only need to
 confirm each documented project has its README, package metadata, source, and
-tests directories.
+tests directories. For a focused project-health check during a small milestone,
+run `python scripts/verify_portfolio.py --project 05-financial-research-analyst`
+to keep the same layout/navigation guardrails while executing only that
+project's tests.
 
 ## Current status
 

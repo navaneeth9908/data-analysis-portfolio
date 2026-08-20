@@ -59,6 +59,11 @@ def main() -> int:
         action="store_true",
         help="Validate project structure without running test suites.",
     )
+    parser.add_argument(
+        "--project",
+        choices=PROJECTS,
+        help="Run the test suite for one documented project after layout checks.",
+    )
     arguments = parser.parse_args()
 
     issues = find_layout_issues(arguments.root)
@@ -79,7 +84,8 @@ def main() -> int:
     if arguments.check_only:
         return 0
 
-    for project in PROJECTS:
+    selected_projects = (arguments.project,) if arguments.project else PROJECTS
+    for project in selected_projects:
         completed = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "-q"],
             cwd=arguments.root / "projects" / project,
@@ -96,7 +102,8 @@ def main() -> int:
             return completed.returncode
         print(f"[PASS] {project}")
 
-    print(f"Portfolio test suites passed: {len(PROJECTS)} projects.")
+    project_label = "project" if len(selected_projects) == 1 else "projects"
+    print(f"Portfolio test suites passed: {len(selected_projects)} {project_label}.")
     return 0
 
 
