@@ -1,0 +1,6 @@
+customer_id,segment,region
+C-001,enterprise,north
+C-002,enterprise,north
+C-003,midmarket,south
+C-004,midmarket,west
+C-005,startup,west

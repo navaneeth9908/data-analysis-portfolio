@@ -52,6 +52,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_iqr_outliers.csv \
 PYTHONPATH=src python -m auto_eda.cli examples/sample_constant_columns.csv \
   --output /tmp/auto_eda_constant_columns.md
 
+# Flag likely identifier columns with many distinct text values.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_high_cardinality_customers.csv \
+  --output /tmp/auto_eda_high_cardinality.md
+
 # Inspect Pearson correlations using rows populated in both numeric columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
   --output /tmp/auto_eda_correlations.md
@@ -177,6 +181,16 @@ The `sample_constant_columns.csv` example adds this section, so fields that do n
 | status | text | active | 3 |
 ```
 
+The `sample_high_cardinality_customers.csv` example adds this section, so likely identifier fields are separated from ordinary categorical dimensions:
+
+```markdown
+## High-cardinality text columns
+
+| Column | Unique values | Non-null rows | Unique rate |
+| --- | ---: | ---: | ---: |
+| customer_id | 5 | 5 | 100.0% |
+```
+
 The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation.
 
 ```markdown
@@ -204,6 +218,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
+- Text columns with at least four populated values and at least 80% distinct values appear in a `High-cardinality text columns` table so likely identifiers are not mistaken for low-cardinality dimensions.
 - Empty header names and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
@@ -224,6 +239,7 @@ projects/01-auto-eda-analyst/
   examples/sample_constant_columns.csv
   examples/sample_duplicate_rows.csv
   examples/sample_empty_columns.csv
+  examples/sample_high_cardinality_customers.csv
   examples/sample_iqr_outliers.csv
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
@@ -242,6 +258,7 @@ projects/01-auto-eda-analyst/
 - Duplicate-row data-quality signal in the generated report.
 - Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.
+- High-cardinality text-column signal for likely identifiers or sparse dimensions.
 - Schema warnings for empty column headers and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - ISO date-column inference with earliest/latest date range reporting.

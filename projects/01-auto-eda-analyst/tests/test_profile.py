@@ -150,6 +150,29 @@ def test_rendered_report_flags_columns_with_no_populated_values(tmp_path: Path) 
     assert "| notes |" not in empty_columns_section
 
 
+def test_rendered_report_flags_high_cardinality_text_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "high_cardinality_customers.csv"
+    source_file.write_text(
+        "customer_id,segment\n"
+        "C-001,enterprise\n"
+        "C-002,enterprise\n"
+        "C-003,midmarket\n"
+        "C-004,midmarket\n"
+        "C-005,startup\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## High-cardinality text columns\n\n" in report
+    assert "| Column | Unique values | Non-null rows | Unique rate |" in report
+    assert "| customer_id | 5 | 5 | 100.0% |" in report
+    high_cardinality_section = report.split(
+        "## High-cardinality text columns", 1
+    )[1].split("## Categorical summary", 1)[0]
+    assert "| segment |" not in high_cardinality_section
+
+
 def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> None:
     source_file = tmp_path / "empty_header.csv"
     source_file.write_text(

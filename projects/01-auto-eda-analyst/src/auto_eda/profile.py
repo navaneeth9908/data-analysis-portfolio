@@ -363,6 +363,13 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         for column in dataset.columns
         if (value := _constant_column_value(column)) is not None
     ]
+    high_cardinality_columns = [
+        column
+        for column in dataset.columns
+        if column.unique_count is not None
+        and column.non_null_count >= 4
+        and column.unique_count / column.non_null_count >= 0.8
+    ]
     analyst_summary = [
         "## Analyst summary",
         "",
@@ -547,6 +554,22 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         for column in outlier_columns:
             values = ", ".join(f"{value:.2f}" for value in column.outlier_values)
             lines.append(f"| {column.name} | {len(column.outlier_values)} | {values} |")
+    if high_cardinality_columns:
+        lines.extend(
+            [
+                "",
+                "## High-cardinality text columns",
+                "",
+                "| Column | Unique values | Non-null rows | Unique rate |",
+                "| --- | ---: | ---: | ---: |",
+                *[
+                    f"| {column.name} | {column.unique_count} | "
+                    f"{column.non_null_count} | "
+                    f"{(column.unique_count / column.non_null_count):.1%} |"
+                    for column in high_cardinality_columns
+                ],
+            ]
+        )
     categorical_columns = [
         column for column in dataset.columns if column.unique_count is not None
     ]

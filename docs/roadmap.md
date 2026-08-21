@@ -37,6 +37,7 @@ Progress:
 - Added configurable single-character CSV delimiters plus a semicolon-export example so analyst reports can ingest common regional/business-system exports without preprocessing.
 - Added an empty-column report section and bundled example so fields with no populated values are separated from partially missing columns before analysis.
 - Added explicit CLI validation for `--delimiter` so multi-character separators fail fast with a clear message before report output is created.
+- Added high-cardinality text-column warnings so likely identifiers are separated from ordinary categorical dimensions in EDA reports.
 
 ### 2. NL2SQL Analytics Agent
 
