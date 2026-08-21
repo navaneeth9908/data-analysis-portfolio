@@ -20,6 +20,13 @@ def _positive_integer(value: str) -> int:
     return parsed
 
 
+def _single_character_delimiter(value: str) -> str:
+    """Parse a CSV delimiter accepted by csv.reader."""
+    if len(value) != 1:
+        raise argparse.ArgumentTypeError("--delimiter must be exactly one character")
+    return value
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line parser for CSV profiling."""
     parser = argparse.ArgumentParser(
@@ -35,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--delimiter",
+        type=_single_character_delimiter,
         default=",",
         help="Single-character CSV delimiter to use when reading the file (default: comma)",
     )

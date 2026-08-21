@@ -255,3 +255,31 @@ def test_cli_rejects_a_non_positive_categorical_limit(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "--categorical-limit must be at least 1" in result.stderr
+
+
+def test_cli_rejects_a_multi_character_delimiter(tmp_path: Path) -> None:
+    source_file = tmp_path / "customers.csv"
+    source_file.write_text("customer||spend\nAster||10.5\n", encoding="utf-8")
+    output_file = tmp_path / "eda_report.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+            "--delimiter",
+            "||",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 2
+    assert "--delimiter must be exactly one character" in result.stderr
+    assert not output_file.exists()

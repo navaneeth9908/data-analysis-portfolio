@@ -199,7 +199,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 
 ## Input contract
 
-- Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing. Use `--delimiter` for single-character delimiters such as semicolons when exported data is not comma-separated.
+- Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing. Use `--delimiter` for single-character delimiters such as semicolons when exported data is not comma-separated; longer delimiter values are rejected with a clear CLI validation error before report files are written.
 - Blank cells count as missing values, and columns with missing values are ranked by missing count and percentage in a dedicated report section.
 - Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.

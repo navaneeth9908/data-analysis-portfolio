@@ -36,6 +36,7 @@ Progress:
 - Added complete-row coverage to the analyst summary and data-quality section so reports show how many records are immediately analysis-ready across every column.
 - Added configurable single-character CSV delimiters plus a semicolon-export example so analyst reports can ingest common regional/business-system exports without preprocessing.
 - Added an empty-column report section and bundled example so fields with no populated values are separated from partially missing columns before analysis.
+- Added explicit CLI validation for `--delimiter` so multi-character separators fail fast with a clear message before report output is created.
 
 ### 2. NL2SQL Analytics Agent
 
