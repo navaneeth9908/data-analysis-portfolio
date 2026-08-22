@@ -290,6 +290,28 @@ def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) 
     assert "| sales | refunds | 3 | -1.00 |" in report
 
 
+def test_analyst_summary_highlights_the_strongest_numeric_correlation(
+    tmp_path: Path,
+) -> None:
+    source_file = tmp_path / "growth_drivers.csv"
+    source_file.write_text(
+        "visitors,discount_rate,revenue\n"
+        "1,1,10\n"
+        "2,4,20\n"
+        "3,2,30\n"
+        "4,3,40\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert (
+        "- Strongest numeric relationship: visitors and revenue have Pearson r "
+        "1.00 over 4 paired rows.\n"
+        in report
+    )
+
+
 def test_missingness_svg_escapes_a_column_name_for_safe_rendering(tmp_path: Path) -> None:
     source_file = tmp_path / "unsafe_header.csv"
     source_file.write_text("<cost & margin>\nvalue\n", encoding="utf-8")

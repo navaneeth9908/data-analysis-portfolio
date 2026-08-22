@@ -38,6 +38,7 @@ Progress:
 - Added an empty-column report section and bundled example so fields with no populated values are separated from partially missing columns before analysis.
 - Added explicit CLI validation for `--delimiter` so multi-character separators fail fast with a clear message before report output is created.
 - Added high-cardinality text-column warnings so likely identifiers are separated from ordinary categorical dimensions in EDA reports.
+- Added a strongest numeric-relationship summary bullet so reports spotlight the highest absolute Pearson correlation before the detailed numeric-correlation table.
 
 ### 2. NL2SQL Analytics Agent
 

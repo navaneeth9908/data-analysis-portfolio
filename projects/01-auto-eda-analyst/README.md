@@ -16,7 +16,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
-- distills profiling results into an analyst-ready summary of data quality, complete-row coverage, missingness priority, numeric ranges, and detected outliers
+- distills profiling results into an analyst-ready summary of data quality, complete-row coverage, missingness priority, numeric ranges, detected outliers, and the strongest numeric relationship
 
 ## Quick start
 
@@ -191,9 +191,11 @@ The `sample_high_cardinality_customers.csv` example adds this section, so likely
 | customer_id | 5 | 5 | 100.0% |
 ```
 
-The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation.
+The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation. The analyst summary also calls out the strongest relationship so reviewers see the highest-signal numeric pair before the detailed table.
 
 ```markdown
+- Strongest numeric relationship: sales and refunds have Pearson r -1.00 over 3 paired rows.
+
 ## Numeric correlations
 
 | First column | Second column | Pairwise rows | Pearson r |
@@ -227,7 +229,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - A populated numeric or text column with exactly one distinct value appears in a `Constant columns` table; all-missing columns do not appear.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
-- Every report starts with an analyst summary of dataset shape, data quality, and complete-row coverage. It includes numeric ranges when numeric columns are present and an outlier watchlist only when the IQR check finds values to review.
+- Every report starts with an analyst summary of dataset shape, data quality, and complete-row coverage. It includes numeric ranges when numeric columns are present, an outlier watchlist only when the IQR check finds values to review, and the strongest absolute Pearson correlation when numeric-column pairs are available.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -254,7 +256,7 @@ projects/01-auto-eda-analyst/
 ## Current capabilities
 
 - Local CSV profiling with row counts, complete-row coverage, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
-- Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, and IQR outlier watchlists.
+- Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, IQR outlier watchlists, and strongest numeric relationships.
 - Duplicate-row data-quality signal in the generated report.
 - Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.

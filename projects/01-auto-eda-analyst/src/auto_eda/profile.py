@@ -332,6 +332,22 @@ def _constant_column_value(column: ColumnProfile) -> str | None:
     return None
 
 
+def _strongest_numeric_correlation(
+    correlations: tuple[NumericCorrelation, ...],
+) -> NumericCorrelation | None:
+    """Return the strongest absolute numeric relationship with stable tie-breaks."""
+    if not correlations:
+        return None
+    return sorted(
+        correlations,
+        key=lambda correlation: (
+            -abs(correlation.pearson_r),
+            correlation.first_column,
+            correlation.second_column,
+        ),
+    )[0]
+
+
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
     numeric_columns = [
@@ -370,6 +386,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         and column.non_null_count >= 4
         and column.unique_count / column.non_null_count >= 0.8
     ]
+    strongest_correlation = _strongest_numeric_correlation(dataset.numeric_correlations)
     analyst_summary = [
         "## Analyst summary",
         "",
@@ -407,6 +424,15 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             for column in outlier_columns
         )
         analyst_summary.append(f"- Outlier watchlist: {outlier_watchlist}.")
+    if strongest_correlation:
+        row_label = "row" if strongest_correlation.paired_row_count == 1 else "rows"
+        analyst_summary.append(
+            "- Strongest numeric relationship: "
+            f"{strongest_correlation.first_column} and "
+            f"{strongest_correlation.second_column} have Pearson r "
+            f"{strongest_correlation.pearson_r:.2f} over "
+            f"{strongest_correlation.paired_row_count} paired {row_label}."
+        )
     lines = [
         "# Automated EDA Report",
         "",
