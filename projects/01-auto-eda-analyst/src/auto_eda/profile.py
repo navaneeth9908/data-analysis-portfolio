@@ -63,20 +63,21 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
     source_path = Path(path)
     with source_path.open(newline="", encoding="utf-8") as handle:
         reader = csv.reader(handle, delimiter=delimiter)
-        fieldnames = next(reader, None)
-        if not fieldnames:
+        raw_fieldnames = next(reader, None)
+        if not raw_fieldnames:
             raise ValueError("CSV input must include a header row")
         schema_warnings = [
             f"Empty header name at column {index}."
-            for index, name in enumerate(fieldnames, start=1)
+            for index, name in enumerate(raw_fieldnames, start=1)
             if not name.strip()
         ]
+        fieldnames = _deduplicate_fieldnames(raw_fieldnames, schema_warnings)
         rows = []
         for row_number, values in enumerate(reader, start=2):
-            if len(values) != len(fieldnames):
+            if len(values) != len(raw_fieldnames):
                 noun = "value" if len(values) == 1 else "values"
                 schema_warnings.append(
-                    f"Row {row_number} has {len(values)} {noun}; expected {len(fieldnames)}."
+                    f"Row {row_number} has {len(values)} {noun}; expected {len(raw_fieldnames)}."
                 )
             rows.append(
                 {
@@ -167,6 +168,26 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
         columns=tuple(columns),
         numeric_correlations=_numeric_correlations(rows, numeric_column_names),
     )
+
+
+def _deduplicate_fieldnames(
+    raw_fieldnames: list[str], schema_warnings: list[str]
+) -> list[str]:
+    """Return unique CSV column names while preserving first occurrences."""
+    occurrence_counts: Counter[str] = Counter()
+    fieldnames: list[str] = []
+    for index, name in enumerate(raw_fieldnames, start=1):
+        occurrence_counts[name] += 1
+        if occurrence_counts[name] == 1:
+            fieldnames.append(name)
+            continue
+        deduplicated_name = f"{name}_{occurrence_counts[name]}"
+        schema_warnings.append(
+            f"Duplicate header name '{name}' at column {index}; "
+            f"renamed to '{deduplicated_name}'."
+        )
+        fieldnames.append(deduplicated_name)
+    return fieldnames
 
 
 def _as_numeric_values(values: list[str]) -> list[float] | None:

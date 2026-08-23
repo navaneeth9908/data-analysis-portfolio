@@ -39,6 +39,7 @@ Progress:
 - Added explicit CLI validation for `--delimiter` so multi-character separators fail fast with a clear message before report output is created.
 - Added high-cardinality text-column warnings so likely identifiers are separated from ordinary categorical dimensions in EDA reports.
 - Added a strongest numeric-relationship summary bullet so reports spotlight the highest absolute Pearson correlation before the detailed numeric-correlation table.
+- Added duplicate-header schema warnings with deterministic header renaming so repeated CSV field names are profiled separately instead of silently overwriting values.
 
 ### 2. NL2SQL Analytics Agent
 

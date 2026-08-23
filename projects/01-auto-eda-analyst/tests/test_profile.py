@@ -186,6 +186,31 @@ def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> Non
     assert "Schema warnings:\n- Empty header name at column 1.\n" in report
 
 
+def test_profile_renames_duplicate_header_names_and_warns(tmp_path: Path) -> None:
+    source_file = tmp_path / "duplicate_headers.csv"
+    source_file.write_text(
+        "customer,spend,spend\n"
+        "Aster,10.5,11.0\n"
+        "Birch,19.5,21.0\n",
+        encoding="utf-8",
+    )
+
+    dataset = profile_csv(source_file)
+    report = render_markdown_report(dataset)
+
+    assert [column.name for column in dataset.columns] == [
+        "customer",
+        "spend",
+        "spend_2",
+    ]
+    assert (
+        "- Duplicate header name 'spend' at column 3; renamed to 'spend_2'.\n"
+        in report
+    )
+    assert "| spend | numeric | 0 | 2 | 15.00 | 10.50 | 19.50 |" in report
+    assert "| spend_2 | numeric | 0 | 2 | 16.00 | 11.00 | 21.00 |" in report
+
+
 def test_rendered_report_warns_about_inconsistent_row_widths(tmp_path: Path) -> None:
     source_file = tmp_path / "inconsistent_rows.csv"
     source_file.write_text(
