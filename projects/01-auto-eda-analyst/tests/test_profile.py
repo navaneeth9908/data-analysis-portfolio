@@ -183,7 +183,29 @@ def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> Non
 
     report = render_markdown_report(profile_csv(source_file))
 
-    assert "Schema warnings:\n- Empty header name at column 1.\n" in report
+    assert (
+        "Schema warnings:\n- Empty header name at column 1; renamed to 'column_1'.\n"
+        in report
+    )
+
+
+def test_profile_renames_empty_header_names_for_report_tables(tmp_path: Path) -> None:
+    source_file = tmp_path / "blank_header.csv"
+    source_file.write_text(
+        ",spend\n"
+        "Aster,10.5\n",
+        encoding="utf-8",
+    )
+
+    dataset = profile_csv(source_file)
+    report = render_markdown_report(dataset)
+
+    assert [column.name for column in dataset.columns] == ["column_1", "spend"]
+    assert (
+        "- Empty header name at column 1; renamed to 'column_1'.\n"
+        in report
+    )
+    assert "| column_1 | text | 0 | 1 | — | — | — |" in report
 
 
 def test_profile_renames_duplicate_header_names_and_warns(tmp_path: Path) -> None:

@@ -36,7 +36,7 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_customers.csv \
 PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_rows.csv \
   --output /tmp/auto_eda_duplicates.md
 
-# Inspect schema warnings for an empty header and uneven data rows.
+# Inspect schema warnings for an empty header that is renamed plus uneven data rows.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
   --output /tmp/auto_eda_schema_warnings.md
 
@@ -153,6 +153,14 @@ Complete rows: 2 (66.7%)
 
 The `sample_duplicate_rows.csv` example produces `Duplicate rows: 1`.
 
+The `sample_schema_warnings.csv` example renames a blank first header to a stable
+placeholder before profiling, while still preserving a warning for analyst review:
+
+```markdown
+Schema warnings:
+- Empty header name at column 1; renamed to 'column_1'.
+```
+
 The `sample_duplicate_headers.csv` example surfaces duplicate CSV headers before
 profiling so the second copy is not silently overwritten:
 
@@ -233,7 +241,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
 - Text columns with at least four populated values and at least 80% distinct values appear in a `High-cardinality text columns` table so likely identifiers are not mistaken for low-cardinality dimensions.
-- Empty header names, duplicate header names, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, and repeated headers are renamed with numeric suffixes before profiling.
+- Empty header names, duplicate header names, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, and repeated headers are renamed with numeric suffixes before profiling.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
@@ -274,7 +282,7 @@ projects/01-auto-eda-analyst/
 - Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
-- Schema warnings for empty or duplicate column headers and data rows that do not match header width.
+- Schema warnings for empty or duplicate column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics.
 - ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.

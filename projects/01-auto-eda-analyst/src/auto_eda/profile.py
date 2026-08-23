@@ -66,11 +66,7 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
         raw_fieldnames = next(reader, None)
         if not raw_fieldnames:
             raise ValueError("CSV input must include a header row")
-        schema_warnings = [
-            f"Empty header name at column {index}."
-            for index, name in enumerate(raw_fieldnames, start=1)
-            if not name.strip()
-        ]
+        schema_warnings: list[str] = []
         fieldnames = _deduplicate_fieldnames(raw_fieldnames, schema_warnings)
         rows = []
         for row_number, values in enumerate(reader, start=2):
@@ -173,17 +169,23 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
 def _deduplicate_fieldnames(
     raw_fieldnames: list[str], schema_warnings: list[str]
 ) -> list[str]:
-    """Return unique CSV column names while preserving first occurrences."""
+    """Return display-safe, unique CSV column names while preserving order."""
     occurrence_counts: Counter[str] = Counter()
     fieldnames: list[str] = []
     for index, name in enumerate(raw_fieldnames, start=1):
-        occurrence_counts[name] += 1
-        if occurrence_counts[name] == 1:
-            fieldnames.append(name)
+        normalized_name = name
+        if not name.strip():
+            normalized_name = f"column_{index}"
+            schema_warnings.append(
+                f"Empty header name at column {index}; renamed to '{normalized_name}'."
+            )
+        occurrence_counts[normalized_name] += 1
+        if occurrence_counts[normalized_name] == 1:
+            fieldnames.append(normalized_name)
             continue
-        deduplicated_name = f"{name}_{occurrence_counts[name]}"
+        deduplicated_name = f"{normalized_name}_{occurrence_counts[normalized_name]}"
         schema_warnings.append(
-            f"Duplicate header name '{name}' at column {index}; "
+            f"Duplicate header name '{normalized_name}' at column {index}; "
             f"renamed to '{deduplicated_name}'."
         )
         fieldnames.append(deduplicated_name)
