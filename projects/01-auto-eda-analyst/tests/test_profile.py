@@ -173,6 +173,29 @@ def test_rendered_report_flags_high_cardinality_text_columns(tmp_path: Path) -> 
     assert "| segment |" not in high_cardinality_section
 
 
+def test_rendered_report_summarizes_boolean_flag_text_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "boolean_flags.csv"
+    source_file.write_text(
+        "customer,active,renewal_ready\n"
+        "Aster,yes,true\n"
+        "Birch,no,false\n"
+        "Cedar,yes,false\n"
+        "Dune,,true\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Boolean flag summary\n\n" in report
+    assert "| Column | True-like values | False-like values | Non-null rows |" in report
+    assert "| active | 2 | 1 | 3 |" in report
+    assert "| renewal_ready | 2 | 2 | 4 |" in report
+    boolean_section = report.split("## Boolean flag summary", 1)[1].split(
+        "## Categorical summary", 1
+    )[0]
+    assert "| customer |" not in boolean_section
+
+
 def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> None:
     source_file = tmp_path / "empty_header.csv"
     source_file.write_text(

@@ -38,6 +38,7 @@ Progress:
 - Added an empty-column report section and bundled example so fields with no populated values are separated from partially missing columns before analysis.
 - Added explicit CLI validation for `--delimiter` so multi-character separators fail fast with a clear message before report output is created.
 - Added high-cardinality text-column warnings so likely identifiers are separated from ordinary categorical dimensions in EDA reports.
+- Added boolean flag summaries so yes/no, y/n, and true/false text columns show operational flag counts before categorical summaries.
 - Added a strongest numeric-relationship summary bullet so reports spotlight the highest absolute Pearson correlation before the detailed numeric-correlation table.
 - Added duplicate-header schema warnings with deterministic header renaming so repeated CSV field names are profiled separately instead of silently overwriting values.
 - Added deterministic blank-header placeholder names so CSVs with unnamed fields remain profiled in report tables while preserving schema warnings.

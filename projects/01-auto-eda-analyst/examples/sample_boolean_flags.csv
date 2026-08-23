@@ -1,0 +1,5 @@
+customer,active_customer,renewal_ready,segment
+Aster,yes,true,enterprise
+Birch,no,false,midmarket
+Cedar,yes,false,enterprise
+Dune,yes,true,startup

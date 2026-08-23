@@ -12,6 +12,10 @@ from pathlib import Path
 from statistics import mean, median
 
 
+_BOOLEAN_TRUE_VALUES = frozenset({"true", "yes", "y"})
+_BOOLEAN_FALSE_VALUES = frozenset({"false", "no", "n"})
+
+
 @dataclass(frozen=True)
 class ColumnProfile:
     """A compact profile for one CSV column."""
@@ -371,6 +375,23 @@ def _strongest_numeric_correlation(
     )[0]
 
 
+def _boolean_flag_counts(column: ColumnProfile) -> tuple[int, int] | None:
+    """Return true/false-like counts when a text column is a boolean flag."""
+    if not column.categorical_values:
+        return None
+    true_count = 0
+    false_count = 0
+    for value, count in column.categorical_values:
+        normalized_value = value.strip().lower()
+        if normalized_value in _BOOLEAN_TRUE_VALUES:
+            true_count += count
+        elif normalized_value in _BOOLEAN_FALSE_VALUES:
+            false_count += count
+        else:
+            return None
+    return true_count, false_count
+
+
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
     numeric_columns = [
@@ -408,6 +429,12 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         if column.unique_count is not None
         and column.non_null_count >= 4
         and column.unique_count / column.non_null_count >= 0.8
+    ]
+    boolean_flag_columns = [
+        (column, true_count, false_count)
+        for column in dataset.columns
+        if (counts := _boolean_flag_counts(column)) is not None
+        for true_count, false_count in [counts]
     ]
     strongest_correlation = _strongest_numeric_correlation(dataset.numeric_correlations)
     analyst_summary = [
@@ -616,6 +643,21 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                     f"{column.non_null_count} | "
                     f"{(column.unique_count / column.non_null_count):.1%} |"
                     for column in high_cardinality_columns
+                ],
+            ]
+        )
+    if boolean_flag_columns:
+        lines.extend(
+            [
+                "",
+                "## Boolean flag summary",
+                "",
+                "| Column | True-like values | False-like values | Non-null rows |",
+                "| --- | ---: | ---: | ---: |",
+                *[
+                    f"| {column.name} | {true_count} | {false_count} | "
+                    f"{column.non_null_count} |"
+                    for column, true_count, false_count in boolean_flag_columns
                 ],
             ]
         )
