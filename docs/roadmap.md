@@ -42,6 +42,7 @@ Progress:
 - Added a strongest numeric-relationship summary bullet so reports spotlight the highest absolute Pearson correlation before the detailed numeric-correlation table.
 - Added duplicate-header schema warnings with deterministic header renaming so repeated CSV field names are profiled separately instead of silently overwriting values.
 - Added deterministic blank-header placeholder names so CSVs with unnamed fields remain profiled in report tables while preserving schema warnings.
+- Added business-formatted numeric parsing so currency symbols, thousands separators, and parenthesized negatives are still summarized as numeric values.
 
 ### 2. NL2SQL Analytics Agent
 

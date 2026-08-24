@@ -11,7 +11,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - reports complete-row coverage for downstream analysis readiness
 - flags redundant duplicate data rows
 - flags columns that have no populated values before analysts build downstream assumptions
-- infers whether every populated value in a column is numeric
+- infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols or thousands separators
 - calculates mean, minimum, maximum, quartiles, and median for numeric columns
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
@@ -63,6 +63,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_high_cardinality_customers
 # Summarize yes/no or true/false operational flag columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_boolean_flags.csv \
   --output /tmp/auto_eda_boolean_flags.md
+
+# Parse common business-formatted revenue values as numeric.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_business_numbers.csv \
+  --output /tmp/auto_eda_business_numbers.md
 
 # Inspect Pearson correlations using rows populated in both numeric columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
@@ -226,6 +230,12 @@ The `sample_boolean_flags.csv` example adds this section, so operational flags a
 | renewal_ready | 2 | 2 | 4 |
 ```
 
+The `sample_business_numbers.csv` example keeps common finance/export formatting numeric, including currency symbols, thousands separators, and parenthesized negatives:
+
+```markdown
+| booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |
+```
+
 The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation. The analyst summary also calls out the strongest relationship so reviewers see the highest-signal numeric pair before the detailed table.
 
 ```markdown
@@ -258,7 +268,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Text columns with at least four populated values and at least 80% distinct values appear in a `High-cardinality text columns` table so likely identifiers are not mistaken for low-cardinality dimensions.
 - Text columns whose populated values are only yes/no, y/n, or true/false appear in a `Boolean flag summary` table with true-like and false-like counts while still remaining visible in categorical summaries.
 - Empty header names, duplicate header names, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, and repeated headers are renamed with numeric suffixes before profiling.
-- A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number.
+- A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
@@ -274,6 +284,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 ```text
 projects/01-auto-eda-analyst/
   examples/sample_boolean_flags.csv
+  examples/sample_business_numbers.csv
   examples/sample_customers.csv
   examples/sample_constant_columns.csv
   examples/sample_duplicate_headers.csv
@@ -301,7 +312,7 @@ projects/01-auto-eda-analyst/
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
 - Boolean flag summary for yes/no, y/n, or true/false text columns.
 - Schema warnings for empty or duplicate column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
-- Conservative numeric-type inference, distribution quartiles, and summary statistics.
+- Conservative numeric-type inference, distribution quartiles, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
 - ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.
 - Optional standalone SVG missingness chart artifacts via `--chart-output`.

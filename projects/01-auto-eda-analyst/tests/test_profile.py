@@ -392,6 +392,21 @@ def test_missingness_svg_escapes_a_column_name_for_safe_rendering(tmp_path: Path
     assert "<cost & margin>" not in chart
 
 
+def test_profile_treats_business_formatted_numbers_as_numeric(tmp_path: Path) -> None:
+    source_file = tmp_path / "currency_sales.csv"
+    source_file.write_text(
+        "customer,revenue\n"
+        "Aster,\"$1,200.50\"\n"
+        "Birch,$900.25\n"
+        "Cedar,($100.75)\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
+
+
 def test_profile_accepts_a_header_without_data_rows(tmp_path: Path) -> None:
     source_file = tmp_path / "header_only.csv"
     source_file.write_text("customer,spend\n", encoding="utf-8")

@@ -201,10 +201,22 @@ def _as_numeric_values(values: list[str]) -> list[float] | None:
     parsed: list[float] = []
     try:
         for value in values:
-            parsed.append(float(value))
+            parsed.append(_parse_business_number(value))
     except ValueError:
         return None
     return parsed
+
+
+def _parse_business_number(value: str) -> float:
+    """Parse standard numbers plus common business currency formatting."""
+    normalized = value.strip().replace(",", "")
+    is_parenthesized_negative = normalized.startswith("(") and normalized.endswith(")")
+    if is_parenthesized_negative:
+        normalized = normalized[1:-1].strip()
+    if normalized[:1] in {"$", "€", "£"}:
+        normalized = normalized[1:].strip()
+    parsed = float(normalized)
+    return -parsed if is_parenthesized_negative else parsed
 
 
 def _as_iso_dates(values: list[str]) -> list[date] | None:
