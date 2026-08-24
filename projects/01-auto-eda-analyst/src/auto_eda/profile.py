@@ -270,7 +270,7 @@ def _numeric_correlations(
     for first_index, first_column in enumerate(numeric_column_names):
         for second_column in numeric_column_names[first_index + 1 :]:
             paired_values = [
-                (float(first_value), float(second_value))
+                (_parse_business_number(first_value), _parse_business_number(second_value))
                 for row in rows
                 if (first_value := str(row.get(first_column) or "").strip())
                 and (second_value := str(row.get(second_column) or "").strip())

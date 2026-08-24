@@ -407,6 +407,22 @@ def test_profile_treats_business_formatted_numbers_as_numeric(tmp_path: Path) ->
     assert "| revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
 
 
+def test_profile_correlates_business_formatted_numeric_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "currency_drivers.csv"
+    source_file.write_text(
+        "month,revenue,refunds\n"
+        "January,\"$1,000.00\",($50.00)\n"
+        "February,\"$2,000.00\",($100.00)\n"
+        "March,\"$3,000.00\",($150.00)\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Numeric correlations" in report
+    assert "| revenue | refunds | 3 | -1.00 |" in report
+
+
 def test_profile_accepts_a_header_without_data_rows(tmp_path: Path) -> None:
     source_file = tmp_path / "header_only.csv"
     source_file.write_text("customer,spend\n", encoding="utf-8")

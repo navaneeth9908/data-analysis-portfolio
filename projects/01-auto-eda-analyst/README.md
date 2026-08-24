@@ -12,7 +12,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags redundant duplicate data rows
 - flags columns that have no populated values before analysts build downstream assumptions
 - infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols or thousands separators
-- calculates mean, minimum, maximum, quartiles, and median for numeric columns
+- calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - writes a deterministic Markdown report that can be reviewed and versioned
@@ -67,6 +67,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_boolean_flags.csv \
 # Parse common business-formatted revenue values as numeric.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_business_numbers.csv \
   --output /tmp/auto_eda_business_numbers.md
+
+# Correlate business-formatted currency columns without preprocessing.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_currency_correlations.csv \
+  --output /tmp/auto_eda_currency_correlations.md
 
 # Inspect Pearson correlations using rows populated in both numeric columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_correlations.csv \
@@ -234,6 +238,18 @@ The `sample_business_numbers.csv` example keeps common finance/export formatting
 
 ```markdown
 | booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |
+```
+
+The `sample_currency_correlations.csv` example applies the same parsing before calculating pairwise numeric relationships, so currency exports can be correlated without manual cleanup:
+
+```markdown
+- Strongest numeric relationship: revenue and refunds have Pearson r -1.00 over 3 paired rows.
+
+## Numeric correlations
+
+| First column | Second column | Pairwise rows | Pearson r |
+| --- | --- | ---: | ---: |
+| revenue | refunds | 3 | -1.00 |
 ```
 
 The `sample_numeric_correlations.csv` example adds this section; its missing April sales value is excluded from the pairwise calculation. The analyst summary also calls out the strongest relationship so reviewers see the highest-signal numeric pair before the detailed table.
