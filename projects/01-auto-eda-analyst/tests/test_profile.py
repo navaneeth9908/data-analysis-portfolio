@@ -431,6 +431,29 @@ def test_profile_treats_business_formatted_numbers_as_numeric(tmp_path: Path) ->
     assert "| revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
 
 
+def test_rendered_report_flags_mixed_numeric_text_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "mixed_amounts.csv"
+    source_file.write_text(
+        "customer,booked_amount\n"
+        "Aster,\"$1,200.00\"\n"
+        "Birch,pending\n"
+        "Cedar,950\n"
+        "Dune,not available\n"
+        "Elm,($25.00)\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Mixed-type warnings\n\n" in report
+    assert "| Column | Numeric-like values | Non-numeric examples |" in report
+    assert "| booked_amount | 3 of 5 | not available, pending |" in report
+    mixed_type_section = report.split("## Mixed-type warnings", 1)[1].split(
+        "## Categorical summary", 1
+    )[0]
+    assert "| customer |" not in mixed_type_section
+
+
 def test_profile_correlates_business_formatted_numeric_columns(tmp_path: Path) -> None:
     source_file = tmp_path / "currency_drivers.csv"
     source_file.write_text(

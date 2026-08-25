@@ -37,6 +37,8 @@ class ColumnProfile:
     top_value: str | None = None
     top_value_count: int | None = None
     categorical_values: tuple[tuple[str, int], ...] = ()
+    numeric_parseable_count: int | None = None
+    numeric_parse_error_examples: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -107,6 +109,11 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
         is_numeric = bool(non_null_values) and numeric_values is not None
         date_values = _as_iso_dates(non_null_values) if not is_numeric else None
         is_date = bool(non_null_values) and date_values is not None
+        numeric_parseable_count, numeric_parse_error_examples = (
+            _numeric_parse_coverage(non_null_values)
+            if not is_numeric and not is_date
+            else (0, ())
+        )
         first_quartile = (
             _linear_percentile(sorted_numeric_values, 0.25)
             if sorted_numeric_values
@@ -153,6 +160,12 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
                 categorical_values=tuple(
                     sorted(value_counts.items(), key=lambda item: (-item[1], item[0]))
                 ),
+                numeric_parseable_count=(
+                    numeric_parseable_count
+                    if numeric_parseable_count and numeric_parse_error_examples
+                    else None
+                ),
+                numeric_parse_error_examples=numeric_parse_error_examples,
             )
         )
 
@@ -210,6 +223,20 @@ def _as_numeric_values(values: list[str]) -> list[float] | None:
     except ValueError:
         return None
     return parsed
+
+
+def _numeric_parse_coverage(values: list[str]) -> tuple[int, tuple[str, ...]]:
+    """Return numeric-like row count plus deterministic non-numeric examples."""
+    parseable_count = 0
+    invalid_values = set()
+    for value in values:
+        try:
+            _parse_business_number(value)
+        except ValueError:
+            invalid_values.add(value)
+        else:
+            parseable_count += 1
+    return parseable_count, tuple(sorted(invalid_values, key=str.casefold)[:3])
 
 
 def _parse_business_number(value: str) -> float:
@@ -453,6 +480,11 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         if (counts := _boolean_flag_counts(column)) is not None
         for true_count, false_count in [counts]
     ]
+    mixed_type_columns = [
+        column
+        for column in dataset.columns
+        if column.numeric_parseable_count and column.numeric_parse_error_examples
+    ]
     strongest_correlation = _strongest_numeric_correlation(dataset.numeric_correlations)
     analyst_summary = [
         "## Analyst summary",
@@ -675,6 +707,22 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                     f"| {column.name} | {true_count} | {false_count} | "
                     f"{column.non_null_count} |"
                     for column, true_count, false_count in boolean_flag_columns
+                ],
+            ]
+        )
+    if mixed_type_columns:
+        lines.extend(
+            [
+                "",
+                "## Mixed-type warnings",
+                "",
+                "| Column | Numeric-like values | Non-numeric examples |",
+                "| --- | ---: | --- |",
+                *[
+                    f"| {column.name} | {column.numeric_parseable_count} of "
+                    f"{column.non_null_count} | "
+                    f"{', '.join(column.numeric_parse_error_examples)} |"
+                    for column in mixed_type_columns
                 ],
             ]
         )

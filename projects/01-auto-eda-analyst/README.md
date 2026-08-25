@@ -13,6 +13,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags columns that have no populated values before analysts build downstream assumptions
 - infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols or thousands separators
 - calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
+- flags columns that mix numeric-like export values with non-numeric status text before analysts trust them as dimensions
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
 - normalizes accidental whitespace in CSV header names while preserving schema warnings
@@ -72,6 +73,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_boolean_flags.csv \
 # Parse common business-formatted revenue values as numeric.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_business_numbers.csv \
   --output /tmp/auto_eda_business_numbers.md
+
+# Flag amount columns that mix numeric-like values with status text.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_mixed_type_amounts.csv \
+  --output /tmp/auto_eda_mixed_type_amounts.md
 
 # Correlate business-formatted currency columns without preprocessing.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_currency_correlations.csv \
@@ -254,6 +259,18 @@ The `sample_business_numbers.csv` example keeps common finance/export formatting
 | booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |
 ```
 
+The `sample_mixed_type_amounts.csv` example keeps partially numeric status
+fields visible as text while warning that some populated values look like
+amounts:
+
+```markdown
+## Mixed-type warnings
+
+| Column | Numeric-like values | Non-numeric examples |
+| --- | ---: | --- |
+| booked_amount | 3 of 5 | not available, pending |
+```
+
 The `sample_currency_correlations.csv` example applies the same parsing before calculating pairwise numeric relationships, so currency exports can be correlated without manual cleanup:
 
 ```markdown
@@ -299,6 +316,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Text columns whose populated values are only yes/no, y/n, or true/false appear in a `Boolean flag summary` table with true-like and false-like counts while still remaining visible in categorical summaries.
 - Empty header names, duplicate header names, header names with accidental leading/trailing whitespace, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, trimmed headers use the stripped display name, and repeated headers are renamed with numeric suffixes before profiling.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
+- Text columns with at least one numeric-like value and at least one non-numeric value appear in a `Mixed-type warnings` table. The warning reports the count of numeric-like populated values and up to three sorted non-numeric examples, while keeping the column in categorical summaries for review.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
 - A numeric value is an outlier only when it is strictly outside Tukey's 1.5-IQR fences; reported values are sorted and formatted to two decimals.
@@ -322,6 +340,7 @@ projects/01-auto-eda-analyst/
   examples/sample_empty_columns.csv
   examples/sample_high_cardinality_customers.csv
   examples/sample_iqr_outliers.csv
+  examples/sample_mixed_type_amounts.csv
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
@@ -342,6 +361,7 @@ projects/01-auto-eda-analyst/
 - Constant-column signal for populated fields with one distinct value.
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
 - Boolean flag summary for yes/no, y/n, or true/false text columns.
+- Mixed-type warnings for text columns that combine parseable amounts with non-numeric status values.
 - Schema warnings for empty, duplicate, or whitespace-padded column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
 - ISO date-column inference with earliest/latest date range reporting.

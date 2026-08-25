@@ -1,0 +1,6 @@
+customer,booked_amount,stage
+Aster,"$1,200.00",won
+Birch,pending,review
+Cedar,950,won
+Dune,not available,review
+Elm,($25.00),lost
