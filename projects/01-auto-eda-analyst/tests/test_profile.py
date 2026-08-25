@@ -212,6 +212,30 @@ def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> Non
     )
 
 
+def test_profile_trims_header_names_before_rendering(tmp_path: Path) -> None:
+    source_file = tmp_path / "trimmed_headers.csv"
+    source_file.write_text(
+        " customer , spend ,segment\n"
+        "Aster,10.5,enterprise\n"
+        "Birch,19.5,midmarket\n",
+        encoding="utf-8",
+    )
+
+    dataset = profile_csv(source_file)
+    report = render_markdown_report(dataset)
+
+    assert [column.name for column in dataset.columns] == ["customer", "spend", "segment"]
+    assert (
+        "- Header name ' customer ' at column 1 was trimmed to 'customer'.\n"
+        in report
+    )
+    assert (
+        "- Header name ' spend ' at column 2 was trimmed to 'spend'.\n"
+        in report
+    )
+    assert "| spend | numeric | 0 | 2 | 15.00 | 10.50 | 19.50 |" in report
+
+
 def test_profile_renames_empty_header_names_for_report_tables(tmp_path: Path) -> None:
     source_file = tmp_path / "blank_header.csv"
     source_file.write_text(

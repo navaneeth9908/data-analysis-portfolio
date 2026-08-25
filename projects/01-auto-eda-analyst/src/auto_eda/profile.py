@@ -177,11 +177,16 @@ def _deduplicate_fieldnames(
     occurrence_counts: Counter[str] = Counter()
     fieldnames: list[str] = []
     for index, name in enumerate(raw_fieldnames, start=1):
-        normalized_name = name
-        if not name.strip():
+        stripped_name = name.strip()
+        normalized_name = stripped_name
+        if not stripped_name:
             normalized_name = f"column_{index}"
             schema_warnings.append(
                 f"Empty header name at column {index}; renamed to '{normalized_name}'."
+            )
+        elif stripped_name != name:
+            schema_warnings.append(
+                f"Header name '{name}' at column {index} was trimmed to '{normalized_name}'."
             )
         occurrence_counts[normalized_name] += 1
         if occurrence_counts[normalized_name] == 1:

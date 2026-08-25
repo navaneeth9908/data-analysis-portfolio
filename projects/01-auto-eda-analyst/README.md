@@ -15,6 +15,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
 - flags numeric values outside deterministic 1.5-IQR Tukey fences
+- normalizes accidental whitespace in CSV header names while preserving schema warnings
 - writes a deterministic Markdown report that can be reviewed and versioned
 - distills profiling results into an analyst-ready summary of data quality, complete-row coverage, missingness priority, numeric ranges, detected outliers, and the strongest numeric relationship
 
@@ -43,6 +44,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_schema_warnings.csv \
 # Inspect duplicate headers; repeated names are renamed before profiling.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_duplicate_headers.csv \
   --output /tmp/auto_eda_duplicate_headers.md
+
+# Inspect headers with accidental leading/trailing spaces.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_whitespace_headers.csv \
+  --output /tmp/auto_eda_whitespace_headers.md
 
 # Inspect columns that contain no populated values.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_empty_columns.csv \
@@ -181,6 +186,15 @@ Schema warnings:
 - Duplicate header name 'spend' at column 3; renamed to 'spend_2'.
 ```
 
+The `sample_whitespace_headers.csv` example trims accidental export whitespace
+from header names before profiling and keeps a schema warning for review:
+
+```markdown
+Schema warnings:
+- Header name ' customer ' at column 1 was trimmed to 'customer'.
+- Header name ' spend ' at column 2 was trimmed to 'spend'.
+```
+
 The `sample_empty_columns.csv` example adds this section so fields that are
 present in the extract but unusable for analysis are easy to spot:
 
@@ -283,7 +297,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
 - Text columns with at least four populated values and at least 80% distinct values appear in a `High-cardinality text columns` table so likely identifiers are not mistaken for low-cardinality dimensions.
 - Text columns whose populated values are only yes/no, y/n, or true/false appear in a `Boolean flag summary` table with true-like and false-like counts while still remaining visible in categorical summaries.
-- Empty header names, duplicate header names, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, and repeated headers are renamed with numeric suffixes before profiling.
+- Empty header names, duplicate header names, header names with accidental leading/trailing whitespace, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, trimmed headers use the stripped display name, and repeated headers are renamed with numeric suffixes before profiling.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
 - Numeric distributions use 25th/75th percentiles with linear interpolation between adjacent sorted values; median is reported separately.
@@ -312,6 +326,7 @@ projects/01-auto-eda-analyst/
   examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
   examples/sample_semicolon_customers.csv
+  examples/sample_whitespace_headers.csv
   src/auto_eda/profile.py
   src/auto_eda/cli.py
   tests/test_cli.py
@@ -327,7 +342,7 @@ projects/01-auto-eda-analyst/
 - Constant-column signal for populated fields with one distinct value.
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
 - Boolean flag summary for yes/no, y/n, or true/false text columns.
-- Schema warnings for empty or duplicate column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
+- Schema warnings for empty, duplicate, or whitespace-padded column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
 - Conservative numeric-type inference, distribution quartiles, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
 - ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.

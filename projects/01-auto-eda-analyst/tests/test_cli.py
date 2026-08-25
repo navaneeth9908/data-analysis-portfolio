@@ -284,6 +284,33 @@ def test_cli_profiles_business_formatted_numbers_from_the_bundled_example(
     assert "| booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
 
 
+def test_cli_trims_header_names_from_the_bundled_example(tmp_path: Path) -> None:
+    source_file = Path("examples/sample_whitespace_headers.csv")
+    output_file = tmp_path / "eda_whitespace_headers.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "- Header name ' customer ' at column 1 was trimmed to 'customer'." in report
+    assert "- Header name ' spend ' at column 2 was trimmed to 'spend'." in report
+    assert "| spend | numeric | 0 | 3 | 17.00 | 10.50 | 25.00 |" in report
+
+
 def test_cli_rejects_a_non_positive_categorical_limit(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text("segment\nenterprise\n", encoding="utf-8")

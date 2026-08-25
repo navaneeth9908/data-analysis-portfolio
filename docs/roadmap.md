@@ -44,6 +44,7 @@ Progress:
 - Added deterministic blank-header placeholder names so CSVs with unnamed fields remain profiled in report tables while preserving schema warnings.
 - Added business-formatted numeric parsing so currency symbols, thousands separators, and parenthesized negatives are still summarized as numeric values.
 - Extended numeric correlation calculations to reuse business-formatted numeric parsing, so currency-export columns can be compared without preprocessing.
+- Added whitespace-padded header trimming with schema warnings so CSV exports keep clean report column names without hiding source cleanup needs.
 
 ### 2. NL2SQL Analytics Agent
 
