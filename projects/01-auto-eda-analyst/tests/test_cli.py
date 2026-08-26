@@ -147,6 +147,37 @@ def test_cli_renders_iso_date_ranges(tmp_path: Path) -> None:
     assert "| renewal_date | 2026-01-15 | 2026-03-30 | 2 |" in report
 
 
+def test_cli_summarizes_date_coverage_from_the_bundled_example(
+    tmp_path: Path,
+) -> None:
+    source_file = Path("examples/sample_renewals.csv")
+    output_file = tmp_path / "eda_renewals.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "- 3 rows across 4 columns: 1 numeric, 1 date, and 2 text.\n" in report
+    assert (
+        "- Date coverage: renewal_date runs from 2026-01-15 to 2026-03-30 "
+        "across 2 populated rows.\n"
+        in report
+    )
+
 def test_cli_writes_an_svg_missingness_chart_when_requested(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text(

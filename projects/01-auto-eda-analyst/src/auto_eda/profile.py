@@ -447,12 +447,33 @@ def _boolean_flag_counts(column: ColumnProfile) -> tuple[int, int] | None:
     return true_count, false_count
 
 
+def _profile_type_summary(
+    numeric_count: int, date_count: int, text_count: int
+) -> str:
+    """Return a compact human-readable column type summary."""
+    pieces = [f"{numeric_count} numeric"]
+    if date_count:
+        pieces.append(f"{date_count} date")
+    pieces.append(f"{text_count} text")
+    if len(pieces) == 1:
+        return pieces[0]
+    if len(pieces) == 2:
+        return " and ".join(pieces)
+    return ", ".join(pieces[:-1]) + f", and {pieces[-1]}"
+
+
 def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) -> str:
     """Render a stable Markdown profile suitable for review and version control."""
     numeric_columns = [
         column for column in dataset.columns if column.first_quartile is not None
     ]
-    text_column_count = len(dataset.columns) - len(numeric_columns)
+    date_columns = [
+        column for column in dataset.columns if column.earliest_date is not None
+    ]
+    text_column_count = len(dataset.columns) - len(numeric_columns) - len(date_columns)
+    type_summary = _profile_type_summary(
+        len(numeric_columns), len(date_columns), text_column_count
+    )
     missing_value_count = sum(column.missing_count for column in dataset.columns)
     missing_column_count = sum(
         column.missing_count > 0 for column in dataset.columns
@@ -504,7 +525,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"- {dataset.row_count} {'row' if dataset.row_count == 1 else 'rows'} "
             f"across {len(dataset.columns)} "
             f"{'column' if len(dataset.columns) == 1 else 'columns'}: "
-            f"{len(numeric_columns)} numeric and {text_column_count} text."
+            f"{type_summary}."
         ),
         (
             f"- Data quality: {missing_value_count} "
@@ -527,6 +548,14 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"- Numeric {'range' if len(numeric_columns) == 1 else 'ranges'}: "
             f"{numeric_ranges}."
         )
+    if date_columns:
+        date_ranges = "; ".join(
+            f"{column.name} runs from {column.earliest_date} to {column.latest_date} "
+            f"across {column.non_null_count} populated "
+            f"{'row' if column.non_null_count == 1 else 'rows'}"
+            for column in date_columns
+        )
+        analyst_summary.append(f"- Date coverage: {date_ranges}.")
     if outlier_columns:
         outlier_watchlist = "; ".join(
             f"{column.name} ({len(column.outlier_values)} "
@@ -629,9 +658,6 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             f"| {_markdown_table_cell(column.name)} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
-    date_columns = [
-        column for column in dataset.columns if column.earliest_date is not None
-    ]
     if date_columns:
         lines.extend(
             [

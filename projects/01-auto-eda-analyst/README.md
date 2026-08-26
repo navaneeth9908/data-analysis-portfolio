@@ -308,9 +308,12 @@ The `sample_numeric_correlations.csv` example adds this section; its missing Apr
 | sales | refunds | 3 | -1.00 |
 ```
 
-The `sample_renewals.csv` example adds a date-range section for populated ISO date columns:
+The `sample_renewals.csv` example adds a date-range section for populated ISO date columns and summarizes the timeline coverage before the detailed tables:
 
 ```markdown
+- 3 rows across 4 columns: 1 numeric, 1 date, and 2 text.
+- Date coverage: renewal_date runs from 2026-01-15 to 2026-03-30 across 2 populated rows.
+
 ## Date ranges
 
 | Column | Earliest date | Latest date | Non-null rows |
@@ -337,7 +340,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - A populated numeric or text column with exactly one distinct value appears in a `Constant columns` table; all-missing columns do not appear.
 - Numeric-column pairs with at least two rows populated in both columns and nonzero variation report a Pearson correlation; missing values are excluded pairwise and constant pairs are omitted.
 - Passing `--chart-output DIRECTORY` writes a deterministic `missingness.svg` chart that plots each column's blank-value count and percentage. SVG label text is escaped so input header text is safe to render.
-- Every report starts with an analyst summary of dataset shape, data quality, and complete-row coverage. It includes numeric ranges when numeric columns are present, an outlier watchlist only when the IQR check finds values to review, and the strongest absolute Pearson correlation when numeric-column pairs are available.
+- Every report starts with an analyst summary of dataset shape, data quality, and complete-row coverage. It separates detected date columns from text columns, adds date-coverage ranges when ISO date columns are present, includes numeric ranges when numeric columns are present, an outlier watchlist only when the IQR check finds values to review, and the strongest absolute Pearson correlation when numeric-column pairs are available.
 - Numeric results are formatted to two decimals for deterministic report diffs.
 - Text columns include their count of distinct non-blank values plus the most frequent value and its frequency. Their value distributions are ranked by descending frequency with alphabetical tie-breaking; the CLI displays the first five by default and accepts a positive `--categorical-limit` override.
 
@@ -370,7 +373,7 @@ projects/01-auto-eda-analyst/
 ## Current capabilities
 
 - Local CSV profiling with row counts, complete-row coverage, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
-- Concise analyst summary of dataset shape, missingness, duplicate rows, numeric ranges, IQR outlier watchlists, and strongest numeric relationships.
+- Concise analyst summary of dataset shape, missingness, duplicate rows, date coverage, numeric ranges, IQR outlier watchlists, and strongest numeric relationships.
 - Duplicate-row data-quality signal in the generated report.
 - Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.

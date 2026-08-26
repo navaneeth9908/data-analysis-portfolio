@@ -334,6 +334,27 @@ def test_rendered_report_includes_iso_date_ranges(tmp_path: Path) -> None:
     assert "| spend |" not in date_section
 
 
+def test_analyst_summary_counts_date_columns_and_timeline_coverage(
+    tmp_path: Path,
+) -> None:
+    source_file = tmp_path / "renewal_pipeline.csv"
+    source_file.write_text(
+        "customer,renewal_date,spend\n"
+        "Aster,2026-01-15,10\n"
+        "Birch,,20\n"
+        "Cedar,2026-03-30,30\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "- 3 rows across 3 columns: 1 numeric, 1 date, and 1 text.\n" in report
+    assert (
+        "- Date coverage: renewal_date runs from 2026-01-15 to 2026-03-30 "
+        "across 2 populated rows.\n"
+        in report
+    )
+
 def test_iso_week_date_strings_stay_categorical_text(tmp_path: Path) -> None:
     source_file = tmp_path / "week_dates.csv"
     source_file.write_text(

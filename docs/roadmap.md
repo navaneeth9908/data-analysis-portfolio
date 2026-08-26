@@ -47,6 +47,7 @@ Progress:
 - Added whitespace-padded header trimming with schema warnings so CSV exports keep clean report column names without hiding source cleanup needs.
 - Added mixed numeric/text type warnings so amount-style columns with status tokens stay visible as text while still flagging parseable business-number values.
 - Added Markdown-safe table escaping so source headers and text values with pipes or embedded line breaks do not corrupt generated report tables.
+- Added analyst-summary date coverage so ISO date columns are counted separately from text dimensions and their populated timeline spans are visible before the detailed tables.
 
 ### 2. NL2SQL Analytics Agent
 
