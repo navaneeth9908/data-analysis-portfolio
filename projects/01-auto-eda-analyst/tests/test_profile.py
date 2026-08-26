@@ -481,3 +481,20 @@ def test_profile_accepts_a_header_without_data_rows(tmp_path: Path) -> None:
         ("customer", "text"),
         ("spend", "text"),
     ]
+
+
+def test_rendered_report_escapes_markdown_table_cells(tmp_path: Path) -> None:
+    source_file = tmp_path / "markdown_sensitive_values.csv"
+    source_file.write_text(
+        "customer|tier,segment\n"
+        '"Aster|Enterprise\nNorth",core\n'
+        "Birch,expansion\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| customer\\|tier | text | 0 | 2 | — | — | — |" in report
+    assert "| customer\\|tier | 1 | Aster\\|Enterprise North | 1 |" in report
+    assert "| customer|tier | text |" not in report
+    assert "Aster|Enterprise\nNorth" not in report

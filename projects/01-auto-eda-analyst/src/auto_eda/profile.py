@@ -392,6 +392,17 @@ def render_missingness_chart(dataset: DatasetProfile) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _markdown_table_cell(value: object) -> str:
+    """Escape dynamic text so Markdown table cell boundaries stay stable."""
+    return (
+        str(value)
+        .replace("\r\n", " ")
+        .replace("\n", " ")
+        .replace("\r", " ")
+        .replace("|", "\\|")
+    )
+
+
 def _constant_column_value(column: ColumnProfile) -> str | None:
     """Return a display value when a populated column has one distinct value."""
     if column.inferred_type == "numeric":
@@ -555,7 +566,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | Missing values | Missing rate |",
                 "| --- | ---: | ---: |",
                 *[
-                    f"| {column.name} | {column.missing_count} | "
+                    f"| {_markdown_table_cell(column.name)} | {column.missing_count} | "
                     f"{(column.missing_count / dataset.row_count):.1%} |"
                     for column in missing_columns
                 ],
@@ -570,7 +581,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | Missing values | Missing rate |",
                 "| --- | ---: | ---: |",
                 *[
-                    f"| {column.name} | {column.missing_count} | "
+                    f"| {_markdown_table_cell(column.name)} | {column.missing_count} | "
                     f"{(column.missing_count / dataset.row_count):.1%} |"
                     for column in empty_columns
                 ],
@@ -585,8 +596,8 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | Inferred type | Constant value | Non-null rows |",
                 "| --- | --- | --- | ---: |",
                 *[
-                    f"| {column.name} | {column.inferred_type} | {value} | "
-                    f"{column.non_null_count} |"
+                    f"| {_markdown_table_cell(column.name)} | {column.inferred_type} | "
+                    f"{_markdown_table_cell(value)} | {column.non_null_count} |"
                     for column, value in constant_columns
                 ],
                 "",
@@ -615,7 +626,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             else "— | — | —"
         )
         lines.append(
-            f"| {column.name} | {column.inferred_type} | {column.missing_count} | "
+            f"| {_markdown_table_cell(column.name)} | {column.inferred_type} | {column.missing_count} | "
             f"{column.non_null_count} | {numeric_values} |"
         )
     date_columns = [
@@ -633,7 +644,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         )
         for column in date_columns:
             lines.append(
-                f"| {column.name} | {column.earliest_date} | "
+                f"| {_markdown_table_cell(column.name)} | {column.earliest_date} | "
                 f"{column.latest_date} | {column.non_null_count} |"
             )
     if numeric_columns:
@@ -648,7 +659,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         )
         for column in numeric_columns:
             lines.append(
-                f"| {column.name} | {column.first_quartile:.2f} | "
+                f"| {_markdown_table_cell(column.name)} | {column.first_quartile:.2f} | "
                 f"{column.median:.2f} | {column.third_quartile:.2f} |"
             )
     if dataset.numeric_correlations:
@@ -663,7 +674,8 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         )
         for correlation in dataset.numeric_correlations:
             lines.append(
-                f"| {correlation.first_column} | {correlation.second_column} | "
+                f"| {_markdown_table_cell(correlation.first_column)} | "
+                f"{_markdown_table_cell(correlation.second_column)} | "
                 f"{correlation.paired_row_count} | {correlation.pearson_r:.2f} |"
             )
     if outlier_columns:
@@ -678,7 +690,10 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         )
         for column in outlier_columns:
             values = ", ".join(f"{value:.2f}" for value in column.outlier_values)
-            lines.append(f"| {column.name} | {len(column.outlier_values)} | {values} |")
+            lines.append(
+                f"| {_markdown_table_cell(column.name)} | "
+                f"{len(column.outlier_values)} | {values} |"
+            )
     if high_cardinality_columns:
         lines.extend(
             [
@@ -688,7 +703,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | Unique values | Non-null rows | Unique rate |",
                 "| --- | ---: | ---: | ---: |",
                 *[
-                    f"| {column.name} | {column.unique_count} | "
+                    f"| {_markdown_table_cell(column.name)} | {column.unique_count} | "
                     f"{column.non_null_count} | "
                     f"{(column.unique_count / column.non_null_count):.1%} |"
                     for column in high_cardinality_columns
@@ -704,7 +719,7 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | True-like values | False-like values | Non-null rows |",
                 "| --- | ---: | ---: | ---: |",
                 *[
-                    f"| {column.name} | {true_count} | {false_count} | "
+                    f"| {_markdown_table_cell(column.name)} | {true_count} | {false_count} | "
                     f"{column.non_null_count} |"
                     for column, true_count, false_count in boolean_flag_columns
                 ],
@@ -719,9 +734,9 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 "| Column | Numeric-like values | Non-numeric examples |",
                 "| --- | ---: | --- |",
                 *[
-                    f"| {column.name} | {column.numeric_parseable_count} of "
+                    f"| {_markdown_table_cell(column.name)} | {column.numeric_parseable_count} of "
                     f"{column.non_null_count} | "
-                    f"{', '.join(column.numeric_parse_error_examples)} |"
+                    f"{_markdown_table_cell(', '.join(column.numeric_parse_error_examples))} |"
                     for column in mixed_type_columns
                 ],
             ]
@@ -740,14 +755,14 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             ]
         )
         for column in categorical_columns:
-            top_value = column.top_value or "—"
+            top_value = _markdown_table_cell(column.top_value or "—")
             top_value_count = (
                 str(column.top_value_count)
                 if column.top_value_count is not None
                 else "—"
             )
             lines.append(
-                f"| {column.name} | {column.unique_count} | {top_value} | "
+                f"| {_markdown_table_cell(column.name)} | {column.unique_count} | {top_value} | "
                 f"{top_value_count} |"
             )
         displayed_categorical_columns = [
@@ -767,5 +782,8 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 for rank, (value, count) in enumerate(
                     column.categorical_values[:categorical_limit], start=1
                 ):
-                    lines.append(f"| {column.name} | {rank} | {value} | {count} |")
+                    lines.append(
+                        f"| {_markdown_table_cell(column.name)} | {rank} | "
+                        f"{_markdown_table_cell(value)} | {count} |"
+                    )
     return "\n".join(lines) + "\n"

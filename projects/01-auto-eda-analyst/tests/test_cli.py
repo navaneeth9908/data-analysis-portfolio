@@ -312,6 +312,36 @@ def test_cli_flags_mixed_numeric_text_columns_from_the_bundled_example(
     assert "| booked_amount | 3 of 5 | not available, pending |" in report
 
 
+def test_cli_escapes_markdown_sensitive_table_cells_from_the_bundled_example(
+    tmp_path: Path,
+) -> None:
+    source_file = Path("examples/sample_markdown_sensitive_values.csv")
+    output_file = tmp_path / "eda_markdown_sensitive_values.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "| customer\\|tier | text | 0 | 2 | — | — | — |" in report
+    assert "| customer\\|tier | 1 | Aster\\|Enterprise North | 1 |" in report
+    assert "| customer|tier | text |" not in report
+    assert "Aster|Enterprise\nNorth" not in report
+
+
 def test_cli_trims_header_names_from_the_bundled_example(tmp_path: Path) -> None:
     source_file = Path("examples/sample_whitespace_headers.csv")
     output_file = tmp_path / "eda_whitespace_headers.md"

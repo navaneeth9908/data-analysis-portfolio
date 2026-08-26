@@ -46,6 +46,7 @@ Progress:
 - Extended numeric correlation calculations to reuse business-formatted numeric parsing, so currency-export columns can be compared without preprocessing.
 - Added whitespace-padded header trimming with schema warnings so CSV exports keep clean report column names without hiding source cleanup needs.
 - Added mixed numeric/text type warnings so amount-style columns with status tokens stay visible as text while still flagging parseable business-number values.
+- Added Markdown-safe table escaping so source headers and text values with pipes or embedded line breaks do not corrupt generated report tables.
 
 ### 2. NL2SQL Analytics Agent
 
