@@ -83,6 +83,7 @@ def test_cli_writes_a_deterministic_profile_for_a_csv_with_missing_values(tmp_pa
         "- Numeric range: spend spans 10.50 to 19.50.\n\n"
         "## Data quality\n\n"
         "Duplicate rows: 0\n"
+        "Missing values: 1 across 1 column\n"
         "Complete rows: 2 (66.7%)\n\n"
         "## Missingness details\n\n"
         "| Column | Missing values | Missing rate |\n"

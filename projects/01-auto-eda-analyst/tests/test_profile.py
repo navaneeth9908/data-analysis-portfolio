@@ -59,6 +59,27 @@ def test_rendered_report_includes_complete_row_coverage(tmp_path: Path) -> None:
     assert "Complete rows: 2 (50.0%)\n" in report
 
 
+def test_data_quality_section_summarizes_missing_value_totals(tmp_path: Path) -> None:
+    source_file = tmp_path / "missing_totals.csv"
+    source_file.write_text(
+        "customer,spend,region\n"
+        "Aster,10.5,north\n"
+        "Birch,,\n"
+        "Cedar,,west\n"
+        "Dune,14.0,\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Data quality\n\n" in report
+    assert "Missing values: 4 across 2 columns\n" in report
+    data_quality_section = report.split("## Data quality", 1)[1].split(
+        "## Missingness details", 1
+    )[0]
+    assert "Complete rows: 1 (25.0%)\n" in data_quality_section
+
+
 def test_rendered_report_flags_constant_numeric_and_text_columns(tmp_path: Path) -> None:
     source_file = tmp_path / "constant_columns.csv"
     source_file.write_text(

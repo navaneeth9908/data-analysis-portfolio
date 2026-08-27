@@ -143,6 +143,7 @@ Rows: 3
 ## Data quality
 
 Duplicate rows: 0
+Missing values: 1 across 1 column
 Complete rows: 2 (66.7%)
 
 ## Missingness details
@@ -339,7 +340,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 ## Input contract
 
 - Inputs must be UTF-8 CSV files with a header row. A header-only file produces a zero-row report with text columns rather than failing. Use `--delimiter` for single-character delimiters such as semicolons when exported data is not comma-separated; longer delimiter values are rejected with a clear CLI validation error before report files are written.
-- Blank cells count as missing values, and columns with missing values are ranked by missing count and percentage in a dedicated report section.
+- Blank cells count as missing values. Reports show the total missing-value count and affected column count in the data-quality summary, then rank incomplete columns by missing count and percentage in a dedicated section.
 - Complete rows are records with populated values for every header column; reports show both the count and percentage so analysis-ready coverage is visible before modeling or charting.
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
@@ -389,7 +390,7 @@ projects/01-auto-eda-analyst/
 
 ## Current capabilities
 
-- Local CSV profiling with row counts, complete-row coverage, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
+- Local CSV profiling with row counts, complete-row coverage, total missing-value counts, ranked per-column missingness, and configurable one-character delimiters for non-comma exports.
 - Concise analyst summary of dataset shape, missingness, duplicate rows, date coverage, numeric ranges, IQR outlier watchlists, and strongest numeric relationships.
 - Duplicate-row data-quality signal in the generated report.
 - Empty-column signal for fields that contain no populated values.

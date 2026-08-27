@@ -600,6 +600,10 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         "## Data quality",
         "",
         f"Duplicate rows: {dataset.duplicate_row_count}",
+        (
+            f"Missing values: {missing_value_count} across {missing_column_count} "
+            f"{'column' if missing_column_count == 1 else 'columns'}"
+        ),
         f"Complete rows: {dataset.complete_row_count} ({complete_row_rate:.1%})",
         "",
     ]

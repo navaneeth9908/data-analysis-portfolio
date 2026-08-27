@@ -49,6 +49,7 @@ Progress:
 - Added Markdown-safe table escaping so source headers and text values with pipes or embedded line breaks do not corrupt generated report tables.
 - Added analyst-summary date coverage so ISO date columns are counted separately from text dimensions and their populated timeline spans are visible before the detailed tables.
 - Added dominant-category warnings so low-variation text fields show their top value share before categorical summaries.
+- Added explicit missing-value totals to the EDA data-quality section so reviewers see both overall blank-cell volume and the ranked column-level detail.
 
 ### 2. NL2SQL Analytics Agent
 
