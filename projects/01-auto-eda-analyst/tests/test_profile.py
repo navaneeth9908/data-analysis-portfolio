@@ -196,6 +196,30 @@ def test_rendered_report_summarizes_boolean_flag_text_columns(tmp_path: Path) ->
     assert "| customer |" not in boolean_section
 
 
+def test_rendered_report_flags_dominant_categorical_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "dominant_status.csv"
+    source_file.write_text(
+        "customer,status,region\n"
+        "Aster,active,north\n"
+        "Birch,active,south\n"
+        "Cedar,active,east\n"
+        "Dune,active,west\n"
+        "Elm,paused,north\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Dominant categorical values\n\n" in report
+    assert "| Column | Dominant value | Count | Share | Other values |" in report
+    assert "| status | active | 4 | 80.0% | 1 |" in report
+    dominant_section = report.split("## Dominant categorical values", 1)[1].split(
+        "## Categorical summary", 1
+    )[0]
+    assert "| region |" not in dominant_section
+    assert "| customer |" not in dominant_section
+
+
 def test_rendered_report_warns_about_an_empty_header_name(tmp_path: Path) -> None:
     source_file = tmp_path / "empty_header.csv"
     source_file.write_text(

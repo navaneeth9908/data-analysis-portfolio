@@ -288,6 +288,36 @@ def test_cli_summarizes_boolean_flags_from_the_bundled_example(tmp_path: Path) -
     assert "| renewal_ready | 2 | 2 | 4 |" in report
 
 
+def test_cli_flags_dominant_categories_from_the_bundled_example(tmp_path: Path) -> None:
+    source_file = Path("examples/sample_dominant_categories.csv")
+    output_file = tmp_path / "eda_dominant_categories.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "## Dominant categorical values\n\n" in report
+    assert "| status | active | 4 | 80.0% | 1 |" in report
+    dominant_section = report.split("## Dominant categorical values", 1)[1].split(
+        "## Categorical summary", 1
+    )[0]
+    assert "| region |" not in dominant_section
+
+
 def test_cli_profiles_business_formatted_numbers_from_the_bundled_example(
     tmp_path: Path,
 ) -> None:

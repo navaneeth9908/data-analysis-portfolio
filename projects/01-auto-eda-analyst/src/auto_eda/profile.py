@@ -447,6 +447,19 @@ def _boolean_flag_counts(column: ColumnProfile) -> tuple[int, int] | None:
     return true_count, false_count
 
 
+def _is_dominant_categorical_column(column: ColumnProfile) -> bool:
+    """Return True when one text value accounts for at least 80% of rows."""
+    if (
+        column.unique_count is None
+        or column.unique_count < 2
+        or column.top_value_count is None
+        or column.non_null_count == 0
+        or _boolean_flag_counts(column) is not None
+    ):
+        return False
+    return column.top_value_count / column.non_null_count >= 0.8
+
+
 def _profile_type_summary(
     numeric_count: int, date_count: int, text_count: int
 ) -> str:
@@ -516,6 +529,9 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         column
         for column in dataset.columns
         if column.numeric_parseable_count and column.numeric_parse_error_examples
+    ]
+    dominant_categorical_columns = [
+        column for column in dataset.columns if _is_dominant_categorical_column(column)
     ]
     strongest_correlation = _strongest_numeric_correlation(dataset.numeric_correlations)
     analyst_summary = [
@@ -764,6 +780,24 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                     f"{column.non_null_count} | "
                     f"{_markdown_table_cell(', '.join(column.numeric_parse_error_examples))} |"
                     for column in mixed_type_columns
+                ],
+            ]
+        )
+    if dominant_categorical_columns:
+        lines.extend(
+            [
+                "",
+                "## Dominant categorical values",
+                "",
+                "| Column | Dominant value | Count | Share | Other values |",
+                "| --- | --- | ---: | ---: | ---: |",
+                *[
+                    f"| {_markdown_table_cell(column.name)} | "
+                    f"{_markdown_table_cell(column.top_value or '—')} | "
+                    f"{column.top_value_count} | "
+                    f"{(column.top_value_count / column.non_null_count):.1%} | "
+                    f"{column.unique_count - 1} |"
+                    for column in dominant_categorical_columns
                 ],
             ]
         )

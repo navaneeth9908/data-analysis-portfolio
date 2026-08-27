@@ -1,0 +1,6 @@
+customer,status,region
+Aster,active,north
+Birch,active,south
+Cedar,active,east
+Dune,active,west
+Elm,paused,north
