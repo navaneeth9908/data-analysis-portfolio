@@ -433,6 +433,28 @@ def test_rendered_report_flags_values_outside_iqr_outlier_fences(tmp_path: Path)
     assert "| sales | 1 | 100.00 |" in report
 
 
+def test_rendered_report_flags_negative_numeric_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "cash_movements.csv"
+    source_file.write_text(
+        "customer,balance,refunds,spend\n"
+        "Aster,100,-5,10\n"
+        "Birch,-25,-10,20\n"
+        "Cedar,-50,0,30\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Negative numeric values\n\n" in report
+    assert "| Column | Negative values | Lowest value | Highest negative value |" in report
+    assert "| balance | 2 | -50.00 | -25.00 |" in report
+    assert "| refunds | 2 | -10.00 | -5.00 |" in report
+    negative_section = report.split("## Negative numeric values", 1)[1].split(
+        "## Numeric correlations", 1
+    )[0]
+    assert "| spend |" not in negative_section
+
+
 def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) -> None:
     source_file = tmp_path / "monthly_sales.csv"
     source_file.write_text(

@@ -13,6 +13,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags columns that have no populated values before analysts build downstream assumptions
 - infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols or thousands separators
 - calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
+- flags numeric columns with values below zero so refunds, credits, and data-entry sign issues are reviewed explicitly
 - flags columns that mix numeric-like export values with non-numeric status text before analysts trust them as dimensions
 - flags text columns dominated by one repeated category so low-variation fields are visible before segmentation
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
@@ -79,6 +80,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_dominant_categories.csv \
 # Parse common business-formatted revenue values as numeric.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_business_numbers.csv \
   --output /tmp/auto_eda_business_numbers.md
+
+# Flag numeric columns with refunds, credits, or other negative values.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_negative_values.csv \
+  --output /tmp/auto_eda_negative_values.md
 
 # Flag amount columns that mix numeric-like values with status text.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_mixed_type_amounts.csv \
@@ -280,6 +285,17 @@ The `sample_business_numbers.csv` example keeps common finance/export formatting
 | booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |
 ```
 
+The `sample_negative_values.csv` example adds a focused review table for numeric columns containing below-zero values:
+
+```markdown
+## Negative numeric values
+
+| Column | Negative values | Lowest value | Highest negative value |
+| --- | ---: | ---: | ---: |
+| refund_amount | 2 | -25.00 | -10.00 |
+| net_revenue | 1 | -50.00 | -50.00 |
+```
+
 The `sample_mixed_type_amounts.csv` example keeps partially numeric status
 fields visible as text while warning that some populated values look like
 amounts:
@@ -349,6 +365,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Non-boolean text columns where the top value is at least 80% of populated rows appear in a `Dominant categorical values` table with the dominant value, count, share, and number of remaining values.
 - Empty header names, duplicate header names, header names with accidental leading/trailing whitespace, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, trimmed headers use the stripped display name, and repeated headers are renamed with numeric suffixes before profiling.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
+- Numeric columns with one or more values below zero appear in a `Negative numeric values` table with the count, lowest value, and highest negative value.
 - Text columns with at least one numeric-like value and at least one non-numeric value appear in a `Mixed-type warnings` table. The warning reports the count of numeric-like populated values and up to three sorted non-numeric examples, while keeping the column in categorical summaries for review.
 - Generated Markdown table cells escape pipe characters and collapse embedded line breaks in dynamic header and text values, keeping report tables parseable without mutating the underlying source profile.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
@@ -377,6 +394,7 @@ projects/01-auto-eda-analyst/
   examples/sample_iqr_outliers.csv
   examples/sample_markdown_sensitive_values.csv
   examples/sample_mixed_type_amounts.csv
+  examples/sample_negative_values.csv
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
@@ -401,7 +419,7 @@ projects/01-auto-eda-analyst/
 - Mixed-type warnings for text columns that combine parseable amounts with non-numeric status values.
 - Markdown-safe table rendering for source headers and text values that contain pipes or embedded line breaks.
 - Schema warnings for empty, duplicate, or whitespace-padded column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
-- Conservative numeric-type inference, distribution quartiles, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
+- Conservative numeric-type inference, distribution quartiles, negative-value checks, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
 - ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.
 - Optional standalone SVG missingness chart artifacts via `--chart-output`.

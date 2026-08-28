@@ -50,6 +50,7 @@ Progress:
 - Added analyst-summary date coverage so ISO date columns are counted separately from text dimensions and their populated timeline spans are visible before the detailed tables.
 - Added dominant-category warnings so low-variation text fields show their top value share before categorical summaries.
 - Added explicit missing-value totals to the EDA data-quality section so reviewers see both overall blank-cell volume and the ranked column-level detail.
+- Added negative numeric-value checks so refunds, credits, and below-zero data-entry issues are visible in a focused report section.
 
 ### 2. NL2SQL Analytics Agent
 

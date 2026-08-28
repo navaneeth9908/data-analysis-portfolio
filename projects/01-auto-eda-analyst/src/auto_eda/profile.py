@@ -39,6 +39,9 @@ class ColumnProfile:
     categorical_values: tuple[tuple[str, int], ...] = ()
     numeric_parseable_count: int | None = None
     numeric_parse_error_examples: tuple[str, ...] = ()
+    negative_count: int = 0
+    negative_minimum: float | None = None
+    negative_maximum: float | None = None
 
 
 @dataclass(frozen=True)
@@ -131,6 +134,11 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
             and third_quartile is not None
             else ()
         )
+        negative_values = (
+            [value for value in sorted_numeric_values if value < 0]
+            if sorted_numeric_values
+            else []
+        )
         value_counts = Counter(non_null_values) if not is_numeric and not is_date else Counter()
         top_value = (
             min(value_counts, key=lambda value: (-value_counts[value], value))
@@ -166,6 +174,9 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
                     else None
                 ),
                 numeric_parse_error_examples=numeric_parse_error_examples,
+                negative_count=len(negative_values),
+                negative_minimum=min(negative_values) if negative_values else None,
+                negative_maximum=max(negative_values) if negative_values else None,
             )
         )
 
@@ -530,10 +541,15 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         for column in dataset.columns
         if column.numeric_parseable_count and column.numeric_parse_error_examples
     ]
+    negative_numeric_columns = sorted(
+        (column for column in numeric_columns if column.negative_count),
+        key=lambda column: (-column.negative_count, column.name),
+    )
     dominant_categorical_columns = [
         column for column in dataset.columns if _is_dominant_categorical_column(column)
     ]
     strongest_correlation = _strongest_numeric_correlation(dataset.numeric_correlations)
+
     analyst_summary = [
         "## Analyst summary",
         "",
@@ -707,6 +723,21 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             lines.append(
                 f"| {_markdown_table_cell(column.name)} | {column.first_quartile:.2f} | "
                 f"{column.median:.2f} | {column.third_quartile:.2f} |"
+            )
+    if negative_numeric_columns:
+        lines.extend(
+            [
+                "",
+                "## Negative numeric values",
+                "",
+                "| Column | Negative values | Lowest value | Highest negative value |",
+                "| --- | ---: | ---: | ---: |",
+            ]
+        )
+        for column in negative_numeric_columns:
+            lines.append(
+                f"| {_markdown_table_cell(column.name)} | {column.negative_count} | "
+                f"{column.negative_minimum:.2f} | {column.negative_maximum:.2f} |"
             )
     if dataset.numeric_correlations:
         lines.extend(
