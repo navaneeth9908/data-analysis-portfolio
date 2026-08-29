@@ -42,6 +42,7 @@ class ColumnProfile:
     negative_count: int = 0
     negative_minimum: float | None = None
     negative_maximum: float | None = None
+    zero_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,11 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
             if sorted_numeric_values
             else []
         )
+        zero_count = (
+            sum(1 for value in sorted_numeric_values if value == 0)
+            if sorted_numeric_values
+            else 0
+        )
         value_counts = Counter(non_null_values) if not is_numeric and not is_date else Counter()
         top_value = (
             min(value_counts, key=lambda value: (-value_counts[value], value))
@@ -177,6 +183,7 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
                 negative_count=len(negative_values),
                 negative_minimum=min(negative_values) if negative_values else None,
                 negative_maximum=max(negative_values) if negative_values else None,
+                zero_count=zero_count,
             )
         )
 
@@ -545,6 +552,10 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
         (column for column in numeric_columns if column.negative_count),
         key=lambda column: (-column.negative_count, column.name),
     )
+    zero_numeric_columns = sorted(
+        (column for column in numeric_columns if column.zero_count),
+        key=lambda column: (-column.zero_count, column.name),
+    )
     dominant_categorical_columns = [
         column for column in dataset.columns if _is_dominant_categorical_column(column)
     ]
@@ -738,6 +749,22 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
             lines.append(
                 f"| {_markdown_table_cell(column.name)} | {column.negative_count} | "
                 f"{column.negative_minimum:.2f} | {column.negative_maximum:.2f} |"
+            )
+    if zero_numeric_columns:
+        lines.extend(
+            [
+                "",
+                "## Zero numeric values",
+                "",
+                "| Column | Zero values | Zero share | Non-null rows |",
+                "| --- | ---: | ---: | ---: |",
+            ]
+        )
+        for column in zero_numeric_columns:
+            lines.append(
+                f"| {_markdown_table_cell(column.name)} | {column.zero_count} | "
+                f"{(column.zero_count / column.non_null_count):.1%} | "
+                f"{column.non_null_count} |"
             )
     if dataset.numeric_correlations:
         lines.extend(

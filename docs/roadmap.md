@@ -51,6 +51,7 @@ Progress:
 - Added dominant-category warnings so low-variation text fields show their top value share before categorical summaries.
 - Added explicit missing-value totals to the EDA data-quality section so reviewers see both overall blank-cell volume and the ranked column-level detail.
 - Added negative numeric-value checks so refunds, credits, and below-zero data-entry issues are visible in a focused report section.
+- Added zero numeric-value checks so inactive counts, zero revenue, and zero-rate fields are visible in a focused report section.
 
 ### 2. NL2SQL Analytics Agent
 

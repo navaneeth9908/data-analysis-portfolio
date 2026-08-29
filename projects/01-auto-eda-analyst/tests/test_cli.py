@@ -460,6 +460,35 @@ def test_cli_reports_negative_numeric_values_from_the_bundled_example(
     assert "| net_revenue | 1 | -50.00 | -50.00 |" in report
 
 
+def test_cli_reports_zero_numeric_values_from_the_bundled_example(
+    tmp_path: Path,
+) -> None:
+    source_file = Path("examples/sample_zero_values.csv")
+    output_file = tmp_path / "eda_zero_values.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "## Zero numeric values\n\n" in report
+    assert "| units_sold | 2 | 50.0% | 4 |" in report
+    assert "| conversion_rate | 2 | 50.0% | 4 |" in report
+
+
 def test_cli_rejects_a_non_positive_categorical_limit(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text("segment\nenterprise\n", encoding="utf-8")

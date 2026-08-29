@@ -455,6 +455,25 @@ def test_rendered_report_flags_negative_numeric_values(tmp_path: Path) -> None:
     assert "| spend |" not in negative_section
 
 
+def test_rendered_report_flags_zero_numeric_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "zero_activity.csv"
+    source_file.write_text(
+        "customer,orders,revenue,discount_rate\n"
+        "Aster,0,0,0.10\n"
+        "Birch,2,150,0\n"
+        "Cedar,0,200,0.05\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Zero numeric values\n\n" in report
+    assert "| Column | Zero values | Zero share | Non-null rows |" in report
+    assert "| orders | 2 | 66.7% | 3 |" in report
+    assert "| discount_rate | 1 | 33.3% | 3 |" in report
+    assert "| revenue | 1 | 33.3% | 3 |" in report
+
+
 def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) -> None:
     source_file = tmp_path / "monthly_sales.csv"
     source_file.write_text(
