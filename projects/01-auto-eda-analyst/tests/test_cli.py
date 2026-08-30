@@ -489,6 +489,38 @@ def test_cli_reports_zero_numeric_values_from_the_bundled_example(
     assert "| conversion_rate | 2 | 50.0% | 4 |" in report
 
 
+def test_cli_reports_dominant_numeric_values_from_the_bundled_example(
+    tmp_path: Path,
+) -> None:
+    source_file = Path("examples/sample_dominant_numeric_values.csv")
+    output_file = tmp_path / "eda_dominant_numeric_values.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "## Dominant numeric values\n\n" in report
+    assert "| engagement_score | 42.00 | 4 | 80.0% | 1 |" in report
+    dominant_numeric_section = report.split("## Dominant numeric values", 1)[1].split(
+        "## Numeric correlations", 1
+    )[0]
+    assert "| risk_score |" not in dominant_numeric_section
+
+
 def test_cli_rejects_a_non_positive_categorical_limit(tmp_path: Path) -> None:
     source_file = tmp_path / "customers.csv"
     source_file.write_text("segment\nenterprise\n", encoding="utf-8")

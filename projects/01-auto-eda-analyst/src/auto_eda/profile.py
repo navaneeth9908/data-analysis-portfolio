@@ -43,6 +43,9 @@ class ColumnProfile:
     negative_minimum: float | None = None
     negative_maximum: float | None = None
     zero_count: int = 0
+    dominant_numeric_value: float | None = None
+    dominant_numeric_count: int | None = None
+    unique_numeric_count: int | None = None
 
 
 @dataclass(frozen=True)
@@ -145,6 +148,15 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
             if sorted_numeric_values
             else 0
         )
+        numeric_value_counts = Counter(sorted_numeric_values or [])
+        dominant_numeric_value = (
+            min(
+                numeric_value_counts,
+                key=lambda value: (-numeric_value_counts[value], value),
+            )
+            if numeric_value_counts
+            else None
+        )
         value_counts = Counter(non_null_values) if not is_numeric and not is_date else Counter()
         top_value = (
             min(value_counts, key=lambda value: (-value_counts[value], value))
@@ -184,6 +196,15 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
                 negative_minimum=min(negative_values) if negative_values else None,
                 negative_maximum=max(negative_values) if negative_values else None,
                 zero_count=zero_count,
+                dominant_numeric_value=dominant_numeric_value,
+                dominant_numeric_count=(
+                    numeric_value_counts[dominant_numeric_value]
+                    if dominant_numeric_value is not None
+                    else None
+                ),
+                unique_numeric_count=(
+                    len(numeric_value_counts) if numeric_value_counts else None
+                ),
             )
         )
 
@@ -478,6 +499,19 @@ def _is_dominant_categorical_column(column: ColumnProfile) -> bool:
     return column.top_value_count / column.non_null_count >= 0.8
 
 
+def _is_dominant_numeric_column(column: ColumnProfile) -> bool:
+    """Return True when one numeric value accounts for at least 80% of rows."""
+    if (
+        column.inferred_type != "numeric"
+        or column.unique_numeric_count is None
+        or column.unique_numeric_count < 2
+        or column.dominant_numeric_count is None
+        or column.non_null_count == 0
+    ):
+        return False
+    return column.dominant_numeric_count / column.non_null_count >= 0.8
+
+
 def _profile_type_summary(
     numeric_count: int, date_count: int, text_count: int
 ) -> str:
@@ -555,6 +589,10 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
     zero_numeric_columns = sorted(
         (column for column in numeric_columns if column.zero_count),
         key=lambda column: (-column.zero_count, column.name),
+    )
+    dominant_numeric_columns = sorted(
+        (column for column in numeric_columns if _is_dominant_numeric_column(column)),
+        key=lambda column: (-(column.dominant_numeric_count or 0), column.name),
     )
     dominant_categorical_columns = [
         column for column in dataset.columns if _is_dominant_categorical_column(column)
@@ -765,6 +803,24 @@ def render_markdown_report(dataset: DatasetProfile, categorical_limit: int = 5) 
                 f"| {_markdown_table_cell(column.name)} | {column.zero_count} | "
                 f"{(column.zero_count / column.non_null_count):.1%} | "
                 f"{column.non_null_count} |"
+            )
+    if dominant_numeric_columns:
+        lines.extend(
+            [
+                "",
+                "## Dominant numeric values",
+                "",
+                "| Column | Dominant value | Count | Share | Other numeric values |",
+                "| --- | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for column in dominant_numeric_columns:
+            lines.append(
+                f"| {_markdown_table_cell(column.name)} | "
+                f"{column.dominant_numeric_value:.2f} | "
+                f"{column.dominant_numeric_count} | "
+                f"{(column.dominant_numeric_count / column.non_null_count):.1%} | "
+                f"{column.unique_numeric_count - 1} |"
             )
     if dataset.numeric_correlations:
         lines.extend(

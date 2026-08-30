@@ -15,6 +15,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
 - flags numeric columns with values below zero so refunds, credits, and data-entry sign issues are reviewed explicitly
 - flags zero-heavy numeric columns so inactive counts, zero revenue, and rate fields are reviewed before analysis
+- flags numeric columns dominated by one repeated value so low-variation measures are visible before modeling
 - flags columns that mix numeric-like export values with non-numeric status text before analysts trust them as dimensions
 - flags text columns dominated by one repeated category so low-variation fields are visible before segmentation
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
@@ -89,6 +90,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_negative_values.csv \
 # Flag numeric columns with zero-value concentration.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_zero_values.csv \
   --output /tmp/auto_eda_zero_values.md
+
+# Flag numeric columns where one repeated value dominates the populated rows.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_dominant_numeric_values.csv \
+  --output /tmp/auto_eda_dominant_numeric_values.md
 
 # Flag amount columns that mix numeric-like values with status text.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_mixed_type_amounts.csv \
@@ -313,6 +318,16 @@ The `sample_zero_values.csv` example adds a review table for numeric columns con
 | revenue | 1 | 25.0% | 4 |
 ```
 
+The `sample_dominant_numeric_values.csv` example adds a low-variation numeric review table for measures whose populated rows are dominated by one repeated value:
+
+```markdown
+## Dominant numeric values
+
+| Column | Dominant value | Count | Share | Other numeric values |
+| --- | ---: | ---: | ---: | ---: |
+| engagement_score | 42.00 | 4 | 80.0% | 1 |
+```
+
 The `sample_mixed_type_amounts.csv` example keeps partially numeric status
 fields visible as text while warning that some populated values look like
 amounts:
@@ -384,6 +399,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
 - Numeric columns with one or more values below zero appear in a `Negative numeric values` table with the count, lowest value, and highest negative value.
 - Numeric columns with one or more zeros appear in a `Zero numeric values` table with the count, share of populated rows, and non-null row count.
+- Numeric columns with at least two distinct populated values and one value representing at least 80% of populated rows appear in a `Dominant numeric values` table; exact constants remain in the separate constant-column section.
 - Text columns with at least one numeric-like value and at least one non-numeric value appear in a `Mixed-type warnings` table. The warning reports the count of numeric-like populated values and up to three sorted non-numeric examples, while keeping the column in categorical summaries for review.
 - Generated Markdown table cells escape pipe characters and collapse embedded line breaks in dynamic header and text values, keeping report tables parseable without mutating the underlying source profile.
 - A non-numeric column is inferred as `date` only when every populated value is an ISO `YYYY-MM-DD` date; date columns appear in a `Date ranges` table instead of categorical-value summaries.
@@ -405,6 +421,7 @@ projects/01-auto-eda-analyst/
   examples/sample_customers.csv
   examples/sample_constant_columns.csv
   examples/sample_dominant_categories.csv
+  examples/sample_dominant_numeric_values.csv
   examples/sample_duplicate_headers.csv
   examples/sample_duplicate_rows.csv
   examples/sample_empty_columns.csv
@@ -435,6 +452,7 @@ projects/01-auto-eda-analyst/
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
 - Boolean flag summary for yes/no, y/n, or true/false text columns.
 - Dominant-category warnings for low-variation text fields where one value accounts for at least 80% of populated rows.
+- Dominant numeric-value warnings for low-variation measures where one value accounts for at least 80% of populated rows.
 - Mixed-type warnings for text columns that combine parseable amounts with non-numeric status values.
 - Markdown-safe table rendering for source headers and text values that contain pipes or embedded line breaks.
 - Schema warnings for empty, duplicate, or whitespace-padded column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.

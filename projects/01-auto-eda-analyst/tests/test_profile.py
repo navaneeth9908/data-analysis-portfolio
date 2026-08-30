@@ -474,6 +474,29 @@ def test_rendered_report_flags_zero_numeric_values(tmp_path: Path) -> None:
     assert "| revenue | 1 | 33.3% | 3 |" in report
 
 
+def test_rendered_report_flags_dominant_numeric_values(tmp_path: Path) -> None:
+    source_file = tmp_path / "dominant_score.csv"
+    source_file.write_text(
+        "customer,engagement_score,risk_score\n"
+        "Aster,42,1\n"
+        "Birch,42,2\n"
+        "Cedar,42,3\n"
+        "Dune,42,4\n"
+        "Elm,55,5\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Dominant numeric values\n\n" in report
+    assert "| Column | Dominant value | Count | Share | Other numeric values |" in report
+    assert "| engagement_score | 42.00 | 4 | 80.0% | 1 |" in report
+    dominant_numeric_section = report.split("## Dominant numeric values", 1)[1].split(
+        "## Numeric correlations", 1
+    )[0]
+    assert "| risk_score |" not in dominant_numeric_section
+
+
 def test_rendered_report_includes_pairwise_numeric_correlations(tmp_path: Path) -> None:
     source_file = tmp_path / "monthly_sales.csv"
     source_file.write_text(
