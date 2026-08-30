@@ -74,7 +74,18 @@ def main() -> int:
         choices=PROJECTS,
         help="Run the test suite for one documented project after layout checks.",
     )
+    parser.add_argument(
+        "--list-projects",
+        action="store_true",
+        help="Print documented project directory names without running layout checks.",
+    )
     arguments = parser.parse_args()
+
+    if arguments.list_projects:
+        print("Documented projects:")
+        for project in PROJECTS:
+            print(f"- {project}")
+        return 0
 
     issues = find_layout_issues(arguments.root)
     if issues:

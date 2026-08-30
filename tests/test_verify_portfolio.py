@@ -204,3 +204,24 @@ def test_project_filter_runs_only_the_selected_project_suite(tmp_path: Path) -> 
     assert "[PASS] 01-auto-eda-analyst" in result.stdout
     assert "06-research-briefing-generator" not in result.stdout
     assert result.stdout.endswith("Portfolio test suites passed: 1 project.\n")
+
+
+def test_list_projects_skips_layout_checks_for_discovery(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/verify_portfolio.py",
+            "--root",
+            str(tmp_path),
+            "--list-projects",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "Documented projects:",
+        *[f"- {project}" for project in PROJECTS],
+    ]

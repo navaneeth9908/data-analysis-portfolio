@@ -73,6 +73,13 @@ run `python scripts/verify_portfolio.py --project 05-financial-research-analyst`
 to keep the same layout/navigation guardrails while executing only that
 project's tests.
 
+To discover the supported project directory names without running layout checks
+or test suites, use:
+
+```bash
+python scripts/verify_portfolio.py --list-projects
+```
+
 ## Current status
 
 The Auto EDA Analyst now profiles local CSV files into deterministic Markdown with a concise analyst summary, configurable validated one-character delimiters for non-comma exports, complete-row coverage, data-quality totals for missing values and affected columns, ranked missingness details, empty-column and high-cardinality text warnings, boolean flag summaries, dominant-category warnings, mixed numeric/text type warnings, duplicate-row and constant-column quality signals, categorical summaries, configurable ranked categorical values, numeric summaries that accept common currency/thousands formatting, negative-value, zero-value, and dominant numeric-value checks, ISO date-range summaries with analyst-summary date coverage, numeric correlation detail that also supports business-formatted numeric columns, strongest-relationship highlights, Markdown-safe escaping for report table cells, and schema-warning signals for empty, duplicated, whitespace-padded, or uneven CSV structures, including stable placeholder names for blank headers. Its CLI also produces an optional standalone SVG missingness chart, with bundled examples and tests.
