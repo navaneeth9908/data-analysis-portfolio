@@ -217,6 +217,47 @@ def test_rendered_report_summarizes_boolean_flag_text_columns(tmp_path: Path) ->
     assert "| customer |" not in boolean_section
 
 
+def test_rendered_report_summarizes_numeric_binary_flag_columns(tmp_path: Path) -> None:
+    source_file = tmp_path / "binary_flags.csv"
+    source_file.write_text(
+        "customer,is_active,trial_count\n"
+        "Aster,1,0\n"
+        "Birch,0,1\n"
+        "Cedar,1,2\n"
+        "Dune,,3\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "## Boolean flag summary\n\n" in report
+    assert "| is_active | 2 | 1 | 3 |" in report
+    boolean_section = report.split("## Boolean flag summary", 1)[1].split(
+        "## Categorical summary", 1
+    )[0]
+    assert "| trial_count |" not in boolean_section
+
+
+def test_rendered_report_does_not_treat_binary_flags_as_iqr_outliers(
+    tmp_path: Path,
+) -> None:
+    source_file = tmp_path / "binary_flag_outliers.csv"
+    source_file.write_text(
+        "customer,is_active,order_count\n"
+        "Aster,1,0\n"
+        "Birch,1,2\n"
+        "Cedar,0,4\n"
+        "Dune,1,5\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| is_active | 3 | 1 | 4 |" in report
+    assert "## IQR outliers" not in report
+    assert "Outlier watchlist" not in report
+
+
 def test_rendered_report_flags_dominant_categorical_values(tmp_path: Path) -> None:
     source_file = tmp_path / "dominant_status.csv"
     source_file.write_text(

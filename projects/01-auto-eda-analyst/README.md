@@ -16,6 +16,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - flags numeric columns with values below zero so refunds, credits, and data-entry sign issues are reviewed explicitly
 - flags zero-heavy numeric columns so inactive counts, zero revenue, and rate fields are reviewed before analysis
 - flags numeric columns dominated by one repeated value so low-variation measures are visible before modeling
+- summarizes numeric 0/1 flag columns alongside text yes/no or true/false flags
 - flags columns that mix numeric-like export values with non-numeric status text before analysts trust them as dimensions
 - flags text columns dominated by one repeated category so low-variation fields are visible before segmentation
 - identifies ISO `YYYY-MM-DD` date columns and reports their earliest/latest dates
@@ -74,6 +75,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_high_cardinality_customers
 # Summarize yes/no or true/false operational flag columns.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_boolean_flags.csv \
   --output /tmp/auto_eda_boolean_flags.md
+
+# Summarize numeric 0/1 operational flag columns from exported systems.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_numeric_binary_flags.csv \
+  --output /tmp/auto_eda_numeric_binary_flags.md
 
 # Flag text dimensions where one category dominates the populated rows.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_dominant_categories.csv \
@@ -268,7 +273,7 @@ The `sample_high_cardinality_customers.csv` example adds this section, so likely
 | customer_id | 5 | 5 | 100.0% |
 ```
 
-The `sample_boolean_flags.csv` example adds this section, so operational flags are counted consistently even when source systems use yes/no or true/false text values:
+The `sample_boolean_flags.csv` and `sample_numeric_binary_flags.csv` examples add this section, so operational flags are counted consistently when source systems use yes/no, true/false, or numeric 0/1 values:
 
 ```markdown
 ## Boolean flag summary
@@ -277,6 +282,8 @@ The `sample_boolean_flags.csv` example adds this section, so operational flags a
 | --- | ---: | ---: | ---: |
 | active_customer | 3 | 1 | 4 |
 | renewal_ready | 2 | 2 | 4 |
+| is_active | 3 | 1 | 4 |
+| had_discount | 2 | 2 | 4 |
 ```
 
 The `sample_dominant_categories.csv` example adds this section, so low-variation text fields are visible before analysts treat them as balanced dimensions:
@@ -393,7 +400,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Duplicate rows count redundant data records; a repeated row counts once after its first instance.
 - Columns with no populated values appear in an `Empty columns` table with a 100% missing rate.
 - Text columns with at least four populated values and at least 80% distinct values appear in a `High-cardinality text columns` table so likely identifiers are not mistaken for low-cardinality dimensions.
-- Text columns whose populated values are only yes/no, y/n, or true/false appear in a `Boolean flag summary` table with true-like and false-like counts while still remaining visible in categorical summaries.
+- Text columns whose populated values are only yes/no, y/n, or true/false, plus numeric columns whose populated values are only 0 and/or 1, appear in a `Boolean flag summary` table with true-like and false-like counts. Text flags remain visible in categorical summaries; numeric flags remain visible in numeric distribution tables.
 - Non-boolean text columns where the top value is at least 80% of populated rows appear in a `Dominant categorical values` table with the dominant value, count, share, and number of remaining values.
 - Empty header names, duplicate header names, header names with accidental leading/trailing whitespace, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, trimmed headers use the stripped display name, and repeated headers are renamed with numeric suffixes before profiling.
 - A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
@@ -429,6 +436,7 @@ projects/01-auto-eda-analyst/
   examples/sample_iqr_outliers.csv
   examples/sample_markdown_sensitive_values.csv
   examples/sample_mixed_type_amounts.csv
+  examples/sample_numeric_binary_flags.csv
   examples/sample_negative_values.csv
   examples/sample_numeric_correlations.csv
   examples/sample_renewals.csv
@@ -450,7 +458,7 @@ projects/01-auto-eda-analyst/
 - Empty-column signal for fields that contain no populated values.
 - Constant-column signal for populated fields with one distinct value.
 - High-cardinality text-column signal for likely identifiers or sparse dimensions.
-- Boolean flag summary for yes/no, y/n, or true/false text columns.
+- Boolean flag summary for yes/no, y/n, true/false, or numeric 0/1 flag columns.
 - Dominant-category warnings for low-variation text fields where one value accounts for at least 80% of populated rows.
 - Dominant numeric-value warnings for low-variation measures where one value accounts for at least 80% of populated rows.
 - Mixed-type warnings for text columns that combine parseable amounts with non-numeric status values.

@@ -53,6 +53,7 @@ Progress:
 - Added negative numeric-value checks so refunds, credits, and below-zero data-entry issues are visible in a focused report section.
 - Added zero numeric-value checks so inactive counts, zero revenue, and zero-rate fields are visible in a focused report section.
 - Added dominant numeric-value checks so low-variation measures with one repeated value are visible before modeling or metric interpretation.
+- Added numeric 0/1 flag detection so exported binary indicator columns are summarized with the same true-like and false-like counts as text flags.
 
 ### 2. NL2SQL Analytics Agent
 

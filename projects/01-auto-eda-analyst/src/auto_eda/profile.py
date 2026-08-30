@@ -46,6 +46,7 @@ class ColumnProfile:
     dominant_numeric_value: float | None = None
     dominant_numeric_count: int | None = None
     unique_numeric_count: int | None = None
+    numeric_value_counts: tuple[tuple[float, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,10 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
         non_null_values = [value for value in values if value]
         numeric_values = _as_numeric_values(non_null_values)
         sorted_numeric_values = sorted(numeric_values) if numeric_values is not None else None
+        numeric_value_counts = Counter(sorted_numeric_values or [])
+        is_binary_numeric = bool(numeric_value_counts) and set(
+            numeric_value_counts
+        ).issubset({0.0, 1.0})
         is_numeric = bool(non_null_values) and numeric_values is not None
         date_values = _as_iso_dates(non_null_values) if not is_numeric else None
         is_date = bool(non_null_values) and date_values is not None
@@ -136,6 +141,7 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
             if sorted_numeric_values
             and first_quartile is not None
             and third_quartile is not None
+            and not is_binary_numeric
             else ()
         )
         negative_values = (
@@ -148,7 +154,6 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
             if sorted_numeric_values
             else 0
         )
-        numeric_value_counts = Counter(sorted_numeric_values or [])
         dominant_numeric_value = (
             min(
                 numeric_value_counts,
@@ -205,8 +210,12 @@ def profile_csv(path: str | Path, delimiter: str = ",") -> DatasetProfile:
                 unique_numeric_count=(
                     len(numeric_value_counts) if numeric_value_counts else None
                 ),
+                numeric_value_counts=tuple(
+                    sorted(numeric_value_counts.items(), key=lambda item: item[0])
+                ),
             )
         )
+
 
     numeric_column_names = [
         column.name for column in columns if column.inferred_type == "numeric"
@@ -470,20 +479,24 @@ def _strongest_numeric_correlation(
 
 
 def _boolean_flag_counts(column: ColumnProfile) -> tuple[int, int] | None:
-    """Return true/false-like counts when a text column is a boolean flag."""
-    if not column.categorical_values:
-        return None
-    true_count = 0
-    false_count = 0
-    for value, count in column.categorical_values:
-        normalized_value = value.strip().lower()
-        if normalized_value in _BOOLEAN_TRUE_VALUES:
-            true_count += count
-        elif normalized_value in _BOOLEAN_FALSE_VALUES:
-            false_count += count
-        else:
-            return None
-    return true_count, false_count
+    """Return true/false-like counts when a column encodes a boolean flag."""
+    if column.categorical_values:
+        true_count = 0
+        false_count = 0
+        for value, count in column.categorical_values:
+            normalized_value = value.strip().lower()
+            if normalized_value in _BOOLEAN_TRUE_VALUES:
+                true_count += count
+            elif normalized_value in _BOOLEAN_FALSE_VALUES:
+                false_count += count
+            else:
+                return None
+        return true_count, false_count
+    if column.inferred_type == "numeric" and column.numeric_value_counts:
+        numeric_counts = dict(column.numeric_value_counts)
+        if set(numeric_counts).issubset({0.0, 1.0}):
+            return numeric_counts.get(1.0, 0), numeric_counts.get(0.0, 0)
+    return None
 
 
 def _is_dominant_categorical_column(column: ColumnProfile) -> bool:

@@ -1,0 +1,5 @@
+customer,is_active,had_discount,order_count
+Aster,1,1,0
+Birch,1,0,2
+Cedar,0,1,4
+Dune,1,0,5
