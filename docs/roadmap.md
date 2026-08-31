@@ -160,3 +160,4 @@ Progress:
 - Added a root portfolio verifier that confirms root-README navigation plus the required structure of all six projects before running their isolated test suites, with a `--check-only` mode for quick repository-health checks.
 - Added a focused `--project` option to the root portfolio verifier so one project suite can run behind the same layout and navigation guardrails during small milestone work.
 - Added a lightweight `--list-projects` discovery option to the root verifier so recurring jobs and reviewers can see the supported project keys without running layout checks or tests.
+- Added future-date validation to the Research Briefing Generator so recurring briefs reject sources published after the selected reporting date instead of treating them as fresh evidence.

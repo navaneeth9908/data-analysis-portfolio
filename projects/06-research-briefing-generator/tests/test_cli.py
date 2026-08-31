@@ -172,3 +172,52 @@ def test_cli_writes_an_html_briefing_with_ranked_source_evidence(tmp_path: Path)
     assert "17/18" in report
     assert 'href="https://example.com/timetable"' in report
     assert "Which internal teams own the October reporting deadline?" in report
+
+
+def test_cli_reports_future_dated_sources_without_a_traceback(tmp_path: Path) -> None:
+    source_file = tmp_path / "future_source.json"
+    source_file.write_text(
+        json.dumps(
+            {
+                "briefing_title": "AI policy weekly briefing",
+                "sources": [
+                    {
+                        "title": "Future note",
+                        "publisher": "Example Desk",
+                        "published_on": "2026-08-11",
+                        "url": "https://example.com/future",
+                        "key_point": "This source should not be scored before publication.",
+                        "follow_up_question": "Why was this source included before the reporting date?",
+                        "theme": "Validation",
+                        "relevance": 5,
+                        "source_quality": 4,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_file = tmp_path / "briefing.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "research_briefing.cli",
+            str(source_file),
+            "--as-of",
+            "2026-08-10",
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 2
+    assert "published_on cannot be after the --as-of reporting date" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not output_file.exists()

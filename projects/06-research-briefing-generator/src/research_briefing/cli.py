@@ -45,8 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """Rank sources and write a reviewable briefing document."""
-    args = build_parser().parse_args(argv)
-    briefing = build_briefing(args.source_file, args.as_of)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        briefing = build_briefing(args.source_file, args.as_of)
+    except ValueError as error:
+        parser.error(str(error))
     renderer = render_html_briefing if args.format == "html" else render_markdown_briefing
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(renderer(briefing), encoding="utf-8")

@@ -321,6 +321,8 @@ def _rank_source(raw_source: object, as_of: date) -> RankedSource:
         published_on = date.fromisoformat(_required_text(raw_source, "published_on"))
     except ValueError as error:
         raise ValueError("published_on must use YYYY-MM-DD format") from error
+    if published_on > as_of:
+        raise ValueError("published_on cannot be after the --as-of reporting date")
     relevance = _rating(raw_source, "relevance")
     source_quality = _rating(raw_source, "source_quality")
     return RankedSource(

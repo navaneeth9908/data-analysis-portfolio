@@ -7,7 +7,7 @@ A deterministic, source-backed research-briefing project. It turns a local JSON 
 A useful research brief should make its evidence and prioritization visible. This first vertical slice demonstrates an offline workflow that:
 
 - accepts a documented JSON source-note schema
-- validates required text, dates, URLs, and one-to-five ratings
+- validates required text, dates, URLs, one-to-five ratings, and future-dated sources
 - scores each source against a fixed reporting date
 - ranks the digest deterministically, including stable tie-breaking
 - summarizes publisher coverage before the ranked digest
@@ -109,7 +109,7 @@ The input must be a UTF-8 JSON object with a non-empty `briefing_title` and at l
 }
 ```
 
-`published_on` must use `YYYY-MM-DD`. `relevance` and `source_quality` are integer ratings from 1 through 5. `theme` is optional; missing themes are grouped as `Unspecified` so older source-note files still render deterministically.
+`published_on` must use `YYYY-MM-DD` and cannot be after the required `--as-of` reporting date, so recurring runs do not accidentally score unreleased/future-dated notes as fresh evidence. `relevance` and `source_quality` are integer ratings from 1 through 5. `theme` is optional; missing themes are grouped as `Unspecified` so older source-note files still render deterministically.
 
 ## Ranking contract
 
@@ -141,7 +141,7 @@ projects/06-research-briefing-generator/
 
 ## Current capabilities
 
-- Local JSON source-note ingestion and validation.
+- Local JSON source-note ingestion with required-field, rating-scale, date-format, and future-date validation.
 - Deterministic source scoring and ranked Markdown or self-contained HTML digests.
 - Publisher-coverage, freshness-band, and theme-mix summaries before the ranked evidence table.
 - Source-coverage notes that flag thin or single-publisher evidence before a brief is reused.
