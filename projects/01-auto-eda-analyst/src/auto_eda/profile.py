@@ -288,13 +288,15 @@ def _numeric_parse_coverage(values: list[str]) -> tuple[int, tuple[str, ...]]:
 
 
 def _parse_business_number(value: str) -> float:
-    """Parse standard numbers plus common business currency formatting."""
+    """Parse standard numbers plus common business export formatting."""
     normalized = value.strip().replace(",", "")
     is_parenthesized_negative = normalized.startswith("(") and normalized.endswith(")")
     if is_parenthesized_negative:
         normalized = normalized[1:-1].strip()
     if normalized[:1] in {"$", "€", "£"}:
         normalized = normalized[1:].strip()
+    if normalized.endswith("%"):
+        normalized = normalized[:-1].strip()
     parsed = float(normalized)
     return -parsed if is_parenthesized_negative else parsed
 

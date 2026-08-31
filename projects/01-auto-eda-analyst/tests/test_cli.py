@@ -380,6 +380,34 @@ def test_cli_profiles_business_formatted_numbers_from_the_bundled_example(
     assert "| booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
 
 
+def test_cli_profiles_percentage_formatted_numbers_from_the_bundled_example(
+    tmp_path: Path,
+) -> None:
+    source_file = Path("examples/sample_percentage_metrics.csv")
+    output_file = tmp_path / "eda_percentage_metrics.md"
+    environment = {**os.environ, "PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "auto_eda.cli",
+            str(source_file),
+            "--output",
+            str(output_file),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = output_file.read_text(encoding="utf-8")
+    assert "| conversion_rate | numeric | 0 | 4 | 16.88 | 12.50 | 22.00 |" in report
+    assert "| churn_rate | numeric | 0 | 4 | 3.75 | 2.50 | 5.00 |" in report
+
+
 def test_cli_flags_mixed_numeric_text_columns_from_the_bundled_example(
     tmp_path: Path,
 ) -> None:

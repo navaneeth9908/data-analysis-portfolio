@@ -11,7 +11,7 @@ Exploratory analysis is often the first step in a reliable data workflow. This p
 - reports complete-row coverage for downstream analysis readiness
 - flags redundant duplicate data rows
 - flags columns that have no populated values before analysts build downstream assumptions
-- infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols or thousands separators
+- infers whether every populated value in a column is numeric, including common business-formatted values with currency symbols, thousands separators, or percentage signs
 - calculates mean, minimum, maximum, quartiles, median, and pairwise correlations for numeric columns, including business-formatted numeric exports
 - flags numeric columns with values below zero so refunds, credits, and data-entry sign issues are reviewed explicitly
 - flags zero-heavy numeric columns so inactive counts, zero revenue, and rate fields are reviewed before analysis
@@ -87,6 +87,10 @@ PYTHONPATH=src python -m auto_eda.cli examples/sample_dominant_categories.csv \
 # Parse common business-formatted revenue values as numeric.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_business_numbers.csv \
   --output /tmp/auto_eda_business_numbers.md
+
+# Parse percentage-formatted conversion and churn metrics as numeric.
+PYTHONPATH=src python -m auto_eda.cli examples/sample_percentage_metrics.csv \
+  --output /tmp/auto_eda_percentage_metrics.md
 
 # Flag numeric columns with refunds, credits, or other negative values.
 PYTHONPATH=src python -m auto_eda.cli examples/sample_negative_values.csv \
@@ -302,6 +306,14 @@ The `sample_business_numbers.csv` example keeps common finance/export formatting
 | booked_revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |
 ```
 
+The `sample_percentage_metrics.csv` example treats percentage-formatted KPI
+exports as numeric values while preserving the displayed metric scale:
+
+```markdown
+| conversion_rate | numeric | 0 | 4 | 16.88 | 12.50 | 22.00 |
+| churn_rate | numeric | 0 | 4 | 3.75 | 2.50 | 5.00 |
+```
+
 The `sample_negative_values.csv` example adds a focused review table for numeric columns containing below-zero values:
 
 ```markdown
@@ -403,7 +415,7 @@ The `sample_renewals.csv` example adds a date-range section for populated ISO da
 - Text columns whose populated values are only yes/no, y/n, or true/false, plus numeric columns whose populated values are only 0 and/or 1, appear in a `Boolean flag summary` table with true-like and false-like counts. Text flags remain visible in categorical summaries; numeric flags remain visible in numeric distribution tables.
 - Non-boolean text columns where the top value is at least 80% of populated rows appear in a `Dominant categorical values` table with the dominant value, count, share, and number of remaining values.
 - Empty header names, duplicate header names, header names with accidental leading/trailing whitespace, and records whose width differs from the header are surfaced as schema warnings; record numbers count the header as record 1, blank headers are renamed to stable `column_N` placeholders, trimmed headers use the stripped display name, and repeated headers are renamed with numeric suffixes before profiling.
-- A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, and parenthesized negative values such as `($100.75)`.
+- A column is inferred as `numeric` only when it has at least one populated value and every populated value can be parsed as a number. Common business formatting is accepted for numeric parsing: comma thousands separators, leading `$`, `€`, or `£`, trailing percentage signs, and parenthesized negative values such as `($100.75)`.
 - Numeric columns with one or more values below zero appear in a `Negative numeric values` table with the count, lowest value, and highest negative value.
 - Numeric columns with one or more zeros appear in a `Zero numeric values` table with the count, share of populated rows, and non-null row count.
 - Numeric columns with at least two distinct populated values and one value representing at least 80% of populated rows appear in a `Dominant numeric values` table; exact constants remain in the separate constant-column section.
@@ -439,6 +451,7 @@ projects/01-auto-eda-analyst/
   examples/sample_numeric_binary_flags.csv
   examples/sample_negative_values.csv
   examples/sample_numeric_correlations.csv
+  examples/sample_percentage_metrics.csv
   examples/sample_renewals.csv
   examples/sample_schema_warnings.csv
   examples/sample_semicolon_customers.csv
@@ -464,7 +477,7 @@ projects/01-auto-eda-analyst/
 - Mixed-type warnings for text columns that combine parseable amounts with non-numeric status values.
 - Markdown-safe table rendering for source headers and text values that contain pipes or embedded line breaks.
 - Schema warnings for empty, duplicate, or whitespace-padded column headers, including deterministic placeholder names for blank headers, and data rows that do not match header width.
-- Conservative numeric-type inference, distribution quartiles, negative-value and zero-value checks, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, or parenthesized negatives.
+- Conservative numeric-type inference, distribution quartiles, negative-value and zero-value checks, and summary statistics, including common business-formatted numbers with currency symbols, thousands separators, trailing percentage signs, or parenthesized negatives.
 - ISO date-column inference with earliest/latest date range reporting.
 - Pairwise-complete Pearson correlations for variable numeric-column pairs.
 - Optional standalone SVG missingness chart artifacts via `--chart-output`.

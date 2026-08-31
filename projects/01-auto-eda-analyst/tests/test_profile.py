@@ -602,6 +602,22 @@ def test_profile_treats_business_formatted_numbers_as_numeric(tmp_path: Path) ->
     assert "| revenue | numeric | 0 | 3 | 666.67 | -100.75 | 1200.50 |" in report
 
 
+def test_profile_treats_percentage_formatted_numbers_as_numeric(tmp_path: Path) -> None:
+    source_file = tmp_path / "percentage_metrics.csv"
+    source_file.write_text(
+        "campaign,conversion_rate,churn_rate\n"
+        "Launch,12.5%,3%\n"
+        "Expansion,18%,4.5%\n"
+        "Renewal,20%,2.5%\n",
+        encoding="utf-8",
+    )
+
+    report = render_markdown_report(profile_csv(source_file))
+
+    assert "| conversion_rate | numeric | 0 | 3 | 16.83 | 12.50 | 20.00 |" in report
+    assert "| churn_rate | numeric | 0 | 3 | 3.33 | 2.50 | 4.50 |" in report
+
+
 def test_rendered_report_flags_mixed_numeric_text_columns(tmp_path: Path) -> None:
     source_file = tmp_path / "mixed_amounts.csv"
     source_file.write_text(
